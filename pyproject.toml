@@ -251,4 +251,10 @@ filterwarnings = [
   "ignore:pyproj unable to set PROJ database path.*:UserWarning",
   # Ignore numpy scalar conversion deprecation from geopandas/pyproj CRS transforms
   "ignore:Conversion of an array with ndim > 0 to a scalar.*:DeprecationWarning",
+  # netCDF4 <= 1.7.4 sets `ndarray.shape` when xarray writes a file, which NumPy 2.5
+  # deprecates; remove once netCDF4 releases a fix
+  "ignore:Setting the shape on a NumPy array has been deprecated.*:DeprecationWarning",
+  # rasterio <= 1.5.1 composes transforms with `*` (e.g. `from_bounds`), which
+  # affine 3 deprecates in favour of `@`
+  "ignore:Use `@` matmul instead of `\\*` mul operator.*:PendingDeprecationWarning",
 ]
