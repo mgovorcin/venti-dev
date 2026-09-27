@@ -22,8 +22,8 @@ try:
 except ImportError:
     HAS_SKIMAGE = False
 
-# Both skimage and joblib are top-level imports in venti.spatial.fitting,
-# so any test that imports from that module requires both.
+# The solver and moving-window modules import skimage and joblib,
+# so tests that import them need both.
 _HAS_SPATIAL_DEPS = HAS_JOBLIB and HAS_SKIMAGE
 _SKIP_SPATIAL = pytest.mark.skipif(
     not _HAS_SPATIAL_DEPS, reason="skimage or joblib not installed"
@@ -36,7 +36,7 @@ class TestDesignMatrixPoly:
     """Tests for _design_matrix_poly."""
 
     def test_order_0_is_constant(self):
-        from venti.spatial.fitting import _design_matrix_poly
+        from venti.solver.design_matrix import _design_matrix_poly
 
         x = np.array([1.0, 2.0, 3.0])
         y = np.array([4.0, 5.0, 6.0])
@@ -45,7 +45,7 @@ class TestDesignMatrixPoly:
         assert np.all(A == 1.0)
 
     def test_order_1_has_three_columns(self):
-        from venti.spatial.fitting import _design_matrix_poly
+        from venti.solver.design_matrix import _design_matrix_poly
 
         x = np.linspace(0, 1, 10)
         y = np.linspace(0, 1, 10)
@@ -53,7 +53,7 @@ class TestDesignMatrixPoly:
         assert A.shape == (10, 3)
 
     def test_order_1p5_has_four_columns(self):
-        from venti.spatial.fitting import _design_matrix_poly
+        from venti.solver.design_matrix import _design_matrix_poly
 
         x = np.linspace(0, 1, 10)
         y = np.linspace(0, 1, 10)
@@ -61,7 +61,7 @@ class TestDesignMatrixPoly:
         assert A.shape == (10, 4)
 
     def test_order_2_has_six_columns(self):
-        from venti.spatial.fitting import _design_matrix_poly
+        from venti.solver.design_matrix import _design_matrix_poly
 
         x = np.linspace(0, 1, 10)
         y = np.linspace(0, 1, 10)
@@ -69,7 +69,7 @@ class TestDesignMatrixPoly:
         assert A.shape == (10, 6)
 
     def test_order_3_has_eight_columns(self):
-        from venti.spatial.fitting import _design_matrix_poly
+        from venti.solver.design_matrix import _design_matrix_poly
 
         x = np.linspace(0, 1, 10)
         y = np.linspace(0, 1, 10)
@@ -77,7 +77,7 @@ class TestDesignMatrixPoly:
         assert A.shape == (10, 8)
 
     def test_unsupported_order_raises(self):
-        from venti.spatial.fitting import _design_matrix_poly
+        from venti.solver.design_matrix import _design_matrix_poly
 
         x = np.ones(5)
         y = np.ones(5)
@@ -91,7 +91,7 @@ class TestCalcPlaneValues:
     """Tests for _calc_plane_values."""
 
     def test_constant_plane(self):
-        from venti.spatial.fitting import _calc_plane_values
+        from venti.solver.plane_fitting import _calc_plane_values
 
         x = np.array([[0.0, 1.0], [2.0, 3.0]])
         y = np.array([[0.0, 0.0], [1.0, 1.0]])
@@ -101,7 +101,7 @@ class TestCalcPlaneValues:
 
     def test_linear_plane_exact(self):
         """z = 2x + 3y + 1 must be recovered exactly."""
-        from venti.spatial.fitting import _calc_plane_values
+        from venti.solver.plane_fitting import _calc_plane_values
 
         x = np.array([[0.0, 1.0], [0.0, 1.0]])
         y = np.array([[0.0, 0.0], [1.0, 1.0]])
@@ -111,7 +111,7 @@ class TestCalcPlaneValues:
         assert np.allclose(result, expected)
 
     def test_output_shape_matches_input(self):
-        from venti.spatial.fitting import _calc_plane_values
+        from venti.solver.plane_fitting import _calc_plane_values
 
         x = np.random.rand(8, 12)
         y = np.random.rand(8, 12)
@@ -127,7 +127,7 @@ class TestWeightedLscov:
 
     def test_recover_known_coefficients_unweighted(self):
         """Exact linear system: solution must match to machine precision."""
-        from venti.spatial.fitting import _weighted_lscov
+        from venti.solver.lscov import _weighted_lscov
 
         rng = np.random.default_rng(0)
         x = rng.uniform(0, 10, 50)
@@ -139,7 +139,7 @@ class TestWeightedLscov:
         assert np.allclose(sol.ravel(), true_coef, atol=1e-6)
 
     def test_recover_known_coefficients_weighted(self):
-        from venti.spatial.fitting import _weighted_lscov
+        from venti.solver.lscov import _weighted_lscov
 
         rng = np.random.default_rng(1)
         x = rng.uniform(0, 10, 50)
@@ -152,7 +152,7 @@ class TestWeightedLscov:
         assert np.allclose(sol.ravel(), true_coef, atol=1e-5)
 
     def test_returns_eight_values(self):
-        from venti.spatial.fitting import _weighted_lscov
+        from venti.solver.lscov import _weighted_lscov
 
         A = np.column_stack([np.arange(10.0), np.ones(10)])
         b = np.arange(10.0)
@@ -160,7 +160,7 @@ class TestWeightedLscov:
         assert len(result) == 8
 
     def test_residuals_shape(self):
-        from venti.spatial.fitting import _weighted_lscov
+        from venti.solver.lscov import _weighted_lscov
 
         n, p = 20, 3
         A = np.random.rand(n, p)
@@ -177,27 +177,27 @@ class TestGetSlidingWindows:
     """Tests for _get_sliding_windows."""
 
     def test_single_window_when_size_equals_length(self):
-        from venti.spatial.fitting import _get_sliding_windows
+        from venti.filtering.moving_window import _get_sliding_windows
 
         windows = _get_sliding_windows(100, win_size=100, win_overlap=0)
         assert len(windows) == 1
         assert windows[0] == slice(0, 100)
 
     def test_two_windows_no_overlap(self):
-        from venti.spatial.fitting import _get_sliding_windows
+        from venti.filtering.moving_window import _get_sliding_windows
 
         windows = _get_sliding_windows(100, win_size=50, win_overlap=0)
         assert len(windows) == 2
 
     def test_overlap_reduces_stride(self):
-        from venti.spatial.fitting import _get_sliding_windows
+        from venti.filtering.moving_window import _get_sliding_windows
 
         no_overlap = _get_sliding_windows(200, win_size=50, win_overlap=0)
         with_overlap = _get_sliding_windows(200, win_size=50, win_overlap=10)
         assert len(with_overlap) >= len(no_overlap)
 
     def test_windows_cover_full_range(self):
-        from venti.spatial.fitting import _get_sliding_windows
+        from venti.filtering.moving_window import _get_sliding_windows
 
         length = 150
         windows = _get_sliding_windows(length, win_size=60, win_overlap=10)
@@ -205,7 +205,7 @@ class TestGetSlidingWindows:
         assert windows[-1].stop == length
 
     def test_all_windows_are_slices(self):
-        from venti.spatial.fitting import _get_sliding_windows
+        from venti.filtering.moving_window import _get_sliding_windows
 
         windows = _get_sliding_windows(100, win_size=30, win_overlap=5)
         assert all(isinstance(w, slice) for w in windows)
@@ -232,7 +232,7 @@ class TestFitWindowedPlane:
         return ramp.copy(), np.zeros_like(ramp)
 
     def test_output_shapes(self):
-        from venti.spatial.fitting import fit_windowed_plane
+        from venti.filtering.moving_window import fit_windowed_plane
 
         insar, gnss = self._flat_scene()
         surface, std = fit_windowed_plane(
@@ -250,7 +250,7 @@ class TestFitWindowedPlane:
         assert std.shape == (self.NY, self.NX)
 
     def test_flat_residual_gives_near_zero_surface(self):
-        from venti.spatial.fitting import fit_windowed_plane
+        from venti.filtering.moving_window import fit_windowed_plane
 
         insar, gnss = self._flat_scene(value=0.0)
         surface, _ = fit_windowed_plane(
@@ -268,7 +268,7 @@ class TestFitWindowedPlane:
         assert np.nanmax(np.abs(surface)) < 1e-4
 
     def test_linear_ramp_is_captured(self):
-        from venti.spatial.fitting import fit_windowed_plane
+        from venti.filtering.moving_window import fit_windowed_plane
 
         insar, gnss = self._linear_residual_scene()
         surface, _ = fit_windowed_plane(
@@ -286,7 +286,7 @@ class TestFitWindowedPlane:
         assert np.nanmax(np.abs(surface)) > 1e-4
 
     def test_masked_nan_pixels_do_not_crash(self):
-        from venti.spatial.fitting import fit_windowed_plane
+        from venti.filtering.moving_window import fit_windowed_plane
 
         insar, gnss = self._flat_scene()
         insar[10:20, 10:20] = np.nan
@@ -304,7 +304,7 @@ class TestFitWindowedPlane:
         assert surface.shape == (self.NY, self.NX)
 
     def test_gnss_los_std_accepted(self):
-        from venti.spatial.fitting import fit_windowed_plane
+        from venti.filtering.moving_window import fit_windowed_plane
 
         insar, gnss = self._flat_scene()
         std_field = np.ones_like(insar) * 0.001
@@ -410,7 +410,7 @@ class TestFitWindowedPlaneSmoothing:
         return insar, gnss
 
     def _run(self, method: str, sigma: float | None = 4.0, **kwargs) -> np.ndarray:
-        from venti.spatial.fitting import fit_windowed_plane
+        from venti.filtering.moving_window import fit_windowed_plane
 
         insar, gnss = self._flat_scene()
         surface, _ = fit_windowed_plane(
@@ -602,3 +602,109 @@ class TestLowPassFilters:
         noisy = surface + noise
         out = savitzky_golay(noisy, valid, window_length=15, polyorder=2)
         assert np.std(out[valid]) < np.std(noisy[valid])
+
+
+def test_gdal_gap_fill_needs_no_writable_directory(tmp_path):
+    """GDAL's gap filler must not write work files to disk.
+
+    Reproduces a container with no TMPDIR/CPL_TMPDIR and an unwritable
+    working directory, where GDAL falls back to writing ``./`` temp files.
+    """
+    import os
+    import subprocess
+    import sys
+
+    pytest.importorskip("osgeo.gdal")
+    if os.geteuid() == 0:
+        pytest.skip("root can write to read-only directories")
+
+    readonly = tmp_path / "readonly"
+    readonly.mkdir()
+    readonly.chmod(0o555)
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if k not in ("TMPDIR", "TEMP", "TMP", "CPL_TMPDIR")
+    }
+    code = (
+        "import numpy as np\n"
+        "from venti.spatial import fill_gaps\n"
+        "a = np.ones((200, 200), 'float32'); gaps = np.zeros(a.shape, bool)\n"
+        "gaps[50:150, 50:150] = True; a[gaps] = 7\n"
+        "assert (fill_gaps(a, gaps, smoothing_iterations=2) == 1).all()\n"
+    )
+    try:
+        subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=readonly,
+            env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    finally:
+        readonly.chmod(0o755)
+
+
+class TestFillGaps:
+    """Tests for fill_gaps (GDAL inverse-distance gap filling)."""
+
+    @pytest.fixture(autouse=True)
+    def _needs_gdal(self):
+        pytest.importorskip("osgeo.gdal")
+
+    def test_fills_only_gaps_and_keeps_real_zeros(self):
+        from venti.spatial import fill_gaps
+
+        data = np.full((40, 50), 2.0)
+        data[20, 25] = 0.0  # e.g. the reference pixel after zeroing
+        gaps = np.zeros(data.shape, bool)
+        gaps[5:10, 5:10] = True
+        data[gaps] = 99.0
+
+        filled = fill_gaps(data, gaps)
+
+        assert filled[20, 25] == 0.0
+        np.testing.assert_allclose(filled[gaps], 2.0)
+        np.testing.assert_array_equal(filled[~gaps], data[~gaps])
+
+    def test_nan_is_a_gap_and_input_is_not_modified(self):
+        from venti.spatial import fill_gaps
+
+        data = np.full((30, 30), 3.0)
+        data[10:12, 10:12] = np.nan
+        original = data.copy()
+
+        filled = fill_gaps(data, np.zeros(data.shape, bool))
+
+        np.testing.assert_allclose(filled, 3.0)
+        np.testing.assert_array_equal(data, original)
+
+    def test_unreachable_gaps_stay_nan(self):
+        from venti.spatial import fill_gaps
+
+        data = np.full((20, 200), 1.0)
+        gaps = np.zeros(data.shape, bool)
+        gaps[:, 20:] = True
+
+        filled = fill_gaps(data, gaps, max_search_distance=5)
+
+        assert np.isnan(filled[:, -1]).all()
+        assert np.isfinite(filled[:, :22]).all()
+
+    def test_shape_mismatch_raises(self):
+        from venti.spatial import fill_gaps
+
+        with pytest.raises(ValueError, match="gaps shape"):
+            fill_gaps(np.ones((4, 4)), np.zeros((3, 4), bool))
+
+    def test_global_gdal_exception_setting_is_unchanged(self):
+        from osgeo import gdal
+
+        from venti.spatial import fill_gaps
+
+        before = gdal.GetUseExceptions()
+        gaps = np.zeros((10, 10), bool)
+        gaps[4, 4] = True
+        fill_gaps(np.ones((10, 10)), gaps)
+        assert gdal.GetUseExceptions() == before

@@ -11,6 +11,7 @@ Example usage:
     python get_model_rates.py 5678 --output /path/to/output --plate PCFC
 """
 
+import logging
 from contextlib import suppress
 from pathlib import Path
 from typing import Any, Literal, NamedTuple
@@ -25,7 +26,6 @@ from rasterio.transform import Affine, from_bounds
 from rasterio.warp import Resampling, reproject
 from tyro import conf
 
-from venti.log import get_logger
 from venti.models import load_gia, load_itrf, plate_motion
 
 # Constants
@@ -35,7 +35,7 @@ DEFAULT_PMM_GRID_POSTING = 10000
 SUPPORTED_ITRF_YEARS = [2014, 2020]
 SUPPORTED_GIA_MODELS = ["CARON", "ICE6"]
 
-logger = get_logger("venti", enable_file_logging=False)
+logger = logging.getLogger("venti")
 
 
 class FrameUTM(NamedTuple):
@@ -483,4 +483,8 @@ def main(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
     tyro.cli(main)

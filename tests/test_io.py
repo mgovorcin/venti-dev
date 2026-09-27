@@ -484,6 +484,22 @@ class TestReadNetCDF:
 
 
 @pytest.mark.skipif(not HAS_H5NETCDF, reason="h5netcdf not installed")
+def test_read_netcdf_correction(tmp_path):
+    path = tmp_path / "product.nc"
+    xr.Dataset({"displacement": (("y", "x"), np.zeros((3, 4)))}).to_netcdf(path)
+    no_group = raster.read_netcdf_correction(path, "solid_earth_tide")
+    tide = np.arange(12.0).reshape(3, 4)
+    xr.Dataset({"solid_earth_tide": (("y", "x"), tide)}).to_netcdf(
+        path, group="corrections", mode="a"
+    )
+
+    assert no_group is None
+    assert raster.read_netcdf_correction(path, "ionospheric_delay") is None
+    np.testing.assert_array_equal(
+        raster.read_netcdf_correction(path, "solid_earth_tide"), tide
+    )
+
+
 class TestUpdateNetCDFVariable:
     """Test cases for update_netcdf_variable function."""
 

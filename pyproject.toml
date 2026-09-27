@@ -21,37 +21,42 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python",
   "Topic :: Scientific/Engineering",
   "Typing :: Typed",
 ]
 license = { file = "LICENSE.txt" }
+# Keep in sync with environment.yml and [tool.pixi.dependencies].
 dependencies = [
   "numpy",
   "pandas",
-  "xarray",
-  "requests",
-  "rasterio",
   "scipy",
-  "geopandas",
-  "pyproj>=3.3",
-  "psutil",
-  "pydantic>=2.0",
-  "pyyaml",
-  "tqdm",
-  "tyro>=0.9.24",
   "scikit-image",
   "joblib",
-  "shapely",
-  "opera-utils",
-  "rich",
-  "pyarrow",
-  "gdal",
-  "aiohttp",
-  "fsspec",
-  "s3fs",
-  "numba",
+  "tqdm",
+  # rasters and NetCDF
+  "xarray",
+  "rioxarray",
   "netcdf4",
+  "h5netcdf",
+  "rasterio",
+  "gdal",
+  # geospatial
+  "geopandas",
+  "shapely",
+  "pyproj>=3.3",
+  "pyarrow",  # staging writes GNSS velocities to parquet
+  "requests",
+  # configuration and CLI
+  "pydantic>=2.0",
+  "pyyaml",
+  "tyro>=0.9.24",
+  # OPERA products; the `disp` extra brings what `opera_utils.disp` imports
+  # (zarr, dask, s3fs, ...), used for the reference-point selection
+  "opera-utils[disp]",
+  # data staging (scripts/staging)
+  "asf_search",
   "dem-stitcher",
 ]
 
@@ -65,12 +70,20 @@ test = [
   "pytest",
   "pytest-cov",
   "pytest-randomly",
-  "pytest-recording>=0.13.2",
   "pytest-xdist",
   "pre-commit",
   "ruff",
+]
+notebooks = [
   "matplotlib>=3.10.3",
   "ipykernel",
+  "ipywidgets",  # progress bars in notebooks
+  "folium",
+]
+# Not used by Venti: the GNSS validation and velocity scripts built on it.
+analysis = [
+  "numba",
+  "geepers @ git+https://github.com/opera-adt/geepers.git",
 ]
 
 [project.urls]
@@ -104,7 +117,6 @@ rasterio = "*"
 scipy = "*"
 geopandas = "*"
 pyproj = ">=3.3"
-psutil = "*"
 pydantic = ">=2.0"
 pyyaml = "*"
 tyro = ">=0.9.24"
@@ -113,10 +125,18 @@ scikit-image = "*"
 joblib = "*"
 shapely = "*"
 opera-utils = "*"
-numba = "*"
+zarr = ">=3"
+dask = "*"
 netcdf4 = "*"
+h5netcdf = "*"
+rioxarray = "*"
 gdal = "*"
 libgdal-netcdf = "*"
+pyarrow = "*"
+aiohttp = "*"
+fsspec = "*"
+s3fs = "*"
+asf_search = "*"
 
 [tool.pixi.tasks]
 check = "pre-commit run -a"
@@ -131,7 +151,6 @@ pre-commit = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-randomly = "*"
-pytest-recording = ">=0.13.2"
 pytest-xdist = "*"
 ruff = "*"
 matplotlib = ">=3.10.3"
@@ -159,9 +178,18 @@ mkdocstrings = { extras = ["python"] }
 mkdocs-section-index = "*"
 
 
+# pixi install -e analysis
+[tool.pixi.feature.analysis.dependencies]
+numba = "*"
+
+[tool.pixi.feature.analysis.pypi-dependencies]
+geepers = { git = "https://github.com/opera-adt/geepers.git" }
+
+
 [tool.pixi.environments]
 test = ["test"]
 docs = ["docs"]
+analysis = ["analysis"]
 
 
 [tool.setuptools_scm]
@@ -251,4 +279,10 @@ filterwarnings = [
   "ignore:pyproj unable to set PROJ database path.*:UserWarning",
   # Ignore numpy scalar conversion deprecation from geopandas/pyproj CRS transforms
   "ignore:Conversion of an array with ndim > 0 to a scalar.*:DeprecationWarning",
+  # netCDF4 <= 1.7.4 sets `ndarray.shape` when xarray writes a file, which NumPy 2.5
+  # deprecates; remove once netCDF4 releases a fix
+  "ignore:Setting the shape on a NumPy array has been deprecated.*:DeprecationWarning",
+  # rasterio <= 1.5.1 composes transforms with `*` (e.g. `from_bounds`), which
+  # affine 3 deprecates in favour of `@`
+  "ignore:Use `@` matmul instead of `\\*` mul operator.*:PendingDeprecationWarning",
 ]

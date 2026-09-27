@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from .log_setup import configure_logging
+
 # Lazy imports to avoid pyproj initialization errors
 _LAZY_MODULES = {
     "models": ".models",
@@ -9,9 +11,13 @@ _LAZY_MODULES = {
     "workflow": ".workflow",
     "gnss": ".gnss",
     "io": ".io",
-    "interpolation": ".interpolation",
-    "raster": ".raster",
     "spatial": ".spatial",
+    "surface": ".surface",
+}
+# Main entry points available directly as ``venti.<name>``.
+_LAZY_ATTRS = {
+    "estimate_calibration_surface": ".surface",
+    "CalibrationSurface": ".surface",
 }
 
 
@@ -24,6 +30,13 @@ def __getattr__(name: str) -> Any:
         # Cache the module
         globals()[name] = module
         return module
+
+    if name in _LAZY_ATTRS:
+        import importlib
+
+        value = getattr(importlib.import_module(_LAZY_ATTRS[name], __name__), name)
+        globals()[name] = value
+        return value
 
     if name == "__version__":
         try:
@@ -41,13 +54,19 @@ def __getattr__(name: str) -> Any:
 
 def __dir__():
     """List available attributes."""
-    return [*list(_LAZY_MODULES.keys()), "__version__"]
+    return [*_LAZY_MODULES, *_LAZY_ATTRS, "__version__", "configure_logging"]
 
 
 __all__ = [
+    "CalibrationSurface",
     "__version__",
+    "configure_logging",
+    "estimate_calibration_surface",
+    "gnss",
     "io",
     "models",
+    "spatial",
+    "surface",
     "unwrap",
     "workflow",
-]  # , 'gnss', 'interpolation', 'raster', 'spatial']
+]

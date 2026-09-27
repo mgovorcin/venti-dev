@@ -161,3 +161,6 @@ Thumbs.db
 # pixi environments
 .pixi
 *.egg-info
+
+# GNSS downloads (e.g. from staging examples); src/venti/gnss is code
+/gnss/

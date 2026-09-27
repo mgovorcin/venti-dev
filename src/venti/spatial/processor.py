@@ -55,6 +55,7 @@ class SpatialProcessor:
         smoothing_method: str = "gaussian",
         sg_window_length: int = 51,
         sg_polyorder: int = 3,
+        mask_residual_outliers: bool = True,
     ) -> np.ndarray:
         """Estimate the long-wavelength InSAR calibration surface.
 
@@ -83,8 +84,9 @@ class SpatialProcessor:
             Extra rows of context added around each window for fitting.
             Defaults to `window_size_y` when not given.
         gnss_los_std : np.ndarray, optional
-            Uncertainty of the GNSS LOS field (reserved for future weighted
-            inversion; currently unused).
+            Uncertainty of the GNSS LOS field, same shape as `gnss_los`.
+            When given, used as inverse-variance weights in the windowed
+            least-squares fit. ``None`` (default) fits with uniform weights.
         poly_order : float, optional
             Polynomial order for plane fitting, by default ``1.5``.
         n_jobs : int, optional
@@ -101,6 +103,14 @@ class SpatialProcessor:
             by default ``51``.
         sg_polyorder : int, optional
             Polynomial order for Savitzky-Golay, by default ``3``.
+        mask_residual_outliers : bool, optional
+            Whether `fit_windowed_plane` excludes the most extreme 15% / 85%
+            of ``insar_data - gnss_los`` residual pixels before filling and
+            fitting, by default ``True``. This is a fixed quantile trim,
+            unconditional and independent of any caller-level outlier
+            detection — see `fit_windowed_plane`'s docstring. ``False``
+            fits `insar_data` as given, masking only genuinely invalid
+            (NaN) pixels.
 
         Returns
         -------
@@ -128,5 +138,6 @@ class SpatialProcessor:
             smoothing_method=smoothing_method,
             sg_window_length=sg_window_length,
             sg_polyorder=sg_polyorder,
+            mask_residual_outliers=mask_residual_outliers,
         )
         return surface

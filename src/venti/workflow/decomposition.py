@@ -15,6 +15,7 @@ import numpy as np
 from tqdm import tqdm
 
 from .config import WorkflowConfig
+from .utils import with_scratch_temp_dir
 
 if TYPE_CHECKING:
     from ..io.read import RasterReader
@@ -45,13 +46,6 @@ class DecompositionState:
     n_files_processed: int = 0
     n_files_failed: int = 0
     output_files: list[Path] = field(default_factory=list)
-
-    @property
-    def progress_pct(self) -> float:
-        """Calculate progress percentage."""
-        if self.n_files_total == 0:
-            return 0.0
-        return 100.0 * self.n_files_processed / self.n_files_total
 
     @property
     def success_rate(self) -> float:
@@ -95,10 +89,13 @@ class DecompositionWorkflow:
     state: DecompositionState = field(default_factory=DecompositionState, init=False)
 
     def __post_init__(self):
-        """Initialize workflow components."""
+        """Initialize workflow components and logging."""
         from ..io.read import RasterReader
         from ..io.write import RasterWriter
+        from ..log_setup import configure_logging
         from ..spatial.processor import SpatialProcessor
+
+        configure_logging(log_file=self.config.run_config.log_file)
 
         # Create output directory
         self.config.input_options.work_directory.mkdir(parents=True, exist_ok=True)
@@ -319,6 +316,7 @@ class DecompositionWorkflow:
             logger.debug(f"Saved: {east_file.name}, {north_file.name}, {up_file.name}")
             return east_file, north_file, up_file
 
+    @with_scratch_temp_dir
     def run(self) -> DecompositionState:
         """Run the complete decomposition workflow.
 
@@ -379,21 +377,3 @@ class DecompositionWorkflow:
         logger.info(f"Output directory: {self.config.input_options.work_directory}")
 
         return self.state
-
-
-def run_decomposition_workflow(config: WorkflowConfig) -> DecompositionState:
-    """Run decomposition workflow from configuration.
-
-    Parameters
-    ----------
-    config : WorkflowConfig
-        Workflow configuration
-
-    Returns
-    -------
-    DecompositionState
-        Final workflow state
-
-    """
-    workflow = DecompositionWorkflow(config=config)
-    return workflow.run()

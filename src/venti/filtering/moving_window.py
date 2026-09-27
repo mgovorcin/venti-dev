@@ -17,6 +17,23 @@ from ..solver.plane_fitting import _fit_plane
 
 logger = logging.getLogger(__name__)
 
+# The plane is fit to every `_MAX_DECIMATE`-th pixel of a window for speed,
+# but never to fewer than `_MIN_FIT_SAMPLES` pixels: with small windows or
+# strong downsampling a fixed step left too few points and the fit silently
+# returned a zero plane.
+_MAX_DECIMATE = 50
+_MIN_FIT_SAMPLES = 100
+
+
+def _fit_decimation(shape: tuple[int, int]) -> int:
+    """Largest step <= `_MAX_DECIMATE` keeping >= `_MIN_FIT_SAMPLES` pixels."""
+    step = _MAX_DECIMATE
+    while (
+        step > 1 and (-(-shape[0] // step)) * (-(-shape[1] // step)) < _MIN_FIT_SAMPLES
+    ):
+        step //= 2
+    return step
+
 
 def _find_data_extent(array: np.ndarray, axis: int = 0) -> tuple[int, int]:
     """Return the start and stop indices of non-zero data along an axis.
@@ -179,7 +196,10 @@ def _process_window(
     length: int,
     width: int,
     poly_order: float,
-) -> tuple[tuple[slice, slice], np.ndarray | None, np.ndarray | None]:
+    gnss_los_std: np.ndarray | None = None,
+) -> tuple[
+    tuple[slice, slice], np.ndarray | None, np.ndarray | None, np.ndarray | None
+]:
     """Fit a calibration plane within a single moving window.
 
     Designed to be called in parallel via ``joblib``.
@@ -202,12 +222,23 @@ def _process_window(
         Total number of columns.
     poly_order : float
         Polynomial order for plane fitting.
+    gnss_los_std : np.ndarray, optional
+        Full GNSS LOS uncertainty array, same shape as `gnss_los`. When
+        given, the window's slice of it is passed to `_fit_plane` as
+        inverse-variance weights, so pixels near a well-constrained GNSS
+        point dominate the local fit more than pixels far from any station
+        (where the interpolated reference is least trustworthy). ``None``
+        (default) fits with uniform weights.
 
     Returns
     -------
     win_index : tuple of slice
     plane : np.ndarray or None
+        Plane over `win_index`, 0 where the data are invalid.
     plane_std : np.ndarray or None
+    valid : np.ndarray or None
+        Where the data are valid; only these pixels may carry weight when
+        windows are blended.
 
     """
     win2, pad = _extend_window(
@@ -219,20 +250,26 @@ def _process_window(
 
     res = insar_data[win2] - gnss_los[win2]
     if np.isnan(res).sum() / res.size > 0.8:
-        return win_index, None, None
+        return win_index, None, None, None
 
+    res_std = gnss_los_std[win2] if gnss_los_std is not None else None
     try:
         plane, plane_std = _fit_plane(
-            res, win_lons, win_lats, order=poly_order, decimate=50
+            res,
+            win_lons,
+            win_lats,
+            order=poly_order,
+            decimate=_fit_decimation(res.shape),
+            data_std=res_std,
         )
-        mask2 = np.ma.getmaskarray(np.ma.masked_invalid(res))
-        filled_plane = np.ma.masked_array(plane[pad], mask=mask2[pad]).filled(0)
-        filled_std = np.ma.masked_array(plane_std[pad], mask=mask2[pad]).filled(0)
+        valid = np.isfinite(res[pad])
+        filled_plane = np.where(valid, plane[pad], 0.0)
+        filled_std = np.where(valid, plane_std[pad], 0.0)
     except Exception:
         logger.debug("Skipping window %s", win_index, exc_info=True)
-        return win_index, None, None
+        return win_index, None, None, None
     else:
-        return win_index, filled_plane, filled_std
+        return win_index, filled_plane, filled_std, valid
 
 
 def fit_windowed_plane(
@@ -244,13 +281,14 @@ def fit_windowed_plane(
     win_overlap_y: int,
     win_extend_x: int,
     win_extend_y: int,
-    gnss_los_std: np.ndarray | None = None,  # noqa: ARG001
+    gnss_los_std: np.ndarray | None = None,
     poly_order: float = 1.5,
     n_jobs: int = -1,
     smoothing_sigma: float | None = None,
     smoothing_method: str = "gaussian",
     sg_window_length: int = 51,
     sg_polyorder: int = 3,
+    mask_residual_outliers: bool = True,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Fit a windowed polynomial calibration surface to InSAR data.
 
@@ -277,8 +315,12 @@ def fit_windowed_plane(
     win_extend_y : int
         Extension beyond the window for fitting context.
     gnss_los_std : np.ndarray, optional
-        Uncertainty of the GNSS LOS field (reserved for future weighted
-        inversion; currently unused).
+        Uncertainty of the GNSS LOS field, same shape as `gnss_los`. When
+        given, used as inverse-variance weights in each window's
+        least-squares plane fit (see `_process_window`/`_fit_plane`), so
+        pixels near a well-constrained GNSS point influence the local fit
+        more than pixels far from any station. ``None`` (default) fits
+        with uniform weights.
     poly_order : float, optional
         Polynomial order for plane fitting, by default ``1.5``.
     n_jobs : int, optional
@@ -298,6 +340,17 @@ def fit_windowed_plane(
     sg_polyorder : int, optional
         Polynomial order for the Savitzky-Golay filter, by default ``3``.
         Only used when ``smoothing_method="savitzky_golay"``.
+    mask_residual_outliers : bool, optional
+        Whether to exclude the most extreme 15% / 85% of
+        ``insar_data - gnss_los`` residual pixels (per `_get_residual_mask`)
+        before filling and fitting, by default ``True``. This is a fixed
+        quantile trim, unconditional and independent of any caller-level
+        outlier detection (e.g. `process_displacement_file`'s
+        ``residual_outlier_mad_threshold``) — it always discards ~30% of
+        pixels, real deformation included, and replaces them with
+        InSAR-only smoothed values before the fit ever sees them. Set to
+        ``False`` for a fit that uses `insar_data` as given, masking only
+        genuinely invalid (NaN) pixels.
 
     Returns
     -------
@@ -320,10 +373,14 @@ def fit_windowed_plane(
         calibrated = displacement_mm - surface
 
     """
-    from ..spatial.gap_filling import _fill_gaps, _get_residual_mask
+    from ..spatial.gap_filling import _get_residual_mask, fill_gaps
 
-    outlier_mask = _get_residual_mask(insar_data, gnss_los)
     invalid_mask = np.ma.masked_invalid(insar_data).mask
+    outlier_mask = (
+        _get_residual_mask(insar_data, gnss_los)
+        if mask_residual_outliers
+        else invalid_mask
+    )
     length, width = insar_data.shape
 
     logger.info(
@@ -333,8 +390,12 @@ def fit_windowed_plane(
         poly_order,
     )
 
-    insar_filled = np.ma.masked_array(insar_data, mask=outlier_mask).filled(0)
-    insar_filled = _fill_gaps(insar_filled, fill_value=0, smoothing_iterations=10)
+    insar_filled = fill_gaps(
+        insar_data,
+        outlier_mask,
+        max_search_distance=max(insar_data.shape) // 4,
+        smoothing_iterations=10,
+    )
     insar_filled = np.where(invalid_mask, np.nan, insar_filled)
 
     y_start, y_stop = _find_data_extent(insar_data, axis=1)
@@ -372,6 +433,24 @@ def fit_windowed_plane(
             _gnss_path, dtype=gnss_los.dtype, mode="r", shape=gnss_los.shape
         )
 
+        _gnss_std_mm = None
+        if gnss_los_std is not None:
+            _gnss_std_path = f"{_tmpdir}/gnss_std.mmap"
+            _gnss_std_mm = np.memmap(
+                _gnss_std_path,
+                dtype=gnss_los_std.dtype,
+                mode="w+",
+                shape=gnss_los_std.shape,
+            )
+            _gnss_std_mm[:] = gnss_los_std
+            del _gnss_std_mm
+            _gnss_std_mm = np.memmap(
+                _gnss_std_path,
+                dtype=gnss_los_std.dtype,
+                mode="r",
+                shape=gnss_los_std.shape,
+            )
+
         results = Parallel(n_jobs=n_jobs)(
             delayed(_process_window)(
                 ix,
@@ -382,6 +461,7 @@ def fit_windowed_plane(
                 length,
                 width,
                 poly_order,
+                gnss_los_std=_gnss_std_mm,
             )
             for ix in all_windows
         )
@@ -393,14 +473,16 @@ def fit_windowed_plane(
     weight_sum = np.zeros(insar_data.shape, dtype=np.float64)
     weight_std = np.zeros(insar_data.shape, dtype=np.float64)
 
-    for ix, plane_val, std_val in results:
+    for ix, plane_val, std_val, valid in results:
         if plane_val is None:
             continue
         ny, nx = plane_val.shape
-        # 2-D Hann taper: higher weight toward window centre, tapers to zero at edges
-        taper_y = np.hanning(ny)
-        taper_x = np.hanning(nx)
-        taper = np.outer(taper_y, taper_x)
+        # 2-D Hann taper: higher weight toward window centre, tapers to zero at edges.
+        # Invalid pixels (water, outside the swath) get no weight: counting their
+        # 0s would pull the surface toward 0 near every mask edge (and the
+        # smoothing spreads that inland), so the fit would no longer be linear
+        # in `gnss_los` there.
+        taper = np.outer(np.hanning(ny), np.hanning(nx)) * valid
         cal_surface[ix] += plane_val * taper
         weight_sum[ix] += taper
         if std_val is not None:

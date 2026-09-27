@@ -122,22 +122,43 @@ class TestUnwrapCorrector:
         assert not np.isnan(cycles).any()
 
     def test_correct_simple(self):
-        """Test end-to-end correction with simple synthetic data."""
-        corrector = UnwrapCorrector(wavelength=0.1, min_region_area=5)
+        """An island one wavelength off is brought back to the reference island."""
+        rng = np.random.default_rng(0)
+        disp = np.full((40, 60), np.nan)
+        disp[5:35, 3:25] = 0.010 + 0.002 * rng.standard_normal((30, 22))
+        # Separated by no-data, and one full wavelength off.
+        disp[5:35, 33:57] = 0.010 + 0.0555 + 0.002 * rng.standard_normal((30, 24))
 
-        # Create synthetic data with two regions offset by one wavelength
-        disp = np.zeros((30, 30))
-        disp[5:15, 5:15] = 0.5  # Region 1
-        disp[15:25, 15:25] = 0.6  # Region 2, offset by 0.1 (one wavelength)
+        corrector = UnwrapCorrector(wavelength=0.0555)
+        corrected = np.ma.filled(corrector.correct(disp, np.isfinite(disp)), np.nan)
 
-        mask = np.ones((30, 30), dtype=bool)
+        np.testing.assert_array_equal(corrector.unwrap_cycles_, [0, 1])
+        np.testing.assert_allclose(
+            corrected[5:35, 33:57], disp[5:35, 33:57] - 0.0555, atol=1e-6
+        )
+        np.testing.assert_allclose(corrected[5:35, 3:25], disp[5:35, 3:25], atol=1e-6)
 
-        corrected = corrector.correct(disp, mask)
+    def test_small_islands_keep_their_values(self):
+        """Pixels outside corrected regions must not be left uninitialised.
 
-        # Corrected should have reduced the offset between regions
-        assert corrected is not None
-        assert corrected.shape == disp.shape
-        assert isinstance(corrected, np.ma.MaskedArray)
+        Regression: islands below `min_region_area` in no-data connected to
+        the image edge (e.g. small islands at sea) came out as leftover
+        memory instead of their own values.
+        """
+        rng = np.random.default_rng(0)
+        disp = 0.003 + 0.001 * rng.standard_normal((60, 80))
+        disp[:, 40:] = np.nan  # open sea reaching the image edge
+        islands = [(15, 60), (30, 66), (45, 53)]
+        for r, c in islands:
+            disp[r : r + 3, c : c + 3] = 0.002  # 9 px < min_region_area
+
+        corrected = np.ma.filled(
+            UnwrapCorrector(wavelength=0.0555).correct(disp, np.isfinite(disp)),
+            np.nan,
+        )
+
+        valid = np.isfinite(disp)
+        np.testing.assert_allclose(corrected[valid], disp[valid], atol=1e-6)
 
 
 class TestCorrectRegionOffset:
@@ -148,14 +169,17 @@ class TestCorrectRegionOffset:
         # Create synthetic data
         disp = np.random.rand(50, 50)
         mask = np.ones((50, 50), dtype=bool)
+        mask[:5, :5] = False
 
         corrected = correct_region_offset(
             input_disp=disp, mask=mask, wavelength=0.0555, min_region_area=20
         )
 
-        assert corrected is not None
+        # A plain array with NaN where masked, usable by other Venti functions.
+        assert not isinstance(corrected, np.ma.MaskedArray)
         assert corrected.shape == disp.shape
-        assert isinstance(corrected, np.ma.MaskedArray)
+        assert np.isnan(corrected[:5, :5]).all()
+        assert np.isfinite(corrected[mask]).all()
 
     def test_correct_with_netcdf(self):
         """Test correction with NetCDF file input."""

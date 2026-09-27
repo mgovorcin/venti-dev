@@ -20,30 +20,25 @@ Venti is a Python toolkit designed to fuse GNSS data with OPERA-DISP product to 
 
 ## Installation
 
+1. Get the code:
 ```bash
 git clone https://github.com/opera-adt/Venti.git
 cd Venti
-pip install -r requirements.txt
-
-1. Download source code:
-```bash
-git clone https://github.com/opera-adt/Venti.git
 ```
-2. Install dependencies, either to a new environment:
+2. Create the environment (Venti's dependencies plus test and notebook tools):
 ```bash
-mamba env create --name venti-env --file Venti/environment.yml
-conda activate venti-env
+mamba env create --file environment.yml
+conda activate venti
 ```
-or install within your existing env with mamba.
-
-3. Install `venti` via pip in editable mode
-```bash
-python -m pip install .
-```
-or in editable mode:
+3. Install Venti in editable mode:
 ```bash
 python -m pip install -e .
 ```
+
+With plain pip instead of conda, `python -m pip install -e ".[test]"` installs
+Venti with its test tools (GDAL must already be available). The `notebooks`
+extra adds notebook tools, and `analysis` adds the packages used by the GNSS
+validation scripts (`numba`, `geepers`), which Venti itself does not need.
 
 ---
 
@@ -252,27 +247,33 @@ Two modes are available depending on whether you want to process a full director
 
 ```bash
 # Serial (default)
-python -m venti run configs/runconfig.yaml
+python -m venti run --config-file configs/runconfig.yaml
 
 # Process up to 4 files concurrently (recommended range: 2–4)
-python -m venti run configs/runconfig.yaml --n-workers 4
+python -m venti run --config-file configs/runconfig.yaml --n-workers 4
 ```
 
 **Single-file run** — calibrates one specified displacement file:
 
 ```bash
-python -m venti run-single configs/runconfig.yaml /path/to/epoch_001.nc
+python -m venti run-single --config-file configs/runconfig.yaml \
+    --disp-file /path/to/epoch_001.nc
 ```
 
 With optional tropospheric corrections (provide both the reference- and secondary-date files):
 
 ```bash
-python -m venti run-single configs/runconfig.yaml /path/to/epoch_001.nc \
+python -m venti run-single --config-file configs/runconfig.yaml \
+    --disp-file /path/to/epoch_001.nc \
     --tropo-ref-file /path/to/tropo/tropo_{ref_timestamp}_{epsg}.tif \
     --tropo-sec-file /path/to/tropo/tropo_{sec_timestamp}_{epsg}.tif
 ```
 
 `algorithm_parameters.yaml` is auto-discovered from the same directory as `runconfig.yaml`, so keep both files together. Increase verbosity with `--log-level DEBUG` on either command.
+
+**Logging** — progress is printed to the console (timestamp, module, level). To also keep a log file, set `log_file: path/to/run.log` in `runconfig.yaml`; this works for `venti run`, `venti run-single`, `run_workflow` and `CalibrationWorkflow` in Python. `calibrate_timeseries`, `run_data_staging` and the staging CLIs take a `log_file` / `--log-file` argument. If your own script or notebook already configures logging (e.g. `logging.basicConfig`), Venti messages go through your setup instead of being printed twice. When calling lower-level functions directly, call `venti.configure_logging()` once to see their messages.
+
+**Temporary files** — during `venti run`, `venti run-single` or a `CalibrationWorkflow` run, every temporary file (Venti's own and GDAL's) goes to `<scratch_path>/tmp`, so neither the working directory nor `/tmp` needs to be writable. Set `product_path_group.scratch_path` in `runconfig.yaml` to a writable directory; the run stops at the start with a clear error if it is not.
 
 ---
 
@@ -355,3 +356,41 @@ Then run the tests:
 ```bash
 pytest
 ```
+
+---
+
+## Using Venti's building blocks in your own workflow
+
+Each step also works on its own with plain NumPy arrays; no Venti
+configuration or OPERA product is needed.
+
+```python
+from venti import estimate_calibration_surface
+from venti.gnss import project_to_los
+from venti.workflow.config import CalibrationOptions
+
+# GNSS LOS field (mm) on any grid: a NetCDF, a GeoTIFF or (x, y) coordinates.
+gnss_los_mm = project_to_los(los_east, los_north, los_up, (x, y), station_gdf)
+
+# Calibration surface (m) from arrays; corrections are removed before the fit.
+result = estimate_calibration_surface(
+    disp_m,
+    gnss_los_mm / 1000,
+    valid_mask,
+    ref_point=(row, col),
+    window_size=1000,                # pixels
+    corrections=[tropo_m, solid_earth_tide_m],
+    options=CalibrationOptions(),    # same options as algorithm_parameters.yaml
+    downsample_factor=6,
+)
+calibrated = disp_m - result.surface
+```
+
+| Module | What it provides |
+|---|---|
+| `venti.surface` | `estimate_calibration_surface`: the full calibration step on arrays |
+| `venti.gnss` | UNR download/readers, station rates or epoch displacements, LOS projection on any grid, cached LOS fields |
+| `venti.spatial` | Windowed surface fit (`SpatialProcessor`), grid coordinates, interpolation, masked-region filling, residual-region detection, resampling |
+| `venti.filtering` | Moving-window plane fit and low-pass filters |
+| `venti.unwrap` | Unwrapping-error correction |
+| `venti.io` | GeoTIFF/NetCDF readers and writers, OPERA correction layers |

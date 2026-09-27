@@ -28,7 +28,9 @@ class WorkflowType(StrEnum):
 
 
 def run_workflow(
-    config: WorkflowConfig, workflow_type: WorkflowType = WorkflowType.calibrate
+    config: WorkflowConfig,
+    workflow_type: WorkflowType = WorkflowType.calibrate,
+    n_workers: int = 1,
 ) -> CalibrationState | DecompositionState:
     """Run a workflow using provided configuration.
 
@@ -38,6 +40,9 @@ def run_workflow(
         Configuration object with all workflow parameters
     workflow_type : WorkflowType, optional
         Type of workflow to run: 'calibrate' or 'decompose', by default 'calibrate'
+    n_workers : int, optional
+        Products calibrated concurrently (see `CalibrationWorkflow.run`), by
+        default 1. Not used by the decomposition.
 
     Returns
     -------
@@ -48,15 +53,15 @@ def run_workflow(
     --------
     Run calibration workflow::
 
-        from venti.workflow import WorkflowConfig, run_workflow, WorkflowType
+        from venti.workflow import WorkflowType, load_config, run_workflow
 
-        config = WorkflowConfig.from_yaml('config.yaml')
+        config = load_config('runconfig.yaml')
         state = run_workflow(config, WorkflowType.calibrate)
         print(f"Processed {state.n_files_processed} files")
 
     Run decomposition workflow::
 
-        config = WorkflowConfig.from_yaml('config.yaml')
+        config = load_config('runconfig.yaml')
         state = run_workflow(config, WorkflowType.decompose)
 
     """
@@ -66,16 +71,10 @@ def run_workflow(
     if config.worker_settings.threads_per_worker > 1:
         os.environ["OMP_NUM_THREADS"] = str(config.worker_settings.threads_per_worker)
 
-    # Set up logging if log_file is specified
-    if config.run_config.log_file:
-        file_handler = logging.FileHandler(config.run_config.log_file)
-        file_handler.setLevel(logging.INFO)
-        logging.getLogger().addHandler(file_handler)
-
     # Dispatch to appropriate workflow
     if workflow_type == WorkflowType.calibrate:
         calib_workflow = CalibrationWorkflow(config=config)
-        return calib_workflow.run()
+        return calib_workflow.run(n_workers=n_workers)
     elif workflow_type == WorkflowType.decompose:
         decomp_workflow = DecompositionWorkflow(config=config)
         return decomp_workflow.run()
@@ -96,17 +95,17 @@ def calibrate_timeseries(
     window_size_meters: float = 30000,
     posting_meters: float = 30,
     reference_frame: str = "IGS20",
-    start_year: float = 2014.0,
-    gpu_enabled: bool = False,
-    block_shape: list[int] | None = None,
     unwrap_error_correction: bool = True,
+    apply_tropo_correction: bool = True,
+    apply_solid_earth_tide_correction: bool = True,
+    n_workers: int = 1,
     keep_paths_relative: bool = False,
+    log_file: Path | None = None,
 ) -> CalibrationState:
     """Calibrate InSAR displacement timeseries using GNSS reference data.
 
-    This function provides a backward-compatible functional API that wraps
-    the CalibrationWorkflow class. For new code, consider using WorkflowConfig
-    and run_workflow directly.
+    Builds a configuration from keyword arguments and runs `CalibrationWorkflow`;
+    use `load_config` and `run_workflow` to run from YAML files.
 
     Parameters
     ----------
@@ -133,17 +132,23 @@ def calibrate_timeseries(
         Pixel posting in meters, by default 30
     reference_frame : str, optional
         GNSS reference frame, by default "IGS20"
-    start_year : float, optional
-        Start year for velocity calculation (if grid_type="constant"), by default 2014.0
-    gpu_enabled : bool, optional
-        Whether to use GPU for processing (if available), by default False
-    block_shape : list of int, optional
-        Size (rows, columns) of blocks of data to load at a time, by default [512, 512]
     unwrap_error_correction : bool, optional
         Whether to correct islands for unwrap errors, by default True
+    apply_tropo_correction : bool, optional
+        Whether to apply tropospheric correction when `correction_dir` is
+        given, by default True. Set False to skip tropo without unsetting
+        `correction_dir`, e.g. for an A/B comparison.
+    apply_solid_earth_tide_correction : bool, optional
+        Whether to remove the product's ``/corrections/solid_earth_tide``
+        layer before the fit, by default True.
+    n_workers : int, optional
+        Products calibrated concurrently (see `CalibrationWorkflow.run`),
+        by default 1.
     keep_paths_relative : bool, optional
         Don't resolve filepaths that are given as relative to be absolute,
         by default False
+    log_file : Path, optional
+        Also write log messages to this file, by default None.
 
     Returns
     -------
@@ -175,11 +180,9 @@ def calibrate_timeseries(
 
     Notes
     -----
-    Output GeoTIFF files are saved with suffix based on processing:
-    - _corrected_constant_igs20: Constant velocity model
-    - _corrected_variable_igs20: Epoch-specific model
-    - _corrected_*_tropo: With tropospheric corrections
-    - _corrected_*_downsample{N}: With downsampling
+    One calibration surface GeoTIFF is written per product, named
+    ``<product>_calibration_surface_<grid_type>_<frame>[_downsampleN][_tropo]
+    [_set][_nowrap].tif``; subtract it from the raw ``/displacement``.
 
     """
     from .config import (
@@ -188,14 +191,8 @@ def calibrate_timeseries(
         PrimaryExecutable,
         ProcessingOptions,
         ProductPathGroup,
-        WorkerSettings,
     )
 
-    # Set default block_shape if not provided
-    if block_shape is None:
-        block_shape = [512, 512]
-
-    # Build configuration from parameters
     run_config = RunConfig(
         calibration_input_group=CalibrationInputGroup(
             input_files=input_dir,
@@ -214,12 +211,8 @@ def calibrate_timeseries(
             product_type="CAL",
             workflow_name="calibrate",
         ),
-        worker_settings=WorkerSettings(
-            gpu_enabled=gpu_enabled,
-            threads_per_worker=1,
-            block_shape=block_shape,
-        ),
         keep_paths_relative=keep_paths_relative,
+        log_file=str(log_file) if log_file is not None else None,
     )
 
     algorithm_params = AlgorithmParameters(
@@ -229,8 +222,9 @@ def calibrate_timeseries(
         calibration_options=CalibrationOptions(
             grid_type=grid_type,
             reference_frame=reference_frame,
-            starting_year=start_year,
             unwrap_error_correction=unwrap_error_correction,
+            apply_tropo_correction=apply_tropo_correction,
+            apply_solid_earth_tide_correction=apply_solid_earth_tide_correction,
             window_size_meters=window_size_meters,
             posting_meters=posting_meters,
         ),
@@ -241,9 +235,9 @@ def calibrate_timeseries(
         algorithm_parameters=algorithm_params,
     )
 
-    # Run workflow using the CalibrationWorkflow class
     return cast(
-        CalibrationState, run_workflow(config, workflow_type=WorkflowType.calibrate)
+        CalibrationState,
+        run_workflow(config, WorkflowType.calibrate, n_workers=n_workers),
     )
 
 
@@ -258,12 +252,12 @@ def decompose_timeseries(
     gpu_enabled: bool = False,
     block_shape: list[int] | None = None,
     keep_paths_relative: bool = False,
+    log_file: Path | None = None,
 ) -> DecompositionState:
     """Decompose InSAR LOS displacement to East-North-Up components.
 
-    This function provides a backward-compatible functional API that wraps
-    the DecompositionWorkflow class. For new code, consider using WorkflowConfig
-    and run_workflow directly.
+    Builds a configuration from keyword arguments and runs `DecompositionWorkflow`;
+    use `load_config` and `run_workflow` to run from YAML files.
 
     Parameters
     ----------
@@ -288,6 +282,8 @@ def decompose_timeseries(
     keep_paths_relative : bool, optional
         Don't resolve filepaths that are given as relative to be absolute,
         by default False
+    log_file : Path, optional
+        Also write log messages to this file, by default None.
 
     Returns
     -------
@@ -364,6 +360,7 @@ def decompose_timeseries(
             block_shape=block_shape,
         ),
         keep_paths_relative=keep_paths_relative,
+        log_file=str(log_file) if log_file is not None else None,
     )
 
     algorithm_params = AlgorithmParameters()
@@ -390,6 +387,7 @@ def run_data_staging(
     gnss_reference_frame: str = "IGS20",
     gnss_padding: float = 0.0,
     gnss_start_year: float = 2014.0,
+    log_file: Path | None = None,
 ) -> None:
     """Stage all ancillary data for a single OPERA DISP-S1 frame.
 
@@ -423,6 +421,8 @@ def run_data_staging(
     gnss_start_year : float, optional
         Exclude GNSS observations before this decimal year when estimating
         velocities. Default is ``2014.0``.
+    log_file : Path, optional
+        Also write log messages to this file, by default None.
 
     Examples
     --------
@@ -445,8 +445,10 @@ def run_data_staging(
         )
 
     """
+    from ..log_setup import configure_logging
     from .stage_frame_data import stage_frame
 
+    configure_logging(log_file=log_file)
     stage_frame(
         frame_id=frame_id,
         date=date,
@@ -474,6 +476,7 @@ def run_data_staging_window(
     gnss_reference_frame: str = "IGS20",
     gnss_padding: float = 0.0,
     gnss_start_year: float = 2014.0,
+    log_file: Path | None = None,
 ) -> list[Path]:
     """Stage all ancillary data for multiple DISP-S1 products in a time window.
 
@@ -511,6 +514,8 @@ def run_data_staging_window(
     gnss_start_year : float, optional
         Exclude GNSS observations before this decimal year when estimating
         velocities. Default is ``2014.0``.
+    log_file : Path, optional
+        Also write log messages to this file, by default None.
 
     Returns
     -------
@@ -529,8 +534,10 @@ def run_data_staging_window(
         )
 
     """
+    from ..log_setup import configure_logging
     from .stage_frame_data import stage_window
 
+    configure_logging(log_file=log_file)
     disp_files = stage_window(
         frame_id=frame_id,
         start=start,
@@ -552,38 +559,6 @@ def run_data_staging_window(
         end,
     )
     return disp_files
-
-
-def calibrate_command(config_file: str) -> None:
-    """Run calibration workflow from YAML config file.
-
-    Parameters
-    ----------
-    config_file : str
-        Path to YAML configuration file
-
-    """
-    from .config import load_config
-
-    config = load_config(config_file)
-    state = run_workflow(config, workflow_type=WorkflowType.calibrate)
-    logger.info(f"Calibration complete! Processed {state.n_files_processed} files")
-
-
-def decompose_command(config_file: str) -> None:
-    """Run decomposition workflow from YAML config file.
-
-    Parameters
-    ----------
-    config_file : str
-        Path to YAML configuration file
-
-    """
-    from .config import load_config
-
-    config = load_config(config_file)
-    state = run_workflow(config, workflow_type=WorkflowType.decompose)
-    logger.info(f"Decomposition complete! Processed {state.n_files_processed} files")
 
 
 if __name__ == "__main__":

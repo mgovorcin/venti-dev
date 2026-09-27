@@ -31,11 +31,13 @@ except ImportError:
 from venti.gnss.los import project_to_los
 from venti.gnss.unr import (
     calculate_station_velocity,
+    download_station,
     find_stations_in_bounds,
     read_epoch_displacements,
+    read_station_rate,
 )
 from venti.spatial.interpolation import (
-    _regular_grid_interpolator_from_ds,
+    _regular_grid_interpolator,
     _sample_on_points,
     interpolate_griddata,
     interpolate_rbf,
@@ -201,7 +203,7 @@ class TestReadEpochDisplacements:
             crs="EPSG:32611",
         )
 
-    def test_displacement_is_ref_minus_sec(self):
+    def test_displacement_is_sec_minus_ref(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "000001_IGS20.tenv8"
             years = np.array([2020.0, 2020.5, 2021.0])
@@ -211,8 +213,55 @@ class TestReadEpochDisplacements:
             gdf = self._make_station_gdf([1])
             result = read_epoch_displacements([path], 2020.0, 2021.0, gdf)
 
-            # ref_date=2020.0 -> east=0.00; sec_date=2021.0 -> east=0.02
-            assert abs(result.loc[1, "deast"] - (0.00 - 0.02)) < 1e-6
+            # Same sign as OPERA displacement: position at sec minus at ref.
+            assert abs(result.loc[1, "deast"] - (0.02 - 0.00)) < 1e-6
+
+    def test_matches_constant_rate_times_interval(self):
+        # The same linear motion must give the same GNSS displacement whether
+        # read as per-epoch positions ('variable') or as a rate ('constant').
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "000001_IGS20.tenv8"
+            years = 2016.0 + np.arange(0, 6 * 365) / 365.25
+            ve, vn, vu = -14.0, -3.0, -1.5
+            _write_tenv8(
+                path,
+                years,
+                ve * (years - 2016),
+                vn * (years - 2016),
+                vu * (years - 2016),
+            )
+            ref_date, sec_date = years[100], years[900]
+
+            gdf = self._make_station_gdf([1])
+            disp = read_epoch_displacements([path], ref_date, sec_date, gdf).loc[1]
+            rate = read_station_rate(path)
+
+            for got, v in zip(
+                (disp["deast"], disp["dnorth"], disp["dup"]), rate[:3], strict=False
+            ):
+                assert got == pytest.approx(v * (sec_date - ref_date), abs=1e-6)
+
+    def test_station_without_nearby_epoch_is_skipped(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            covered = Path(tmp) / "000001_IGS20.tenv8"
+            late = Path(tmp) / "000002_IGS20.tenv8"
+            _write_tenv8(
+                covered,
+                np.array([2020.0, 2021.0]),
+                np.zeros(2),
+                np.zeros(2),
+                np.zeros(2),
+            )
+            _write_tenv8(
+                late, np.array([2020.8, 2021.0]), np.zeros(2), np.zeros(2), np.zeros(2)
+            )
+
+            gdf = self._make_station_gdf([1, 2])
+            result = read_epoch_displacements([covered, late], 2020.0, 2021.0, gdf)
+            assert list(result.index) == [1]
+
+            with pytest.raises(ValueError, match="No GNSS station covers"):
+                read_epoch_displacements([late], 2020.0, 2021.0, gdf)
 
     def test_output_has_geometry(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -237,17 +286,72 @@ class TestReadEpochDisplacements:
             assert len(result) == 2
 
 
+def test_station_cache_is_separate_per_grid_type(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from venti.gnss import unr
+
+    requested = []
+
+    def fake_get(url, timeout):
+        requested.append(url)
+        kind = "variable" if "time_variable" in url else "constant"
+        return SimpleNamespace(ok=True, status_code=200, text=kind)
+
+    monkeypatch.setattr(unr.requests, "get", fake_get)
+    constant = download_station(1, tmp_path, "IGS20", grid_type="constant")
+    variable = download_station(1, tmp_path, "IGS20", grid_type="variable")
+
+    assert constant != variable
+    assert constant.read_text() == "constant"
+    assert variable.read_text() == "variable"
+    # Both products share the remote filename.
+    assert all(url.endswith("/000001_IGS20.tenv8") for url in requested)
+
+
+def test_variable_grid_gnss_uncertainty_is_computed_per_epoch(tmp_path):
+    from types import SimpleNamespace
+
+    from venti.gnss.reference import compute_gnss_los_std
+
+    calls = []
+
+    def fake_std(**kwargs):
+        calls.append((kwargs["ref_date"], kwargs["sec_date"]))
+        return np.full((3, 4), 2.0)
+
+    gnss_ref = SimpleNamespace(
+        grid_type="variable", compute_displacement_los_std=fake_std
+    )
+    kwargs = {
+        "gnss_ref": gnss_ref,
+        "los_east": np.zeros((3, 4)),
+        "los_north": np.zeros((3, 4)),
+        "los_up": np.zeros((3, 4)),
+        "grid": tmp_path / "disp.nc",
+        "cache_dir": tmp_path,
+        "ref_date": 2020.0,
+        "sec_date": 2020.5,
+    }
+    first = compute_gnss_los_std(**kwargs)
+    cached = compute_gnss_los_std(**kwargs)
+
+    np.testing.assert_array_equal(first, np.full((3, 4), 2.0))
+    np.testing.assert_array_equal(cached, first)
+    assert calls == [(2020.0, 2020.5)]
+
+
 # venti.gnss.los
 @pytest.mark.skipif(not HAS_XARRAY, reason="xarray not installed")
 class TestRegularGridInterpolatorFromDs:
-    """Tests for _regular_grid_interpolator_from_ds."""
+    """Tests for _regular_grid_interpolator."""
 
     def test_returns_callable(self):
         x = np.linspace(0, 10, 5)
         y = np.linspace(0, 10, 4)
         arr = np.ones((4, 5), dtype=np.float32)
         ds = xr.Dataset({"v": (["y", "x"], arr)}, coords={"x": x, "y": y})
-        interp = _regular_grid_interpolator_from_ds(ds, arr)
+        interp = _regular_grid_interpolator(ds, arr)
         pts = np.column_stack([[5.0], [5.0]])
         val = interp(pts)
         assert np.isfinite(val[0])
@@ -258,7 +362,7 @@ class TestRegularGridInterpolatorFromDs:
         y = np.linspace(10, 0, 4)  # decreasing
         arr = np.ones((4, 5), dtype=np.float32)
         ds = xr.Dataset({"v": (["y", "x"], arr)}, coords={"x": x, "y": y})
-        interp = _regular_grid_interpolator_from_ds(ds, arr)
+        interp = _regular_grid_interpolator(ds, arr)
         pts = np.column_stack([[5.0], [5.0]])
         val = interp(pts)
         assert np.isfinite(val[0])
@@ -376,38 +480,35 @@ class TestProjectToLos:
             with pytest.raises(ValueError, match="No valid GNSS LOS samples"):
                 project_to_los(los_e, los_n, los_u, nc, gdf, method="griddata")
 
-    def test_pure_vertical_los(self):
-        """LOS = (0, 0, 1) means result equals dup directly."""
+    def test_out_of_swath_fill_is_ignored(self):
+        """Regression: `(0, 0, 1)` outside the swath was used as a real look.
+
+        Stations there entered the GNSS field with their vertical rate only,
+        biasing it near the swath edge (NYC frame F08622).
+        """
+        from venti.gnss.los import project_uncertainty_to_los
+
         with tempfile.TemporaryDirectory() as tmp:
             nc = Path(tmp) / "grid.nc"
-            x, y = _make_netcdf(nc, nx=10, ny=8)
-
-            ny, nx_size = 8, 10
-            los_e = np.zeros((ny, nx_size), dtype=np.float32)
-            los_n = np.zeros((ny, nx_size), dtype=np.float32)
-            los_u = np.ones((ny, nx_size), dtype=np.float32)
-
-            dup_val = 0.007
-            # Use a 3x3 grid of stations to constrain the RBF across the full domain
-            xi = [x[0], x[4], x[9]]
-            yi = [y[0], y[3], y[7]]
-            x_coords = np.array(
-                [xi[c] for r in range(3) for c in range(3)], dtype=np.float32
-            )
-            y_coords = np.array(
-                [yi[r] for r in range(3) for c in range(3)], dtype=np.float32
-            )
+            x, y = _make_netcdf(nc, nx=12, ny=8)
+            look = (-0.6, -0.1, 0.78)
+            los = [np.full((8, 12), c, dtype=np.float32) for c in look]
+            los[0][:, 8:], los[1][:, 8:], los[2][:, 8:] = 0.0, 0.0, 1.0  # no swath
+            cols, rows = [0, 4, 7, 9, 11], [0, 3, 7]  # cols 9 and 11: no swath
             gdf = _make_gnss_gdf(
-                x_coords=x_coords,
-                y_coords=y_coords,
-                deast=np.zeros(9),
-                dnorth=np.zeros(9),
-                dup=np.full(9, dup_val),
-            )
+                x_coords=np.array([x[c] for c in cols for _ in rows]),
+                y_coords=np.array([y[r] for _ in cols for r in rows]),
+                deast=np.full(15, -15.0),
+                dnorth=np.full(15, 4.0),
+                dup=np.full(15, -1.0),
+            ).assign(dsigma_e=0.5, dsigma_n=0.5, dsigma_u=2.0)
 
-            result = project_to_los(los_e, los_n, los_u, nc, gdf, method="rbf")
-            interior = result[2:-2, 2:-2]
-            assert np.allclose(interior, dup_val, atol=1e-3)
+            inside = gdf[gdf.geometry.x < x[8]]
+            for project in (project_to_los, project_uncertainty_to_los):
+                np.testing.assert_array_equal(
+                    project(*los, nc, gdf, method="rbf"),
+                    project(*los, nc, inside, method="rbf"),
+                )
 
 
 @pytest.mark.skipif(not HAS_GEOPANDAS, reason="geopandas not installed")
@@ -443,3 +544,54 @@ class TestGNSSReference:
         )
         assert gnss.station_files == []
         assert gnss.station_gdf is None
+
+
+def _gnss_reference_from_files(tmp_path, grid_type, rates):
+    """A GNSSReference over synthetic station files (no download)."""
+    from venti.gnss.reference import GNSSReference
+
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    years = 2016.0 + np.arange(0, 6 * 365) / 365.25
+    files, points = [], []
+    for sid, (x, y, ve, vn, vu) in enumerate(rates, start=1):
+        path = tmp_path / f"{sid:06d}_IGS20_{grid_type}.tenv8"
+        t = years - years[0]
+        _write_tenv8(path, years, ve * t, vn * t, vu * t, sigma=0.5)
+        files.append(path)
+        points.append(Point(x, y))
+    gnss = GNSSReference(bounds=(0, 1, 0, 1), output_dir=tmp_path, grid_type=grid_type)
+    gnss.station_files = files
+    gnss.station_gdf = gpd.GeoDataFrame(index=range(1, len(rates) + 1), geometry=points)
+    return gnss
+
+
+def test_constant_and_variable_grids_give_the_same_los_field(tmp_path):
+    """Same linear motion, read as rates or as epoch positions -> same field."""
+    from venti.gnss import compute_gnss_los, compute_gnss_los_std
+
+    rates = [  # x, y (m), then ve, vn, vu (mm/yr)
+        (100.0, 500.0, -14.0, -3.0, -1.0),
+        (700.0, 450.0, -13.0, -3.5, 0.5),
+        (400.0, 100.0, -14.5, -2.5, -2.0),
+        (650.0, 150.0, -13.5, -2.8, 0.0),
+    ]
+    x, y = np.arange(0.0, 800, 20), np.arange(600.0, 0, -20)
+    los = [np.full((y.size, x.size), c) for c in (-0.6, -0.1, 0.78)]
+    ref_date, sec_date = 2017.0, 2019.5
+
+    fields = {}
+    for grid_type in ("constant", "variable"):
+        gnss = _gnss_reference_from_files(tmp_path / grid_type, grid_type, rates)
+        fields[grid_type] = compute_gnss_los(
+            gnss, *los, (x, y), ref_date=ref_date, sec_date=sec_date
+        )
+        std = compute_gnss_los_std(
+            gnss, *los, (x, y), ref_date=ref_date, sec_date=sec_date
+        )
+        assert np.isfinite(std).all()
+        assert (std > 0).all()
+
+    # Positions are daily, so dates round to the nearest day (< 0.1 mm here).
+    np.testing.assert_allclose(fields["variable"], fields["constant"], atol=0.1)
+    # sec - ref of a westward-moving network seen with los_e < 0: positive.
+    assert np.nanmedian(fields["constant"]) > 0

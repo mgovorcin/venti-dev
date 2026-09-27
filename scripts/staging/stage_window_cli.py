@@ -73,6 +73,8 @@ class StageWindowCLI:
     gnss_start_year : float
         Exclude GNSS observations before this decimal year when estimating
         velocities.
+    log_file : Path or None
+        Also write log messages to this file.
 
     """
 
@@ -87,6 +89,7 @@ class StageWindowCLI:
     gnss_reference_frame: str = "IGS20"
     gnss_padding: float = 0.0
     gnss_start_year: float = 2014.0
+    log_file: Path | None = None
 
     def __call__(self) -> None:
         """Execute the window staging workflow."""
@@ -102,6 +105,7 @@ class StageWindowCLI:
             gnss_reference_frame=self.gnss_reference_frame,
             gnss_padding=self.gnss_padding,
             gnss_start_year=self.gnss_start_year,
+            log_file=self.log_file,
         )
 
 

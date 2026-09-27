@@ -31,7 +31,6 @@ from venti.workflow.config import (
 )
 from venti.workflow.utils import (
     datetime_to_decimal_year,
-    ensure_directory,
     extract_dates_from_filename,
     match_correction_to_displacement,
     parse_window_size_meters,
@@ -83,26 +82,23 @@ class TestCalibrationOptions:
         opts = CalibrationOptions()
         assert opts.grid_type == "constant"
         assert opts.reference_frame == "IGS20"
-        assert opts.starting_year == 2014.0
         assert opts.unwrap_error_correction is True
         assert opts.window_size_meters == 30000.0
         assert opts.posting_meters == 30.0
-        assert opts.longwavelength_filter_method == "none"
-        assert opts.cutoff_wavelength_meters == 100000.0
+        assert opts.apply_tropo_correction is True
+        assert opts.apply_solid_earth_tide_correction is True
 
     def test_custom_values(self):
         """Test custom calibration options."""
         opts = CalibrationOptions(
             grid_type="variable",
             reference_frame="IGS14",
-            starting_year=2020.0,
             unwrap_error_correction=False,
             window_size_meters=50000.0,
             posting_meters=60.0,
         )
         assert opts.grid_type == "variable"
         assert opts.reference_frame == "IGS14"
-        assert opts.starting_year == 2020.0
         assert opts.unwrap_error_correction is False
         assert opts.window_size_meters == 50000.0
         assert opts.posting_meters == 60.0
@@ -879,37 +875,3 @@ class TestParseWindowSizeMeters:
         """Test rounding to nearest pixel."""
         window_pixels = parse_window_size_meters(30001, posting_meters=30)
         assert window_pixels == 1000
-
-
-class TestEnsureDirectory:
-    """Test cases for ensure_directory function."""
-
-    def test_create_new_directory(self):
-        """Test creating a new directory."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            new_dir = Path(tmpdir) / "new_dir"
-            result = ensure_directory(new_dir)
-
-            assert result.exists()
-            assert result.is_dir()
-
-    def test_existing_directory(self):
-        """Test with existing directory."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            result = ensure_directory(tmpdir)
-
-            assert result.exists()
-            assert result.is_dir()
-
-    def test_nested_directory_creation(self):
-        """Test creating nested directories."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            nested_dir = Path(tmpdir) / "level1" / "level2" / "level3"
-            result = ensure_directory(nested_dir)
-
-            assert result.exists()
-            assert result.is_dir()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
