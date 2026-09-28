@@ -55,6 +55,8 @@ dependencies = [
   # OPERA products; the `disp` extra brings what `opera_utils.disp` imports
   # (zarr, dask, s3fs, ...), used for the reference-point selection
   "opera-utils[disp]",
+  # imported by `opera_utils` at the top level but not declared by it
+  "rich",
   # data staging (scripts/staging)
   "asf_search",
   "dem-stitcher",
@@ -127,6 +129,7 @@ shapely = "*"
 opera-utils = "*"
 zarr = ">=3"
 dask = "*"
+rich = "*"
 netcdf4 = "*"
 h5netcdf = "*"
 rioxarray = "*"

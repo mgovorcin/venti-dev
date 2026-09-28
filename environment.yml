@@ -32,6 +32,7 @@ dependencies:
   - s3fs
   - zarr>=3  # with dask: needed by opera_utils.disp
   - dask
+  - rich  # imported by opera_utils, not declared by it
   - asf_search
   # tests and development
   - pytest
