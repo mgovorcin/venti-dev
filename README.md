@@ -36,7 +36,10 @@ python -m pip install -e .
 ```
 
 With plain pip instead of conda, `python -m pip install -e ".[test]"` installs
-Venti with its test tools (GDAL must already be available). The `notebooks`
+Venti with its test tools. GDAL must already be available with NumPy support
+(`python -c "from osgeo import gdal_array"` must work); to build the bindings
+against a system GDAL, run `pip install numpy setuptools wheel` and then
+`pip install --no-build-isolation "gdal==$(gdal-config --version)"`. The `notebooks`
 extra adds notebook tools, and `analysis` adds the packages used by the GNSS
 validation scripts (`numba`, `geepers`), which Venti itself does not need.
 

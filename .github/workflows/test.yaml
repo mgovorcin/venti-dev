@@ -25,7 +25,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install GDAL Python bindings matching system libgdal
-        run: pip install "gdal==$(gdal-config --version)"
+        # Without NumPy at build time (pip's default build isolation) GDAL is built
+        # without osgeo.gdal_array, which Venti's gap filling needs.
+        run: |
+          pip install numpy setuptools wheel
+          pip install --no-build-isolation "gdal==$(gdal-config --version)"
+          python -c "from osgeo import gdal_array"
 
       - name: Install package and test dependencies
         run: pip install -e ".[test]"
