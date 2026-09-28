@@ -5,28 +5,49 @@ dependencies:
   - python>=3.11
   - pip>=21.3
   - git
+  # Venti (keep in sync with [project.dependencies] in pyproject.toml)
   - numpy
   - pandas
-  - xarray
-  - requests
-  - rasterio
   - scipy
-  - geopandas
-  - pyproj>=3.3
-  - psutil
-  - pydantic>=2.0
-  - pyyaml
-  - tqdm
-  - tyro>=0.9.24
   - scikit-image
   - joblib
-  - shapely
-  - numba
+  - tqdm
+  - xarray
+  - rioxarray
   - netcdf4
+  - h5netcdf
+  - rasterio
   - gdal
   - libgdal-netcdf
+  - geopandas
+  - shapely
+  - pyproj>=3.3
+  - pyarrow
+  - requests
+  - pydantic>=2.0
+  - pyyaml
+  - tyro>=0.9.24
+  - aiohttp
+  - fsspec
+  - s3fs
+  - zarr>=3  # with dask: needed by opera_utils.disp
+  - dask
+  - rich  # imported by opera_utils, not declared by it
+  - asf_search
+  # tests and development
+  - pytest
+  - pytest-cov
+  - pytest-randomly
+  - pytest-xdist
+  - pre-commit
+  # notebooks
   - ipykernel
+  - ipywidgets
   - matplotlib
+  - folium
+  # not used by Venti: GNSS validation and velocity scripts built on it
+  - numba
   - pip:
-    - opera-utils
+    - opera-utils[disp]
     - dem-stitcher
+    - geepers @ git+https://github.com/opera-adt/geepers.git

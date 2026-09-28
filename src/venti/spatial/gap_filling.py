@@ -1,88 +1,86 @@
-"""Gap filling and outlier masking for raster data."""
+"""Gap filling and residual-outlier masking for raster data."""
 
 from __future__ import annotations
 
 import numpy as np
 
 
-def _fill_gaps(
+def fill_gaps(
     array: np.ndarray,
-    fill_value: float = 0,
+    gaps: np.ndarray,
+    max_search_distance: int | None = None,
     smoothing_iterations: int = 0,
 ) -> np.ndarray:
-    """Fill zero/NaN gaps via nearest-neighbour propagation.
+    """Fill gaps by inverse-distance interpolation from surrounding pixels.
 
-    Uses GDAL's ``FillNodata`` when available (preferred for large arrays
-    with smoothing), otherwise falls back to
-    :func:`scipy.ndimage.distance_transform_edt`.
+    Uses GDAL's ``FillNodata``. Everything happens in memory: the output
+    array is handed to GDAL without copying and GDAL's work files use the
+    ``MEM`` driver, so no writable working or temporary directory is needed
+    (e.g. in a container). GDAL exceptions are enabled only for this call,
+    leaving the process-wide GDAL setting untouched.
 
     Parameters
     ----------
     array : np.ndarray
-        2-D input array. Gaps are pixels equal to `fill_value` or NaN.
-    fill_value : float, optional
-        Sentinel value treated as missing, by default ``0``.
+        2-D data. Non-finite pixels are treated as gaps too.
+    gaps : np.ndarray
+        Boolean array, True where pixels should be filled.
+    max_search_distance : int, optional
+        Maximum distance in pixels to search for valid values, by default
+        the largest array dimension. Gaps farther than this stay NaN.
     smoothing_iterations : int, optional
-        Number of smoothing passes applied after gap filling, by default ``0``.
+        3x3 smoothing passes over the filled pixels, by default 0.
 
     Returns
     -------
     np.ndarray
-        Gap-filled array.
+        Filled float32 copy of `array`; valid pixels are unchanged.
+
+    Raises
+    ------
+    ValueError
+        If `gaps` does not match the shape of `array`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from venti.spatial import fill_gaps
+    >>> data = np.array([[1.0, 1.0, 1.0], [1.0, 9.0, 1.0], [1.0, 1.0, 1.0]])
+    >>> gaps = data > 5
+    >>> fill_gaps(data, gaps)[1, 1]
+    np.float32(1.0)
 
     """
-    try:
-        from osgeo import gdal  # noqa: F401
+    from osgeo import gdal, gdal_array
 
-        return _fill_gaps_gdal(array, fill_value, smoothing_iterations)
-    except ImportError:
-        pass
-    return _fill_gaps_scipy(array, fill_value, smoothing_iterations)
+    if np.shape(gaps) != np.shape(array):
+        msg = f"gaps shape {np.shape(gaps)} != array shape {np.shape(array)}"
+        raise ValueError(msg)
 
+    # The only copy: GDAL fills it in place through the array wrapper below.
+    filled = np.array(array, dtype=np.float32, order="C")
+    valid = ~np.asarray(gaps, dtype=bool) & np.isfinite(filled)
+    if valid.all() or not valid.any():
+        return filled
+    # Gap values are never used as sources; NaN marks any GDAL cannot reach.
+    filled[~valid] = np.nan
 
-def _fill_gaps_gdal(
-    array: np.ndarray,
-    fill_value: float = 0,
-    smoothing_iterations: int = 0,
-) -> np.ndarray:
-    from osgeo import gdal
-
-    gdal.UseExceptions()
-
-    driver = gdal.GetDriverByName("MEM")
-    rows, cols = array.shape
-    dataset = driver.Create("", cols, rows, 1, gdal.GDT_Float32)
-    band = dataset.GetRasterBand(1)
-    band.WriteArray(array.astype(np.float32))
-    band.SetNoDataValue(fill_value)
-    gdal.FillNodata(
-        targetBand=band,
-        maskBand=None,
-        maxSearchDist=int(np.max(array.shape) // 4),
-        smoothingIterations=smoothing_iterations,
-    )
-    result = band.ReadAsArray()
-    dataset = None  # flush
-    return result
-
-
-def _fill_gaps_scipy(
-    array: np.ndarray,
-    fill_value: float = 0,
-    smoothing_iterations: int = 0,
-) -> np.ndarray:
-    from scipy.ndimage import distance_transform_edt
-
-    from ..filtering.gaussian import apply_gaussian
-
-    mask = (array == fill_value) | np.isnan(array)
-    if not mask.any():
-        return array
-    _, nearest_idx = distance_transform_edt(mask, return_indices=True)
-    result = array[tuple(nearest_idx)]
-    if smoothing_iterations > 0:
-        result = apply_gaussian(result, sigma=smoothing_iterations)
-    return result
+    if max_search_distance is None:
+        max_search_distance = max(filled.shape)
+    with gdal.ExceptionMgr(useExceptions=True):
+        data_ds = gdal_array.OpenArray(filled)
+        mask_ds = gdal_array.OpenArray(valid.view(np.uint8))
+        gdal.FillNodata(
+            targetBand=data_ds.GetRasterBand(1),
+            maskBand=mask_ds.GetRasterBand(1),
+            maxSearchDist=max_search_distance,
+            smoothingIterations=smoothing_iterations,
+            # Work files default to GeoTIFFs in CPL_TMPDIR/TMPDIR or the
+            # working directory; in memory they are faster and need no disk.
+            options=["TEMP_FILE_DRIVER=MEM"],
+        )
+        data_ds.FlushCache()
+    return filled
 
 
 def _get_residual_mask(

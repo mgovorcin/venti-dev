@@ -27,13 +27,17 @@ __all__ = [
     "calibrate_timeseries",
     "create_config_templates",
     "decompose_timeseries",
+    # Calibration step functions
+    "find_event_mask_file",
+    "find_reference_point",
     "load_config",
-    "run_calibration_workflow",
+    "load_los_and_mask",
+    "process_displacement_file",
     "run_data_staging",
     "run_data_staging_window",
-    "run_decomposition_workflow",
     # Functional API
     "run_workflow",
+    "setup_gnss_reference",
 ]
 
 
@@ -59,17 +63,29 @@ def __getattr__(name: str):
         globals()["create_config_templates"] = create_config_templates
         return create_config_templates
 
-    # Object-oriented API
-    if name in ["CalibrationWorkflow", "CalibrationState", "run_calibration_workflow"]:
-        from .calibration import (
-            CalibrationState,
-            CalibrationWorkflow,
-            run_calibration_workflow,
-        )
+    # Calibration API: the CalibrationWorkflow class plus the standalone step
+    # functions it's built on (setup_gnss_reference, load_los_and_mask, etc.)
+    if name in [
+        "CalibrationWorkflow",
+        "CalibrationState",
+        "setup_gnss_reference",
+        "load_los_and_mask",
+        "find_reference_point",
+        "find_event_mask_file",
+        "process_displacement_file",
+    ]:
+        from . import calibration
 
-        globals()["CalibrationWorkflow"] = CalibrationWorkflow
-        globals()["CalibrationState"] = CalibrationState
-        globals()["run_calibration_workflow"] = run_calibration_workflow
+        for attr in (
+            "CalibrationWorkflow",
+            "CalibrationState",
+            "setup_gnss_reference",
+            "load_los_and_mask",
+            "find_reference_point",
+            "find_event_mask_file",
+            "process_displacement_file",
+        ):
+            globals()[attr] = getattr(calibration, attr)
 
         return globals()[name]
 
@@ -77,17 +93,14 @@ def __getattr__(name: str):
     if name in [
         "DecompositionWorkflow",
         "DecompositionState",
-        "run_decomposition_workflow",
     ]:
         from .decomposition import (
             DecompositionState,
             DecompositionWorkflow,
-            run_decomposition_workflow,
         )
 
         globals()["DecompositionWorkflow"] = DecompositionWorkflow
         globals()["DecompositionState"] = DecompositionState
-        globals()["run_decomposition_workflow"] = run_decomposition_workflow
 
         return globals()[name]
 

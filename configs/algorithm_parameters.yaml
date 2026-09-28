@@ -14,15 +14,16 @@ calibration_options:
   # Options: ['IGS14', 'IGS20']
   reference_frame: IGS20
 
-  # Starting year for velocity estimation (for constant grid type)
-  # GNSS velocities will be computed from this year forward
-  # Type: number
-  starting_year: 2014.0
-
   # Whether to correct islands for unwrap errors using watershed segmentation
   # Helps fix phase discontinuities in unwrapped interferograms
   # Type: boolean
   unwrap_error_correction: true
+
+  # Remove the solid Earth tide layer (/corrections/solid_earth_tide) stored
+  # in each OPERA DISP-S1 product before the GNSS-referencing fit
+  # Products without the layer are calibrated without it (a warning is logged)
+  # Type: boolean
+  apply_solid_earth_tide_correction: true
 
   # Recompute GNSS LOS interpolation even if a cached file already exists
   # Set to false to reuse cached results and skip recomputation
@@ -39,22 +40,6 @@ calibration_options:
   # Used for coordinate transformations
   # Type: number
   posting_meters: 30.0
-
-  # Longwavelength filtering method for removing orbital/atmospheric signals
-  # Type: string
-  # Options: ['none', 'savitzky_golay', 'fft_gaussian', 'fft_butterworth', 'fft_ideal']
-  longwavelength_filter_method: none
-
-  # Cutoff wavelength in meters for longwavelength filtering
-  # Signals with wavelengths longer than this will be removed
-  # Typical values: 50000-200000 (50-200 km)
-  # Type: number
-  cutoff_wavelength_meters: 100000.0
-
-  # Moving window filter size in meters (for 'moving_window' method)
-  # Should be approximately equal to cutoff_wavelength_meters
-  # Type: number
-  moving_window_size_meters: 100000.0
 
   # Number of pixels to dilate the event-mask boundary before filling.
   # Expands the excluded region to capture near-boundary pixels contaminated
@@ -83,34 +68,6 @@ calibration_options:
     # Lower order = smoother, higher order = preserves more detail
     # Type: integer
     polyorder: 3
-
-    # Derivative order (0 for smoothing, 1 for first derivative, etc.)
-    # Type: integer
-    deriv: 0
-
-  # FFT-based filter parameters (for 'fft_*' methods)
-  fft_filter:
-    # Gaussian filter standard deviation in wavelength units
-    # Only used for 'fft_gaussian' method
-    # Type: number
-    gaussian_sigma: 0.1
-
-    # Butterworth filter order (for 'fft_butterworth' method)
-    # Higher order = sharper cutoff, lower order = smoother transition
-    # Type: integer
-    butterworth_order: 4
-
-    # Apply filter in spatial domain vs frequency domain
-    # Type: boolean
-    spatial_domain: false
-
-    # Taper edges to reduce edge effects
-    # Type: boolean
-    taper_edges: true
-
-    # Taper width as fraction of image dimensions
-    # Type: number (0.0 to 0.5)
-    taper_width: 0.05
 
 decomposition_options:
   # Method for least-squares inversion

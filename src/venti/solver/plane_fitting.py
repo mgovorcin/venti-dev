@@ -132,6 +132,7 @@ def _fit_plane(
     decimate: int = 1,
     smooth: bool = False,
     smooth_sigma: float = 5.0,
+    data_std: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Fit a polynomial surface to 2-D data at given coordinates.
 
@@ -151,6 +152,11 @@ def _fit_plane(
         Apply Gaussian smoothing before fitting, by default ``False``.
     smooth_sigma : float, optional
         Sigma for Gaussian smoothing in pixels, by default ``5.0``.
+    data_std : np.ndarray, optional
+        Per-pixel uncertainty of `data`, same shape, used as inverse-variance
+        weights (``w = 1 / data_std**2``) in the least-squares solve.
+        Non-positive or non-finite entries fall back to uniform weight for
+        that pixel. ``None`` (default) fits with uniform weights.
 
     Returns
     -------
@@ -178,7 +184,13 @@ def _fit_plane(
         lons_sub.ravel()[valid], lats_sub.ravel()[valid], poly_order=order
     )
     b = data_sub.ravel()[valid]
-    w = np.ones_like(b)
+    if data_std is None:
+        w = np.ones_like(b)
+    else:
+        std_sub = data_std[::decimate, ::decimate].ravel()[valid]
+        w = np.ones_like(b)
+        finite_positive = np.isfinite(std_sub) & (std_sub > 0)
+        w[finite_positive] = 1.0 / std_sub[finite_positive] ** 2
 
     _, _, _, Qxx, res, *_ = _weighted_lscov(A, b, w)
 

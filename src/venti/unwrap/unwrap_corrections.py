@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-import numba
 import numpy as np
 from scipy import ndimage as ndi
 from skimage import filters, measure, segmentation
@@ -22,40 +21,6 @@ except ImportError:
 
 # Set up logger
 logger = logging.getLogger(__name__)
-
-
-@numba.njit(parallel=True)
-def _update_disp_wavelength(
-    input_disp, labeled_regions, valid_labels, unwrap_cycles, wavelength, disp_updated
-):
-    """Update displacement values by removing wavelength cycle offsets.
-
-    This function is optimized with Numba for parallel execution.
-
-    Parameters
-    ----------
-    input_disp : np.ndarray
-        Input displacement array
-    labeled_regions : np.ndarray
-        Array with labeled regions from watershed segmentation
-    valid_labels : np.ndarray
-        Array of valid region labels
-    unwrap_cycles : np.ndarray
-        Number of wavelength cycles to remove from each region
-    wavelength : float
-        The wavelength value for unwrap correction
-    disp_updated : np.ndarray
-        Output array to store corrected displacement
-
-    """
-    for idx in numba.prange(len(valid_labels)):
-        label = valid_labels[idx]
-        cycles = unwrap_cycles[idx]
-        correction = cycles * wavelength
-        rows, cols = np.where(labeled_regions == label)
-        for i in range(len(rows)):
-            r, c = rows[i], cols[i]
-            disp_updated[r, c] = input_disp[r, c] - correction
 
 
 class UnwrapCorrector:
@@ -264,7 +229,11 @@ class UnwrapCorrector:
             cycles = np.round(offsets / self.wavelength)
         cycles = np.nan_to_num(cycles, nan=0.0).astype(np.int32)
 
-        logger.info(f"Detected unwrap cycles per region: {cycles}")
+        logger.info(
+            f"Unwrap correction: {np.count_nonzero(cycles)} of {cycles.size} "
+            "regions shifted by whole wavelengths"
+        )
+        logger.debug(f"Unwrap cycles per region: {cycles}")
         logger.debug(f"Wavelength corrections (in units): {cycles * self.wavelength}")
 
         return cycles
@@ -295,20 +264,18 @@ class UnwrapCorrector:
         Returns
         -------
         np.ndarray
-            Corrected displacement field
+            Corrected displacement as a masked array; pixels outside the
+            corrected regions are unchanged.
 
         """
-        disp_updated = np.empty_like(input_disp, dtype=np.float32)
-        _update_disp_wavelength(
-            input_disp,
-            labeled_regions,
-            valid_labels,
-            unwrap_cycles,
-            self.wavelength,
-            disp_updated,
-        )
-        disp_updated = np.ma.masked_array(disp_updated, mask=disp_mask)
-        return disp_updated
+        # One correction per label; pixels outside the corrected regions
+        # (background, regions below min_region_area) get 0 and keep their
+        # value. Writing only region pixels into an uninitialised array left
+        # those pixels as leftover memory.
+        corrections = np.zeros(labeled_regions.max() + 1, dtype=np.float32)
+        corrections[valid_labels] = unwrap_cycles * self.wavelength
+        disp_updated = (input_disp - corrections[labeled_regions]).astype(np.float32)
+        return np.ma.masked_array(disp_updated, mask=disp_mask)
 
     def correct(
         self, input_disp: np.ndarray, mask: np.ndarray, ref_region: int = 0
@@ -511,7 +478,7 @@ def correct_region_offset(
     Returns
     -------
     np.ndarray
-        Corrected displacement field as a masked array
+        Corrected displacement field, NaN where invalid or masked
 
     Examples
     --------
@@ -599,7 +566,10 @@ def correct_region_offset(
 
     # Run correction
     corrector = UnwrapCorrector(min_region_area=min_region_area, wavelength=wavelength)
-    corrected = corrector.correct(disp_masked, mask)
+    # Plain array with NaN for invalid pixels, like the rest of Venti's API.
+    corrected = np.ma.filled(
+        np.ma.asarray(corrector.correct(disp_masked, mask), dtype=float), np.nan
+    )
 
     # Save to GeoTIFF if output file is specified
     if output_file is not None:

@@ -34,6 +34,7 @@ from venti.gnss.unr import (
     download_grid_lookup,
     download_station,
     find_stations_in_bounds,
+    read_station_rate,
 )
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,7 @@ def download_gnss_data(
     frame_id: int,
     output_dir: Path,
     reference_frame: str = "IGS20",
+    grid_type: str = "variable",
     padding: float = 0.0,
     num_workers: int = 4,
     start_year: float = 2014.0,
@@ -111,6 +113,14 @@ def download_gnss_data(
         station files go into ``output_dir/stations/``.
     reference_frame : str, optional
         GNSS reference frame (``'IGS20'`` or ``'IGS14'``). Default is ``'IGS20'``.
+    grid_type : str, optional
+        UNR grid product to download: ``'variable'`` (per-epoch positions,
+        default — velocities are fit locally below via
+        :func:`~venti.gnss.unr.calculate_station_velocity` over `start_year`
+        onward) or ``'constant'`` (precomputed linear rates, IGS20 only —
+        velocities are read directly via
+        :func:`~venti.gnss.unr.read_station_rate`, and `start_year` does not
+        apply).
     padding : float, optional
         Extra padding in meters beyond the frame extent when searching for
         stations. Default is ``0.0``.
@@ -118,7 +128,8 @@ def download_gnss_data(
         Number of parallel download threads. Default is 4.
     start_year : float, optional
         Exclude observations before this decimal year when estimating
-        velocities. Default is ``2014.0``.
+        velocities. Default is ``2014.0``. Only applies when
+        ``grid_type='variable'``.
 
     Returns
     -------
@@ -130,11 +141,17 @@ def download_gnss_data(
     RuntimeError
         If velocity estimation fails for all stations.
     ValueError
-        If no stations are found within the frame bounds.
+        If no stations are found within the frame bounds, or if `grid_type`
+        is not available for `reference_frame`.
 
     Examples
     --------
-    >>> vel_path = download_gnss_data(frame_id=8887, output_dir=Path("./gnss"))
+    Downloads from UNR, so not run as a doctest::
+
+        vel_path = download_gnss_data(frame_id=8887, output_dir=Path("gnss"))
+        vel_path = download_gnss_data(
+            frame_id=8887, output_dir=Path("gnss"), grid_type="constant"
+        )
 
     """
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -163,7 +180,9 @@ def download_gnss_data(
 
     def _download(sid: int) -> tuple[int, Path | None]:
         try:
-            path = download_station(sid, stations_dir, reference_frame=reference_frame)
+            path = download_station(
+                sid, stations_dir, reference_frame=reference_frame, grid_type=grid_type
+            )
         except RuntimeError:
             logger.warning("Download failed for station %s — skipping", sid)
             return sid, None
@@ -185,9 +204,12 @@ def download_gnss_data(
     rows = []
     for sid, path in station_files.items():
         try:
-            ve, vn, vu, ve_std, vn_std, vu_std = calculate_station_velocity(
-                path, start_year=start_year
-            )
+            if grid_type == "constant":
+                ve, vn, vu, ve_std, vn_std, vu_std = read_station_rate(path)
+            else:
+                ve, vn, vu, ve_std, vn_std, vu_std = calculate_station_velocity(
+                    path, start_year=start_year
+                )
             rows.append(
                 {
                     "station_id": sid,

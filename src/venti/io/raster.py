@@ -313,6 +313,66 @@ def read_netcdf(
     return data, mask, geo_info
 
 
+def read_netcdf_correction(
+    file_path: str | Path,
+    layer: str,
+    group: str = "corrections",
+) -> np.ndarray | None:
+    """Read a correction layer from an OPERA DISP-S1 NetCDF, if present.
+
+    OPERA DISP-S1 products store correction layers (e.g.
+    ``solid_earth_tide``, ``ionospheric_delay``) in a ``/corrections``
+    group, on the same grid as ``/displacement``. Not every product
+    version carries every layer, so a missing group or layer is an
+    expected case and returns ``None`` instead of raising.
+
+    Parameters
+    ----------
+    file_path : str or Path
+        Path to the DISP-S1 NetCDF file.
+    layer : str
+        Variable name inside `group`, e.g. ``'solid_earth_tide'``.
+    group : str, optional
+        NetCDF group holding the layer, by default ``'corrections'``.
+
+    Returns
+    -------
+    np.ndarray or None
+        2D correction layer, or ``None`` if `group` or `layer` is absent.
+
+    Raises
+    ------
+    ValueError
+        If the layer is present but not 2D.
+
+    Examples
+    --------
+    ::
+
+        set_corr = read_netcdf_correction(disp_file, "solid_earth_tide")
+        if set_corr is not None:
+            disp = disp - set_corr
+
+    """
+    # Only xarray opens the file: its reads share a lock around HDF5, which the
+    # pip netCDF4 wheels need when `CalibrationWorkflow.run` uses threads.
+    try:
+        ds = xr.open_dataset(file_path, group=group)
+    except OSError as exc:
+        if "group not found" not in str(exc):
+            raise
+        return None
+    with ds:
+        if layer not in ds.variables:
+            return None
+        data = np.squeeze(ds[layer].values)
+
+    if data.ndim != 2:
+        msg = f"Expected 2D {group}/{layer} in {file_path}, got {data.ndim}D"
+        raise ValueError(msg)
+    return data
+
+
 def update_netcdf_variable(
     file_path: str | Path,
     variable_name: str,

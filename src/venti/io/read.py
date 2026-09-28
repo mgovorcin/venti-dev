@@ -274,6 +274,30 @@ class RasterReader:
             file_path=file_path,
         )
 
+    def read_correction_layer(
+        self,
+        file_path: str | Path,
+        layer: str,
+    ) -> np.ndarray | None:
+        """Read an OPERA DISP-S1 ``/corrections`` layer, if the product has it.
+
+        Parameters
+        ----------
+        file_path : str or Path
+            Path to the DISP-S1 NetCDF file.
+        layer : str
+            Correction layer name, e.g. ``'solid_earth_tide'``.
+
+        Returns
+        -------
+        np.ndarray or None
+            2D layer on the ``/displacement`` grid, or ``None`` if absent.
+
+        """
+        from .raster import read_netcdf_correction
+
+        return read_netcdf_correction(file_path, layer)
+
     def get_bounds(
         self,
         file_path: str | Path,

@@ -6,10 +6,17 @@ and other common operations.
 
 from __future__ import annotations
 
+import functools
 import logging
+import os
 import re
+import shutil
+import tempfile
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager, suppress
 from datetime import date, datetime
 from pathlib import Path
+from typing import Any, TypeVar
 
 import numpy as np
 
@@ -176,6 +183,7 @@ def compute_average_temporal_coherence(
         avg_coh = compute_average_temporal_coherence(nc_files, Path('output/'))
 
     """
+    import rioxarray  # noqa: F401  (registers the .rio accessor used below)
     import xarray as xr
 
     output_file = output_dir / f"average_{variable}.tif"
@@ -186,9 +194,11 @@ def compute_average_temporal_coherence(
 
     logger.info(f"Computing average {variable} from {len(netcdf_files)} files")
 
-    # Extract CRS from xarray dataset directly
+    # Grid coordinates and CRS come from the first product; without them the
+    # GeoTIFF would be written with an identity (pixel-index) transform.
     crs = None
     with xr.open_dataset(netcdf_files[0]) as ds:
+        coords = {"y": ds["y"].values, "x": ds["x"].values}
         if "spatial_ref" in ds:
             sr = ds["spatial_ref"]
             for attr in ("crs_wkt", "spatial_ref", "wkt"):
@@ -222,6 +232,7 @@ def compute_average_temporal_coherence(
     average_da = xr.DataArray(
         (acc / count).astype("float32"),
         dims=["y", "x"],
+        coords=coords,
     )
 
     if crs is not None:
@@ -291,20 +302,89 @@ def get_file_dates(file_path: str | Path) -> tuple[float, float]:
     return ref_decimal, sec_decimal
 
 
-def ensure_directory(path: str | Path) -> Path:
-    """Ensure directory exists, create if needed.
+@contextmanager
+def scratch_temp_dir(scratch_path: str | Path) -> Iterator[Path]:
+    """Send all temporary files to a private folder under ``<scratch_path>/tmp``.
+
+    Covers Python's `tempfile` (Venti's own temporary files and any library
+    using it) and GDAL work files (``CPL_TMPDIR``), so a run never depends
+    on the working directory or ``/tmp`` being writable. Each call gets its
+    own ``<scratch_path>/tmp/run_*`` folder, so concurrent runs sharing a
+    scratch path never touch each other's files; the folder is deleted and
+    previous settings are restored on exit.
 
     Parameters
     ----------
-    path : str or Path
-        Directory path
+    scratch_path : str or Path
+        Scratch directory from ``product_path_group.scratch_path``.
 
-    Returns
-    -------
+    Yields
+    ------
     Path
-        Path object for directory
+        This run's temporary directory.
+
+    Raises
+    ------
+    OSError
+        If ``<scratch_path>/tmp`` cannot be created.
+
+    Examples
+    --------
+    >>> import tempfile
+    >>> from venti.workflow.utils import scratch_temp_dir
+    >>> with scratch_temp_dir(tempfile.mkdtemp()) as tmp:
+    ...     tempfile.gettempdir() == str(tmp) and tmp.parent.name == "tmp"
+    True
 
     """
-    path = Path(path)
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+    tmp_root = Path(scratch_path).resolve() / "tmp"
+    try:
+        tmp_root.mkdir(parents=True, exist_ok=True)
+        tmp_dir = Path(tempfile.mkdtemp(prefix="run_", dir=tmp_root))
+    except OSError as exc:
+        msg = (
+            f"Cannot create a temporary directory in {tmp_root}; set "
+            "product_path_group.scratch_path in the runconfig to a writable directory"
+        )
+        raise OSError(msg) from exc
+
+    previous_tempdir = tempfile.tempdir
+    previous_cpl = os.environ.get("CPL_TMPDIR")
+    tempfile.tempdir = str(tmp_dir)
+    os.environ["CPL_TMPDIR"] = str(tmp_dir)
+    logger.info("Temporary files go to %s", tmp_dir)
+    try:
+        yield tmp_dir
+    finally:
+        tempfile.tempdir = previous_tempdir
+        if previous_cpl is None:
+            os.environ.pop("CPL_TMPDIR", None)
+        else:
+            os.environ["CPL_TMPDIR"] = previous_cpl
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        with suppress(OSError):
+            tmp_root.rmdir()  # only succeeds once no other run is using it
+
+
+_Method = TypeVar("_Method", bound=Callable[..., Any])
+
+
+def with_scratch_temp_dir(method: _Method) -> _Method:
+    """Run a workflow method inside `scratch_temp_dir` of its ``self.config``.
+
+    Examples
+    --------
+    ::
+
+        class MyWorkflow:
+            @with_scratch_temp_dir
+            def run(self): ...
+
+    """
+
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        with scratch_temp_dir(self.config.run_config.product_path_group.scratch_path):
+            return method(self, *args, **kwargs)
+
+    return wrapper  # type: ignore[return-value]

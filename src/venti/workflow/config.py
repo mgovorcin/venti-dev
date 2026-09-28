@@ -28,7 +28,7 @@ class ProcessingOptions(BaseModel):
     downsample_method : str
         Method for aggregating pixels during downsampling
     downsample_weighted : bool
-        Whether to use weighted downsampling
+        Weight downsampling by each product's ``temporal_coherence``
     vlm_output_posting_meters : float
         Output grid posting in meters for decomposed ENU components
 
@@ -47,9 +47,7 @@ class ProcessingOptions(BaseModel):
     )
     downsample_weighted: bool = Field(
         False,
-        description=(
-            "Whether to use weighted downsampling (based on coherence or quality)"
-        ),
+        description="Weight downsampling by each product's temporal_coherence",
     )
     vlm_output_posting_meters: float = Field(
         120.0,
@@ -67,8 +65,6 @@ class SavitzkyGolayOptions(BaseModel):
         Window length in pixels (must be odd)
     polyorder : int
         Polynomial order for fitting
-    deriv : int
-        Derivative order (0 for smoothing, 1 for first derivative, etc.)
 
     """
 
@@ -76,43 +72,6 @@ class SavitzkyGolayOptions(BaseModel):
         51, ge=3, description="Window length in pixels (must be odd)"
     )
     polyorder: int = Field(3, ge=0, description="Polynomial order for fitting")
-    deriv: int = Field(0, ge=0, description="Derivative order (0 for smoothing)")
-
-
-class FFTFilterOptions(BaseModel):
-    """FFT-based filter options.
-
-    Attributes
-    ----------
-    gaussian_sigma : float
-        Gaussian filter standard deviation in wavelength units
-    butterworth_order : int
-        Butterworth filter order
-    spatial_domain : bool
-        Apply filter in spatial domain vs frequency domain
-    taper_edges : bool
-        Taper edges to reduce edge effects
-    taper_width : float
-        Taper width as fraction of image dimensions
-
-    """
-
-    gaussian_sigma: float = Field(
-        0.1,
-        gt=0,
-        description="Gaussian filter standard deviation in wavelength units",
-    )
-    butterworth_order: int = Field(4, ge=1, description="Butterworth filter order")
-    spatial_domain: bool = Field(
-        False, description="Apply filter in spatial domain vs frequency domain"
-    )
-    taper_edges: bool = Field(True, description="Taper edges to reduce edge effects")
-    taper_width: float = Field(
-        0.05,
-        ge=0.0,
-        le=0.5,
-        description="Taper width as fraction of image dimensions",
-    )
 
 
 class CalibrationOptions(BaseModel):
@@ -121,101 +80,133 @@ class CalibrationOptions(BaseModel):
     Attributes
     ----------
     grid_type : str
-        GNSS grid type: constant (velocity-based) or variable (epoch-specific)
+        UNR GNSS grid: ``'constant'`` (linear rates) or ``'variable'``
+        (per-epoch positions).
     reference_frame : str
-        GNSS reference frame (IGS14 or IGS20)
-    starting_year : float
-        Starting year for velocity estimation
+        GNSS reference frame (``'IGS14'`` or ``'IGS20'``).
     unwrap_error_correction : bool
-        Whether to correct islands for unwrap errors
+        Correct unwrapping-error islands by whole-cycle offsets.
+    apply_tropo_correction : bool
+        Apply tropospheric correction when `tropo_files` is configured.
+    apply_solid_earth_tide_correction : bool
+        Remove each product's ``/corrections/solid_earth_tide`` layer before
+        the fit. Products without it are calibrated without it.
+    recompute_gnss : bool
+        Rebuild GNSS LOS caches even if they exist.
     window_size_meters : float
-        Window size for plane fitting in meters
+        Fit window size in meters.
     posting_meters : float
-        Input data posting in meters
-    longwavelength_filter_method : str
-        Longwavelength filtering method
-    cutoff_wavelength_meters : float
-        Cutoff wavelength for longwavelength filtering
-    moving_window_size_meters : float
-        Moving window filter size in meters
+        Input pixel spacing in meters.
     event_mask_buffer_pixels : int
-        Number of pixels to dilate the event-mask boundary before filling.
-        Use to exclude near-boundary pixels that may be contaminated by
-        the deformation signal.  ``0`` disables buffering.
+        Pixels to dilate event regions by before filling; ``0`` disables.
+    residual_outlier_mad_threshold : float or None
+        Automatic event detection when an epoch has no event mask: pixels
+        whose downsampled ``disp - gnss_los`` residual is more than this
+        many scaled MADs from the median are filled before the fit.
+        ``None`` disables it.
+    residual_region_mad_threshold : float or None
+        Automatic detection of wide, coherent deformation (e.g. a subsidence
+        bowl) that the per-pixel test misses: pixels above this looser MAD
+        threshold that form regions of at least `residual_region_min_pixels`
+        are filled. Combined with `residual_outlier_mad_threshold` when both
+        are set. ``None`` disables it.
+    residual_region_min_pixels : int
+        Minimum region size (downsampled pixels) for
+        `residual_region_mad_threshold`.
+    mask_fit_residual_outliers : bool
+        Discard the 15% most extreme residuals at each end (~30% of pixels
+        per window, real deformation included) before fitting.
+    weight_fit_by_gnss_uncertainty : bool
+        Weight the fit by the GNSS LOS uncertainty (Govorcin et al. 2025):
+        the rate uncertainty for ``'constant'``, the per-epoch position
+        uncertainty for ``'variable'``.
     calibration_surface_smoothing_method : str
-        Post-assembly low-pass filter: ``'gaussian'`` (default), ``'gaussian_fft'``,
-        ``'hanning_fft'``, or ``'savitzky_golay'``.
+        Low-pass filter for the assembled surface: ``'gaussian'``,
+        ``'gaussian_fft'``, ``'hanning_fft'`` or ``'savitzky_golay'``.
     calibration_surface_smoothing_sigma : float or None
-        Sigma (pixels) for the smoothing filter; ignored for ``'savitzky_golay'``.
-        ``None`` auto-selects ``window_size_pixels / 8``; ``0`` disables smoothing.
+        Smoothing sigma in pixels (ignored for ``'savitzky_golay'``).
+        ``None`` uses window size / 8; ``0`` disables smoothing.
     savitzky_golay : SavitzkyGolayOptions
-        Savitzky-Golay filter parameters
-    fft_filter : FFTFilterOptions
-        FFT-based filter parameters
+        Savitzky-Golay filter parameters.
 
     """
 
     grid_type: Literal["constant", "variable"] = Field(
         "constant",
         description=(
-            "GNSS grid type: 'constant' uses velocity-based interpolation, "
-            "'variable' uses epoch-specific GNSS positions"
+            "UNR GNSS grid: 'constant' (linear rates) or 'variable' "
+            "(per-epoch positions)"
         ),
     )
     reference_frame: str = Field(
         "IGS20", description="GNSS reference frame (IGS14 or IGS20)"
     )
-    starting_year: float = Field(
-        2014.0,
-        description="Starting year for velocity estimation (for constant grid type)",
-    )
     unwrap_error_correction: bool = Field(
+        True, description="Correct unwrapping-error islands by whole-cycle offsets"
+    )
+    apply_tropo_correction: bool = Field(
+        True,
+        description="Apply tropospheric correction when tropo_files is configured",
+    )
+    apply_solid_earth_tide_correction: bool = Field(
         True,
         description=(
-            "Whether to correct islands for unwrap errors using watershed segmentation"
+            "Remove each product's /corrections/solid_earth_tide layer before "
+            "the fit; products without it are calibrated without it"
         ),
     )
     recompute_gnss: bool = Field(
-        True,
-        description=(
-            "Recompute GNSS LOS interpolation even if a cached file already exists"
-        ),
+        True, description="Rebuild GNSS LOS caches even if they exist"
     )
     window_size_meters: float = Field(
-        30000.0, gt=0, description="Window size for plane fitting in meters"
+        30000.0, gt=0, description="Fit window size in meters"
     )
     posting_meters: float = Field(
-        30.0, gt=0, description="Input data posting (pixel spacing) in meters"
-    )
-    longwavelength_filter_method: Literal[
-        "none",
-        "savitzky_golay",
-        "fft_gaussian",
-        "fft_butterworth",
-        "fft_ideal",
-    ] = Field(
-        "none",
-        description=(
-            "Longwavelength filtering method for removing orbital/atmospheric signals"
-        ),
-    )
-    cutoff_wavelength_meters: float = Field(
-        100000.0,
-        gt=0,
-        description="Cutoff wavelength in meters for longwavelength filtering",
-    )
-    moving_window_size_meters: float = Field(
-        100000.0,
-        gt=0,
-        description="Moving window filter size in meters",
+        30.0, gt=0, description="Input pixel spacing in meters"
     )
     event_mask_buffer_pixels: int = Field(
         0,
         ge=0,
+        description="Pixels to dilate event regions by before filling; 0 disables",
+    )
+    residual_outlier_mad_threshold: float | None = Field(
+        None,
+        gt=0,
         description=(
-            "Number of pixels to dilate the event-mask boundary before filling.  "
-            "Expands the excluded region to capture near-boundary pixels "
-            "contaminated by the deformation signal.  ``0`` disables buffering."
+            "Automatic event detection when an epoch has no event mask: fill "
+            "pixels whose downsampled (disp - gnss_los) residual is more than "
+            "this many scaled MADs from the median. None disables it"
+        ),
+    )
+    residual_region_mad_threshold: float | None = Field(
+        None,
+        gt=0,
+        description=(
+            "Automatic detection of wide, coherent deformation: fill regions of "
+            "at least residual_region_min_pixels above this looser MAD "
+            "threshold. None disables it"
+        ),
+    )
+    residual_region_min_pixels: int = Field(
+        20,
+        gt=0,
+        description=(
+            "Minimum region size (downsampled pixels) for residual_region_mad_threshold"
+        ),
+    )
+    mask_fit_residual_outliers: bool = Field(
+        True,
+        description=(
+            "Discard the 15% most extreme residuals at each end (~30% of "
+            "pixels per window, real deformation included) before fitting"
+        ),
+    )
+    weight_fit_by_gnss_uncertainty: bool = Field(
+        False,
+        description=(
+            "Weight the fit by the GNSS LOS uncertainty (Govorcin et al. 2025): "
+            "rate uncertainty for 'constant', per-epoch position uncertainty "
+            "for 'variable'"
         ),
     )
     calibration_surface_smoothing_method: Literal[
@@ -223,27 +214,21 @@ class CalibrationOptions(BaseModel):
     ] = Field(
         "gaussian",
         description=(
-            "Post-assembly low-pass filter applied to the calibration surface.  "
-            "One of 'gaussian' (spatial-domain, default), 'gaussian_fft', "
-            "'hanning_fft', or 'savitzky_golay'."
+            "Low-pass filter for the assembled surface: 'gaussian', "
+            "'gaussian_fft', 'hanning_fft' or 'savitzky_golay'"
         ),
     )
     calibration_surface_smoothing_sigma: float | None = Field(
         None,
         ge=0,
         description=(
-            "Sigma (pixels) for the post-assembly smoothing filter; ignored for "
-            "'savitzky_golay'.  ``None`` (default) auto-selects "
-            "``window_size_pixels / 8``.  Set to 0 to disable smoothing entirely."
+            "Smoothing sigma in pixels (ignored for 'savitzky_golay'); None uses "
+            "window size / 8, 0 disables smoothing"
         ),
     )
     savitzky_golay: SavitzkyGolayOptions = Field(
         default_factory=SavitzkyGolayOptions,
         description="Savitzky-Golay filter parameters",
-    )
-    fft_filter: FFTFilterOptions = Field(
-        default_factory=FFTFilterOptions,
-        description="FFT-based filter parameters",
     )
 
 
@@ -670,10 +655,6 @@ class DecompositionInputGroup(BaseModel):
         return v
 
 
-# Type alias for backward compatibility
-InputFileGroup = CalibrationInputGroup
-
-
 class ProductPathGroup(BaseModel):
     """Product path group configuration.
 
@@ -682,7 +663,8 @@ class ProductPathGroup(BaseModel):
     product_path : Path
         Directory where products will be placed
     scratch_path : Path
-        Path to scratch directory for intermediate files
+        Scratch directory; during a run all temporary files (Python and GDAL)
+        go to ``<scratch_path>/tmp``, so it must be writable
     sas_output_path : Path
         Path to SAS output directory
     product_version : str
@@ -694,7 +676,11 @@ class ProductPathGroup(BaseModel):
         Path("output"), description="Directory where products will be placed"
     )
     scratch_path: Path = Field(
-        Path("scratch"), description="Path to scratch directory for intermediate files"
+        Path("scratch"),
+        description=(
+            "Scratch directory; during a run all temporary files go to "
+            "<scratch_path>/tmp, so it must be writable"
+        ),
     )
     sas_output_path: Path = Field(
         Path("output"), description="Path to SAS output directory"
@@ -899,36 +885,22 @@ class VentiConfig(BaseModel):
     run_config: RunConfig
     algorithm_parameters: AlgorithmParameters
 
-    # Compatibility properties for old interface
     @property
     def input_options(self):
-        """Compatibility property.
-
-        Maps to run_config.calibration_input_group or input_file_group.
-        """
-        if (
-            hasattr(self.run_config, "calibration_input_group")
-            and self.run_config.calibration_input_group
-        ):
-            return self.run_config.calibration_input_group
-        if (
-            hasattr(self.run_config, "input_file_group")
-            and self.run_config.input_file_group
-        ):
-            return self.run_config.input_file_group
-        return None
+        """Shortcut to the active input group (calibration, else decomposition)."""
+        return (
+            self.run_config.calibration_input_group
+            or self.run_config.decomposition_input_group
+        )
 
     @property
     def worker_settings(self):
-        """Compatibility property: maps to run_config.worker_settings."""
+        """Shortcut to ``run_config.worker_settings``."""
         return self.run_config.worker_settings
 
     @property
     def grid_settings(self):
-        """Compatibility property.
-
-        Provides combined view of calibration and processing options.
-        """
+        """Flat view of calibration and processing options used by the workflow."""
 
         # Create a dynamic object that combines calibration_options
         # and processing_options
@@ -944,12 +916,6 @@ class VentiConfig(BaseModel):
             def reference_frame(self):
                 return (
                     self.config.algorithm_parameters.calibration_options.reference_frame
-                )
-
-            @property
-            def starting_year(self):
-                return (
-                    self.config.algorithm_parameters.calibration_options.starting_year
                 )
 
             @property
@@ -981,6 +947,11 @@ class VentiConfig(BaseModel):
             def recompute_gnss(self):
                 cal_opts = self.config.algorithm_parameters.calibration_options
                 return cal_opts.recompute_gnss
+
+            @property
+            def apply_tropo_correction(self):
+                cal_opts = self.config.algorithm_parameters.calibration_options
+                return cal_opts.apply_tropo_correction
 
             @property
             def output_posting_meters(self):
@@ -1018,60 +989,6 @@ class VentiConfig(BaseModel):
             algorithm_parameters=algorithm_params,
         )
 
-    @classmethod
-    def from_legacy_yaml(cls, yaml_path: str | Path) -> VentiConfig:
-        """Load configuration from legacy single YAML file.
-
-        This provides backward compatibility with the old config format.
-        """
-        from .config import WorkflowConfig
-
-        # Load old config
-        old_config = WorkflowConfig.from_yaml(yaml_path)
-
-        # Convert to new structure
-        run_config = RunConfig(
-            input_file_group=InputFileGroup(
-                input_files=old_config.input_options.input_files,
-                los_file=old_config.input_options.los_file,
-                water_mask=old_config.input_options.water_mask,
-                tropo_files=old_config.input_options.tropo_files,
-                reference_point=old_config.input_options.reference_point,
-            ),
-            product_path_group=ProductPathGroup(
-                product_path=old_config.input_options.work_directory,
-                scratch_path=old_config.input_options.work_directory / "scratch",
-                sas_output_path=old_config.input_options.work_directory,
-                product_version="1.0",
-            ),
-            worker_settings=WorkerSettings(
-                gpu_enabled=old_config.worker_settings.gpu_enabled,
-                threads_per_worker=old_config.worker_settings.threads_per_worker,
-                block_shape=old_config.worker_settings.block_shape,
-            ),
-            log_file=old_config.log_file,
-            keep_paths_relative=old_config.keep_paths_relative,
-        )
-
-        algorithm_params = AlgorithmParameters(
-            processing_options=ProcessingOptions(
-                cal_downsample_factor=old_config.grid_settings.downsample_factor,
-            ),
-            calibration_options=CalibrationOptions(
-                grid_type=old_config.grid_settings.grid_type,
-                reference_frame=old_config.grid_settings.reference_frame,
-                starting_year=old_config.grid_settings.starting_year,
-                unwrap_error_correction=old_config.unwrap_error_correction,
-                window_size_meters=old_config.grid_settings.window_size_meters,
-                posting_meters=old_config.grid_settings.posting_meters,
-            ),
-        )
-
-        return cls(
-            run_config=run_config,
-            algorithm_parameters=algorithm_params,
-        )
-
 
 # ============================================================================
 # Helper Functions
@@ -1089,8 +1006,8 @@ def load_config(
     runconfig_path : str or Path
         Path to runconfig.yaml file
     algorithm_params_path : str or Path, optional
-        Path to algorithm_parameters.yaml file.
-        If None, looks for algorithm_parameters.yaml in same directory as runconfig.
+        Path to algorithm_parameters.yaml. Defaults to the file of that name
+        next to `runconfig_path`.
 
     Returns
     -------
@@ -1101,13 +1018,7 @@ def load_config(
     runconfig_path = Path(runconfig_path)
 
     if algorithm_params_path is None:
-        # Look for algorithm_parameters.yaml in same directory
         algorithm_params_path = runconfig_path.parent / "algorithm_parameters.yaml"
-
-        if not algorithm_params_path.exists():
-            # Try legacy single-file config
-            return VentiConfig.from_legacy_yaml(runconfig_path)
-
     return VentiConfig.from_yaml_files(runconfig_path, algorithm_params_path)
 
 
@@ -1292,9 +1203,5 @@ def create_config_templates(output_dir: str | Path = ".") -> tuple[Path, Path]:
     return runconfig_path, algorithm_params_path
 
 
-# ============================================================================
-# Type Alias for Compatibility
-# ============================================================================
-
-# Type alias for cleaner imports
+# Shorter name used throughout the workflow API.
 WorkflowConfig = VentiConfig

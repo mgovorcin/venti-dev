@@ -85,7 +85,8 @@ product_path_group:
   # Directory where products will be placed
   product_path: output
 
-  # Path to scratch directory for intermediate files
+  # Scratch directory; during a run all temporary files go to
+  # <scratch_path>/tmp, so it must be writable
   scratch_path: scratch
 
   # Path to SAS output directory

@@ -3,8 +3,12 @@
 This module provides the command-line interface for the Venti calibration workflow.
 
 Usage:
-    python -m venti config <output_file>    # Generate config template
-    python -m venti run <config_file>       # Run calibration workflow
+    venti config --output-dir DIR                                # Config templates
+    venti run --config-file runconfig.yaml                       # All products
+    venti run-single --config-file runconfig.yaml --disp-file epoch.nc  # One
+
+Log messages go to the console and, if the runconfig sets ``log_file``, to
+that file as well (see `venti.log_setup.configure_logging`).
 """
 
 from __future__ import annotations
@@ -12,14 +16,17 @@ from __future__ import annotations
 import logging
 import sys
 from enum import StrEnum
+from typing import Literal
 
 import tyro
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+from .log_setup import configure_logging
+
+# Not __name__: under `python -m venti` that is "__main__", outside the
+# "venti" logger that configure_logging sets up.
+logger = logging.getLogger("venti.cli")
+
+LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
 
 
 class Command(StrEnum):
@@ -61,6 +68,7 @@ def config_command(output_dir: str = ".") -> None:
     """
     from .workflow.config import create_config_templates
 
+    configure_logging()
     try:
         runconfig_path, params_path = create_config_templates(output_dir)
         logger.info("Configuration templates created:")
@@ -77,13 +85,15 @@ def config_command(output_dir: str = ".") -> None:
         logger.info("     - Fill in decomposition_input_group if doing decomposition")
         logger.info("     - Set workflow_name to 'calibrate' or 'decompose'")
         logger.info("  2. Review algorithm_parameters.yaml (defaults usually work)")
-        logger.info("  3. Run: python -m venti run runconfig.yaml")
+        logger.info("  3. Run: venti run --config-file runconfig.yaml")
     except Exception:
         logger.exception("Failed to create configuration templates")
         sys.exit(1)
 
 
-def run_command(config_file: str, n_workers: int = 1, log_level: str = "INFO") -> None:
+def run_command(
+    config_file: str, n_workers: int = 1, log_level: LogLevel = "INFO"
+) -> None:
     """Run the Venti calibration workflow.
 
     Parameters
@@ -91,12 +101,9 @@ def run_command(config_file: str, n_workers: int = 1, log_level: str = "INFO") -
     config_file : str
         Path to YAML configuration file.
     n_workers : int, optional
-        Number of displacement files to process concurrently.  Each worker
-        runs one epoch at a time using threads, so file I/O for one epoch
-        overlaps with surface fitting for another.  The inner
-        ``fit_windowed_surface`` worker count is automatically reduced to
-        ``cpu_count // n_workers`` to keep total thread usage within the
-        CPU budget.  Values of 2-4 are recommended; default is 1 (serial).
+        Displacement files processed concurrently in threads, by default 1.
+        I/O overlaps across files; the surface fits run one at a time, each
+        using all CPUs. 2-4 is a good range.
     log_level : str
         Logging level (DEBUG, INFO, WARNING, ERROR), default: INFO.
 
@@ -104,24 +111,21 @@ def run_command(config_file: str, n_workers: int = 1, log_level: str = "INFO") -
     --------
     ::
 
-        python -m venti run config.yaml
-        python -m venti run config.yaml --n-workers 4
-        python -m venti run config.yaml --log-level DEBUG
+        venti run --config-file runconfig.yaml
+        venti run --config-file runconfig.yaml --n-workers 4
+        venti run --config-file runconfig.yaml --log-level DEBUG
 
     """
     from .workflow.calibration import CalibrationWorkflow
     from .workflow.config import load_config
 
-    # Set logging level
-    numeric_level = getattr(logging, log_level.upper(), None)
-    if isinstance(numeric_level, int):
-        logging.getLogger().setLevel(numeric_level)
+    configure_logging(level=log_level)
 
     try:
         # Load configuration
         logger.info(f"Loading configuration from: {config_file}")
         config = load_config(config_file)
-
+        configure_logging(log_file=config.run_config.log_file)
         logger.info("Configuration loaded successfully")
         logger.info(f"  Input directory: {config.input_options.input_files}")
         logger.info(
@@ -153,7 +157,7 @@ def run_single_command(
     disp_file: str,
     tropo_ref_file: str | None = None,
     tropo_sec_file: str | None = None,
-    log_level: str = "INFO",
+    log_level: LogLevel = "INFO",
 ) -> None:
     """Calibrate a single displacement file.
 
@@ -174,10 +178,11 @@ def run_single_command(
     --------
     ::
 
-        venti run-single runconfig.yaml /data/disp/epoch_001.nc
-        venti run-single runconfig.yaml /data/disp/epoch_001.nc \
+        venti run-single --config-file runconfig.yaml --disp-file epoch_001.nc
+        venti run-single --config-file runconfig.yaml --disp-file epoch_001.nc \
             --tropo-ref-file /data/tropo/ref.tif --tropo-sec-file /data/tropo/sec.tif
-        venti run-single runconfig.yaml /data/disp/epoch_001.nc --log-level DEBUG
+        venti run-single --config-file runconfig.yaml --disp-file epoch_001.nc \
+            --log-level DEBUG
 
     """
     from pathlib import Path
@@ -185,14 +190,12 @@ def run_single_command(
     from .workflow.calibration import CalibrationWorkflow
     from .workflow.config import load_config
 
-    numeric_level = getattr(logging, log_level.upper(), None)
-    if isinstance(numeric_level, int):
-        logging.getLogger().setLevel(numeric_level)
+    configure_logging(level=log_level)
 
     try:
         logger.info(f"Loading configuration from: {config_file}")
         config = load_config(config_file)
-
+        configure_logging(log_file=config.run_config.log_file)
         logger.info("Starting single-file calibration...")
         workflow = CalibrationWorkflow(config=config)
         state = workflow.run_single(

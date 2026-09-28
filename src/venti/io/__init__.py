@@ -19,9 +19,10 @@ __all__ = [
     "RasterWriter",
     "VlmProduct",
     "get_bounds",
-    # Functional API (legacy)
+    # Functional API
     "read_geotiff",
     "read_netcdf",
+    "read_netcdf_correction",
     "update_netcdf_variable",
     "write_geotiff",
 ]
@@ -62,11 +63,12 @@ def __getattr__(name: str):
 
         return globals()[name]
 
-    # Functional API (legacy)
+    # Functional API
     if name in [
         "read_geotiff",
         "write_geotiff",
         "read_netcdf",
+        "read_netcdf_correction",
         "update_netcdf_variable",
         "get_bounds",
     ]:
@@ -74,6 +76,7 @@ def __getattr__(name: str):
             get_bounds,
             read_geotiff,
             read_netcdf,
+            read_netcdf_correction,
             update_netcdf_variable,
             write_geotiff,
         )
@@ -82,6 +85,7 @@ def __getattr__(name: str):
         globals()["read_geotiff"] = read_geotiff
         globals()["write_geotiff"] = write_geotiff
         globals()["read_netcdf"] = read_netcdf
+        globals()["read_netcdf_correction"] = read_netcdf_correction
         globals()["update_netcdf_variable"] = update_netcdf_variable
         globals()["get_bounds"] = get_bounds
 
