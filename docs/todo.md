@@ -37,7 +37,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] T23 Gate logic and comparison modes — depends on T21
 - [ ] T24 Reports and traceability — depends on T22, T23
 - [ ] T25 Validation CLI, caching, batch execution — depends on T24
-- [ ] T26 cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget — depends on T09, T13, T17 (T06 only for upstream, ADR-0021)
+- [~] T26 cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget — started 2026-10-06 on cal-disp `feature/v05-venti-pin` (fork PR #3): fork Venti pinned, full wavelength passed, gamma golden still passes at 1e-6; T26.2/T26.4–T26.6 open
 - [x] T27 Frame-parameter table — done 2026-10-06 on `feature/frame-table` (`venti.frames`, `calibration_options.frame`, bundled table for 4 frames; T27.4 cal-disp consumption waits for T37)
 
 ## Phase 2: Science port into Venti
