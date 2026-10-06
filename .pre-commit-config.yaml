@@ -1,7 +1,10 @@
+# Based on 00_tools/standards/pre-commit-config.yaml (shared kit); Venti-specific
+# bits: mypy runs without site packages, SPDX license is BSD-3-Clause.
 ci:
   autofix_prs: true
+  autoupdate_schedule: monthly
 
-exclude: \.ipynb$
+exclude: '^src/venti/_version\.py$'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -11,19 +14,26 @@ repos:
       # - id: check-added-large-files  # Fails with git v1.8.3
       - id: check-case-conflict
       - id: check-docstring-first
+        exclude: '\.ipynb$'
       - id: check-merge-conflict
+      - id: check-toml
       - id: check-yaml
         args: [--allow-multiple-documents]
       - id: debug-statements
+        exclude: '\.ipynb$'
       - id: end-of-file-fixer
+        exclude: '\.ipynb$'
       - id: mixed-line-ending
+        exclude: '\.ipynb$'
       - id: trailing-whitespace
+        exclude: '\.ipynb$'
 
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: "26.5.1"
     hooks:
       - id: black
         args: [--preview, --enable-unstable-feature, string_processing]
+        exclude: '\.ipynb$'
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.8
@@ -37,5 +47,23 @@ repos:
     hooks:
       - id: mypy
         args: [--no-site-packages]
+        exclude: '\.ipynb$'
         additional_dependencies:
         - types-requests
+
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
+        # Notebook outputs are the rendered documentation (mkdocs-jupyter runs
+        # with execute: false), so keep them; strip only metadata and counts.
+        args: [--keep-output]
+
+  - repo: local
+    hooks:
+      - id: spdx-header
+        name: SPDX license header
+        entry: python scripts/spdx_check.py --license BSD-3-Clause
+        language: python
+        types: [python]
+        exclude: '(^docs/|^notebooks/)'

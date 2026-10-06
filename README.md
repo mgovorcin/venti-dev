@@ -35,6 +35,17 @@ conda activate venti
 python -m pip install -e .
 ```
 
+Or, with [pixi](https://pixi.sh) (the lock file is committed, so this is the
+reproducible route used in CI and by the operational image):
+```bash
+pixi install -e dev      # Venti + test, lint and docs tools
+pixi run -e dev test     # pytest
+pixi run -e dev lint     # pre-commit: ruff, black, mypy, nbstripout, SPDX headers
+pixi run -e docs docs    # mkdocs build --strict
+```
+The `ops` environment (`pixi install -e ops`) is the default dependency set
+only, i.e. what a production image installs.
+
 With plain pip instead of conda, `python -m pip install -e ".[test]"` installs
 Venti with its test tools. GDAL must already be available with NumPy support
 (`python -c "from osgeo import gdal_array"` must work); to build the bindings
