@@ -300,28 +300,30 @@ def _make_staging_mocks(tmp: Path) -> dict:
 
 def _inject_staging_modules(mocks: dict) -> dict[str, ModuleType]:
     """Return fake modules to inject into sys.modules for staging CLI imports."""
-    dem_mod = ModuleType("dem_cli")
+    dem_mod = ModuleType("venti.staging.dem_cli")
     dem_mod.generate_frame_dem = mocks["generate_frame_dem"]  # type: ignore[attr-defined]
 
-    disp_mod = ModuleType("disp_cli")
+    disp_mod = ModuleType("venti.staging.disp_cli")
     disp_mod.download_frame_products = mocks["download_frame_products"]  # type: ignore[attr-defined]
 
-    los_mod = ModuleType("los_cli")
+    los_mod = ModuleType("venti.staging.los_cli")
     los_mod.generate_los_enu_raster = mocks["generate_los_enu_raster"]  # type: ignore[attr-defined]
     los_mod.generate_incidence_angle_raster = mocks["generate_incidence_angle_raster"]  # type: ignore[attr-defined]
 
-    tropo_mod = ModuleType("tropo_cli")
+    tropo_mod = ModuleType("venti.staging.tropo_cli")
     tropo_mod.process_tropo_from_file = mocks["process_tropo_from_file"]  # type: ignore[attr-defined]
 
-    utils_mod = ModuleType("utils")
+    utils_mod = ModuleType("venti.staging.utils")
     utils_mod.parse_date = MagicMock(return_value=MagicMock())  # type: ignore[attr-defined]
 
+    # stage_frame imports these lazily as `from venti.staging.<mod> import ...`,
+    # so the fakes are keyed by the package module names.
     return {
-        "dem_cli": dem_mod,
-        "disp_cli": disp_mod,
-        "los_cli": los_mod,
-        "tropo_cli": tropo_mod,
-        "utils": utils_mod,
+        "venti.staging.dem_cli": dem_mod,
+        "venti.staging.disp_cli": disp_mod,
+        "venti.staging.los_cli": los_mod,
+        "venti.staging.tropo_cli": tropo_mod,
+        "venti.staging.utils": utils_mod,
     }
 
 
