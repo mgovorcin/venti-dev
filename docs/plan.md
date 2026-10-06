@@ -131,6 +131,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 - [ ] T14.1 Define extra `grid = ["shapely>=2"]` (+ whatever `gps_imaging.py` needs); move `gps_imaging.py`, `euler.py` imports behind it; add `core-only` CI check that importing them without the extra gives a clear `ImportError` message.
 - [ ] T14.2 Add `gps_imaging.reinterpolate_nodes(grid_df, exclude: GeoSeries | list[Polygon], radius_km, min_neighbors) -> DataFrame` that replaces E/N/U velocity and σ at excluded nodes by the GPS-Imaging estimate from non-excluded neighbours; tests with a synthetic plane + bowl.
 - [ ] T14.3 Add `euler.plate_velocity_enu(lon, lat, plate: Literal["NA","PA","CA",...], model="ITRF2020-PMM") -> (vE, vN, vU=0)` vectorized over arrays; tests against published site velocities (reuse Venti `load_itrf.py` JSON).
+  - [ ] T14.3a **TODO (2026-10-06): add the ITRF2020 plate table to geepers `[grid]`.** geepers has `EulerPole`/`predict_plate_motion` but no plate catalogue; port Venti's ITRF2014/2020-PMM rotation vectors (Altamimi et al. 2023; `models/load_itrf.py` + its JSON) as `geepers/data/itrf2020_pmm.json` with a loader `euler.plate_pole(plate, model="ITRF2020-PMM") -> EulerPole`; include NA, PA, CA and the other PMM plates; test the NA pole (~88 W, 5 S, 0.70 deg/Myr) and one site velocity per plate.
 - [ ] T14.4 Add a `PLATE_BY_FRAME` loader hook (reads the frame-parameter table from T27; geepers stays frame-agnostic, just takes a plate string).
 
 ### T15. `geepers[analysis]` and `[all]`
