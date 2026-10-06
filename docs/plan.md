@@ -120,10 +120,10 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T13. geepers lean core
 **Depends on:** T12
 **Context:** `pandera` validation in `schemas.py` and `geopandas` in `stations()` are the main core blockers. Options: make pandera optional (validate only if installed), return a `pandas.DataFrame` with lon/lat columns from core and a `GeoDataFrame` only when geopandas is present.
-- [ ] T13.1 Move heavy deps out of `[project.dependencies]` into extras in `pyproject.toml`; core = `pandas`, `numpy`, `scipy`, `pyproj`, `requests`, `tqdm`.
-- [ ] T13.2 Make `schemas.py` validation optional (no-op without pandera) with tests for both paths.
-- [ ] T13.3 Make `gps_sources/base.py` work without geopandas (bbox filter in pandas; `GeoDataFrame` upgrade when available).
-- [ ] T13.4 Add CI job `core-only`: install `geepers` with no extras in a clean env; `python -c "from geepers.gps_sources import UnrGridSource, UnrSource"` and a cassette-based download test must pass.
+- [x] T13.1 Move heavy deps out of `[project.dependencies]` into extras in `pyproject.toml`; core = `pandas`, `numpy`, `scipy`, `pyproj`, `requests`, `tqdm`.
+- [x] T13.2 Make `schemas.py` validation optional (no-op without pandera) with tests for both paths.
+- [x] T13.3 Make `gps_sources/base.py` work without geopandas (bbox filter in pandas; `GeoDataFrame` upgrade when available).
+- [x] T13.4 Add CI job `core-only`: install `geepers` with no extras in a clean env; `python -c "from geepers.gps_sources import UnrGridSource, UnrSource"` and a cassette-based download test must pass. *Done 2026-10-06 on geepers `feature/extras-split` (4 commits). Also: `tests/test_core_imports.py` subprocess check; pixi `ops`/`core-test` envs; 362 tests pass with extras, 16 in the core-test env. Implemented before the T12.3 sign-off — reversible if the partition changes.*
 
 ### T14. `geepers[grid]`: GPS Imaging + Euler, with exclusion areas
 **Depends on:** T13
