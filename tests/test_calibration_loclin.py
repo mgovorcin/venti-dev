@@ -25,7 +25,9 @@ def test_kernel_sigma_from_cutoff():
     # sigma = lambda * sqrt(ln2/2)/pi = 50 km * 0.1874 = 9.37 km = 52.1 px
     assert sigma == pytest.approx(52.05, abs=0.1)
     # the Gaussian transfer function is exactly 1/2 at the cutoff
-    assert np.exp(-2 * np.pi**2 * (sigma * PIXEL_M) ** 2 / CUTOFF_M**2) == pytest.approx(0.5)
+    assert np.exp(
+        -2 * np.pi**2 * (sigma * PIXEL_M) ** 2 / CUTOFF_M**2
+    ) == pytest.approx(0.5)
     with pytest.raises(ValueError, match="positive"):
         kernel_sigma_px(0, PIXEL_M)
 
@@ -38,15 +40,33 @@ def _response(wavelength_m: float, n: int = 1024) -> float:
     w = np.ones_like(field)
     level, _cov = local_linear_surface(field, w, kernel_sigma_px(CUTOFF_M, pixel_m))
     inner = np.s_[20:44, n // 4 : 3 * n // 4]
-    return float(np.sqrt(np.mean(level[inner] ** 2)) / np.sqrt(np.mean(field[inner] ** 2)))
+    return float(
+        np.sqrt(np.mean(level[inner] ** 2)) / np.sqrt(np.mean(field[inner] ** 2))
+    )
 
 
 @pytest.mark.parametrize(
     ("wavelength_m", "expected"),
     [
         (CUTOFF_M, 0.5),  # half response at the cutoff, by construction
-        (200_000.0, np.exp(-2 * np.pi**2 * (CUTOFF_M * np.sqrt(np.log(2) / 2) / np.pi) ** 2 / 200_000.0**2)),
-        (20_000.0, np.exp(-2 * np.pi**2 * (CUTOFF_M * np.sqrt(np.log(2) / 2) / np.pi) ** 2 / 20_000.0**2)),
+        (
+            200_000.0,
+            np.exp(
+                -2
+                * np.pi**2
+                * (CUTOFF_M * np.sqrt(np.log(2) / 2) / np.pi) ** 2
+                / 200_000.0**2
+            ),
+        ),
+        (
+            20_000.0,
+            np.exp(
+                -2
+                * np.pi**2
+                * (CUTOFF_M * np.sqrt(np.log(2) / 2) / np.pi) ** 2
+                / 20_000.0**2
+            ),
+        ),
     ],
 )
 def test_transfer_function_matches_the_gaussian(wavelength_m, expected):
@@ -56,7 +76,9 @@ def test_transfer_function_matches_the_gaussian(wavelength_m, expected):
 def test_plane_is_reproduced_exactly_and_edges_are_unbiased():
     yy, xx = np.mgrid[0:120, 0:160].astype(float)
     plane = 2.0 + 0.03 * xx - 0.02 * yy
-    level, cov = local_linear_surface(plane, np.ones_like(plane), kernel_sigma_px(CUTOFF_M, PIXEL_M))
+    level, cov = local_linear_surface(
+        plane, np.ones_like(plane), kernel_sigma_px(CUTOFF_M, PIXEL_M)
+    )
     # a local-*linear* fit is exact on a plane (up to the 1e-6 relative ridge),
     # including at the edges where a plain Gaussian smoother would be biased
     np.testing.assert_allclose(level, plane, atol=1e-3)
@@ -91,7 +113,9 @@ def test_invalid_inputs():
 
 
 def test_smoothstep():
-    np.testing.assert_allclose(smoothstep(np.array([-1, 0, 0.5, 1, 2])), [0, 0, 0.5, 1, 1])
+    np.testing.assert_allclose(
+        smoothstep(np.array([-1, 0, 0.5, 1, 2])), [0, 0, 0.5, 1, 1]
+    )
 
 
 def test_loclin_surface_is_continuous_with_sea_and_gaps():
