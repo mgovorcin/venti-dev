@@ -135,6 +135,7 @@ class TestDownloadGnssData:
         return bbox
 
     def test_velocities_parquet_written(self):
+        pytest.importorskip("pyarrow", reason="parquet needs venti[research]")
         station_gdf = _make_station_gdf([1, 2])
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -195,6 +196,7 @@ class TestDownloadGnssData:
 
     def test_failed_station_download_is_skipped(self):
         """A RuntimeError on one station should not abort the whole run."""
+        pytest.importorskip("pyarrow", reason="parquet needs venti[research]")
         station_gdf = _make_station_gdf([1, 2])
 
         with tempfile.TemporaryDirectory() as tmp:

@@ -15,6 +15,9 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
+# the stack drivers read DISP through opera_utils.disp (zarr): research tier
+pytest.importorskip("zarr", reason="venti[research] not installed")
+
 rasterio = pytest.importorskip("rasterio")
 xr = pytest.importorskip("xarray")
 from rasterio.transform import from_origin  # noqa: E402
