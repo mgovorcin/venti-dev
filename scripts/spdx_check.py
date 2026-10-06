@@ -18,7 +18,8 @@ Add missing headers in place::
 
     spdx_check.py --license Apache-2.0 --fix \
         --copyright '2025-2026 California Institute of Technology ("Caltech")' \
-        --notice 'Part of geepers, https://github.com/opera-adt/geepers.' $(git ls-files '*.py')
+        --notice 'Part of geepers, https://github.com/opera-adt/geepers.' \
+        $(git ls-files '*.py')
 
 Exit code 1 when any file is missing or has a different identifier.
 """
@@ -57,7 +58,9 @@ def header_insert_index(lines: list[str]) -> int:
     return index
 
 
-def build_header(license_id: str, copyright_text: str | None, notice: str | None) -> list[str]:
+def build_header(
+    license_id: str, copyright_text: str | None, notice: str | None
+) -> list[str]:
     """Build the header lines for `--fix`."""
     header = []
     if copyright_text:
@@ -99,11 +102,20 @@ def check_file(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the check on the given files; return the process exit code."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--license", required=True, help="Expected SPDX identifier, e.g. Apache-2.0")
-    parser.add_argument("--fix", action="store_true", help="Insert a header where none exists")
-    parser.add_argument("--copyright", help="SPDX-FileCopyrightText value used by --fix")
-    parser.add_argument("--notice", help="Extra comment line after the identifier, used by --fix")
+    parser.add_argument(
+        "--license", required=True, help="Expected SPDX identifier, e.g. Apache-2.0"
+    )
+    parser.add_argument(
+        "--fix", action="store_true", help="Insert a header where none exists"
+    )
+    parser.add_argument(
+        "--copyright", help="SPDX-FileCopyrightText value used by --fix"
+    )
+    parser.add_argument(
+        "--notice", help="Extra comment line after the identifier, used by --fix"
+    )
     parser.add_argument("files", nargs="*", type=Path)
     args = parser.parse_args(argv)
 

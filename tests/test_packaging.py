@@ -53,7 +53,9 @@ def test_no_package_declared_twice_for_pixi(pyproject):
     # The project itself is installed editable through pixi; that is the one
     # allowed overlap.
     duplicates.discard("venti")
-    assert not duplicates, f"declared both as PEP 621 and pixi pypi dependency: {sorted(duplicates)}"
+    assert (
+        not duplicates
+    ), f"declared both as PEP 621 and pixi pypi dependency: {sorted(duplicates)}"
 
 
 def test_shared_pixi_task_names_exist(pyproject):

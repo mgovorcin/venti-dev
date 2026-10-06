@@ -66,4 +66,4 @@ repos:
         entry: python scripts/spdx_check.py --license BSD-3-Clause
         language: python
         types: [python]
-        exclude: '(^docs/|^notebooks/)'
+        exclude: '(^scripts/spdx_check\.py$|^docs/|^notebooks/)'
