@@ -81,8 +81,15 @@ A snapshot prefix is never rewritten: a changed file is a new snapshot. If
 the bucket has versioning on, it is a second line of defence, not the
 mechanism. `CURRENT` moves only through the roll-forward procedure below.
 
-**Status:** proposal; nothing has been uploaded. Needs the owner's OK on the
-prefix and on who holds write access.
+**Status (2026-10-06):** location approved by the owner. First snapshot
+`unr_grid_0.3_IGS20_20261006` uploaded to
+`s3://opera-adt/opera-ancillary/unr-grid/unr_grid_0.3_IGS20_20261006/`:
+28,492 node files (8.87 GB) + lookup + `snapshot.json` + manifest; 31 lookup
+nodes (ids 1018–1311, one contiguous block) are not published by UNR (HTTP
+404) and are listed as missing. Verified locally against the manifest and by
+re-downloading a random sample from S3. Local copy:
+`/mnt/aurora-z0/govorcin/unr_snapshots/unr_grid_0.3_20261006/`. `CURRENT` is
+**not set** yet: it moves only after the T46 gate on this snapshot.
 
 ## Roll-forward procedure (plan T48.4)
 

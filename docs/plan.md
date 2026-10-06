@@ -25,8 +25,8 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 **Depends on:** none
 **Context:** The delivered gamma 0.3 (600 km window, tropo on, unwrap on) was never validated end to end; our `gamma-release` has unwrap **off** and differs from the delivered `calibration` by a median of −6.7 cm. Talib's own validation used 30 km and tropo off. The release can't be tagged until one configuration is agreed. Open questions are in `gamma_release/delivery_docs_review.md`.
 - [x] T01.1 Write a one-page decision memo: the three configurations (delivered, Talib's validated, ours), the GNSS-grid bias of each (−9.3 cm vs +0.5 cm), and the recommendation (600 km, tropo on, unwrap off). *Done 2026-10-06:* cal-disp `docs/decisions/0001-gamma-config.md` (fork PR #2). The station evidence changed the recommendation to **600 km, tropo off, unwrap off** (36.9 → 21.4 mm RMSE at 83 real stations on the golden pair).
-- [ ] T01.2 Send the memo and the four questions from `delivery_docs_review.md` to Talib; record the answers in `cal-disp/docs/decisions/0001-gamma-config.md`.
-- [ ] T01.3 Freeze `test_golden/configs/algorithm_parameters.yaml` to the agreed values; revert the `output2` paths noted in `GAMMA_RELEASE_HANDOFF.md`.
+- [x] T01.2 Send the memo and the four questions from `delivery_docs_review.md` to Talib; record the answers in `cal-disp/docs/decisions/0001-gamma-config.md`. *Done 2026-10-06:* Talib accepted all proposals; answers in cal-disp `docs/decisions/0001-gamma-config.md` (Q3 version string not covered: `v1.0` kept, to confirm with T05).
+- [x] T01.3 Freeze `test_golden/configs/algorithm_parameters.yaml` to the agreed values; revert the `output2` paths noted in `GAMMA_RELEASE_HANDOFF.md`. *Done 2026-10-06:* `apply_tropo_correction: false` in `scripts/build_golden_output.sh` (`ac9616f`); the `output2` paths are gone with the rebuilt golden configs.
 
 ### T02. Secure a Docker build host and build the gamma image
 **Depends on:** none
@@ -38,10 +38,10 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T03. Rebuild the golden inside Docker and validate
 **Depends on:** T01, T02
 **Context:** `scripts/build_golden_output.sh` builds the reference product; `scripts/run_validation.sh --golden-dir test_golden` reruns the workflow and compares at tolerance 1e-6 (`cal-disp validate` checks values, attrs, CRS, dtype and identification). Both must run inside the image, mounting `test_golden/` (4.9 GB: `configs`, `input_data`, `golden_output`).
-- [ ] T03.1 Run `build_golden_output.sh` inside the image with the T01 config; store the product in `test_golden/golden_output` (exactly one `OPERA_L4_DISP-CAL-S1_*.nc`).
-- [ ] T03.2 Run `run_validation.sh` inside the image; it must print `✓ Validation passed`. Save the log as `test_golden/validation_0.3.0.log`.
-- [ ] T03.3 Run `run_validation.sh` on aurora with the pixi `dev` env against the Docker-built golden; record whether it passes at 1e-6 (expected: possibly not, because of GDAL). Document the result in `docs/development.md`. *Dry run 2026-10-05 (before T01):* the reverse direction already holds — `run_validation.sh` inside `cal-disp:0.3.0-rc` (GDAL 3.13.3, Python 3.13.15, rasterio 1.5.1) reproduces the aurora-built golden at 1e-6, peak 6.31 GB (log `tmp/caldisp_docker_validate.log`). So for the gamma configuration the GDAL-version dependence of the tropo reprojection does not change the product at that tolerance.
-- [ ] T03.4 Write `test_golden/MANIFEST.sha256` for inputs and golden output and commit it (data itself stays out of git).
+- [x] T03.1 Run `build_golden_output.sh` inside the image with the T01 config; store the product in `test_golden/golden_output` (exactly one `OPERA_L4_DISP-CAL-S1_*.nc`). *Done 2026-10-06* in `cal-disp:0.3.0-rc2` (from `ac9616f`), 76 s.
+- [x] T03.2 Run `run_validation.sh` inside the image; it must print `✓ Validation passed`. Save the log as `test_golden/validation_0.3.0.log`. *Done:* passed at 1e-6, peak 5.65 GB (`test_golden/validation_0.3.0.log`).
+- [x] T03.3 Run `run_validation.sh` on aurora with the pixi `dev` env against the Docker-built golden; record whether it passes at 1e-6 (expected: possibly not, because of GDAL). Document the result in `docs/development.md`. *Dry run 2026-10-05 (before T01):* the reverse direction already holds — `run_validation.sh` inside `cal-disp:0.3.0-rc` (GDAL 3.13.3, Python 3.13.15, rasterio 1.5.1) reproduces the aurora-built golden at 1e-6, peak 6.31 GB (log `tmp/caldisp_docker_validate.log`). So for the gamma configuration the GDAL-version dependence of the tropo reprojection does not change the product at that tolerance. *Done:* passed at 1e-6 on aurora, pixi `dev` with Venti `2a7e61f`, GDAL 3.13.3.
+- [x] T03.4 Write `test_golden/MANIFEST.sha256` for inputs and golden output and commit it (data itself stays out of git). *Done:* `docs/golden/MANIFEST_0.3.0.sha256` + `docs/golden/README.md` (`8bafac7`, pushed to upstream PR #21).
 
 ### T04. Fix the delivery documents
 **Depends on:** T01
@@ -115,7 +115,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 **Context:** geepers core deps are heavy (dask, zarr, pandera, lxml, rasterio, rioxarray, geopandas, pyogrio). The operational image needs only UNR grid/station retrieval (`gps_sources/unr_grid.py`, `gps_sources/unr.py`, `gps_sources/base.py`, `schemas.py`) and, in `[grid]`, GPS Imaging (`gps_imaging.py`) and Euler (`euler.py`). PRD §4.4: ≤ 4 extras + `[all]`.
 - [x] T12.1 Generate an import graph (`pydeps` or a script over `ast`) of `src/geepers`; list third-party imports per module; commit as `docs/dependency_audit.md`.
 - [x] T12.2 Propose the partition: `core` = {`gps_sources/*`, `schemas`, `utils`, `io` (reduced)}, `[grid]` = {`gps_imaging`, `euler`, `surface`?}, `[analysis]` = everything else. Record which modules need lazy imports or splitting (e.g. `schemas.py` using pandera).
-- [ ] T12.3 Get owner sign-off on the partition (issue on the fork). *Requested 2026-10-06* as a comment on geepers fork PR #2 (issues are disabled on the fork); waiting for "approved".
+- [x] T12.3 Get owner sign-off on the partition (issue on the fork). *Requested 2026-10-06* as a comment on geepers fork PR #2 (issues are disabled on the fork); waiting for "approved". *Approved by the owner 2026-10-06* (recorded on geepers PR #2); partition frozen.
 
 ### T13. geepers lean core
 **Depends on:** T12
@@ -423,7 +423,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Depends on:** T28
 **Context:** R-G4: a versioned snapshot per release, mirrored to controlled storage (S3 bucket TBD, PRD §7.5 Q6), hash recorded in metadata; roll-forward deliberate (proposal every 6 months) and gated by e2e.
 - [x] T48.1 `scripts/snapshot_unr_grid.py` (validation or cal-disp repo): download v0.3 constant (and variable) for IGS20 via geepers, write `unr_grid_<version>_<date>/` + `MANIFEST.sha256` + `snapshot.json` (UNR version, date, node count, data span). *Done 2026-10-06 in Venti* (`venti.gnss.snapshot` + `scripts/snapshot_unr_grid.py`): Venti owns the sampler that reads the layout, so the writer lives next to it; `--bounds`, `--grid-types`, `--verify`; tests with injected fetch/download fakes.
-- [ ] T48.2 Upload to S3; document the bucket layout and IAM in `docs/operations.md`. *Proposed 2026-10-06:* `s3://opera-adt/opera-ancillary/unr-grid/<snapshot_id>/` + a `CURRENT` pointer, next to the existing shared ancillary data (`docs/operations.md`, Storage). Waiting for the owner's OK; nothing uploaded.
+- [x] T48.2 Upload to S3; document the bucket layout and IAM in `docs/operations.md`. *Proposed 2026-10-06:* `s3://opera-adt/opera-ancillary/unr-grid/<snapshot_id>/` + a `CURRENT` pointer, next to the existing shared ancillary data (`docs/operations.md`, Storage). Waiting for the owner's OK; nothing uploaded. *Uploaded 2026-10-06* (location approved): `unr_grid_0.3_IGS20_20261006`, 28,492 nodes, 31 not published upstream (404), sample re-download verified; `CURRENT` waits for T46.
 - [ ] T48.3 cal-disp `download unr` can read from the snapshot path (`unr_timeseries_dir`), and metadata records `gnss_snapshot_id` + hash (through T28.4 provenance). *Waits for the cal-disp wiring (T37, behind T26/T09).*
 - [x] T48.4 Roll-forward procedure documented: new snapshot → T46 gate → new frame-table k if needed → minor version. *Done 2026-10-06:* `docs/operations.md` (moves to cal-disp docs with T48.3).
 
@@ -454,7 +454,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 
 ### T52. VLM repo skeleton
 **Depends on:** T07, T17
-**Context:** New repo under `mgovorcin/` (name TBD). Depends on `venti-dev[decomposition]`, `geepers[grid]`, `opera-utils[disp]`. Mirror cal-disp structure (cli/config/product/workflow) but no frozen interface yet; design the runconfig deliberately.
+**Context:** New repo under `mgovorcin/` (name TBD; owner suggested products **VLM-S1** and **VLM-NI**, possibly in one repo. *Proposed 2026-10-06:* one sensor-agnostic repo producing both product types through Venti's `SensorSpec`, like cal-disp; awaiting the repo name). Depends on `venti-dev[decomposition]`, `geepers[grid]`, `opera-utils[disp]`. Mirror cal-disp structure (cli/config/product/workflow) but no frozen interface yet; design the runconfig deliberately.
 - [ ] T52.1 Create with the `sas-scaffold` skill (PGE runconfig, algorithm parameters + per-frame overrides, click CLI, product writer with `/identification` and `/metadata`, golden validation, Docker, pixi, pre-commit, CI) and the standards kit; `CLAUDE.md` (Invariants: GNSS provenance must match DISP-CAL; N always from GNSS; per-pixel mode flag).
 - [ ] T52.2 Runconfig draft (`vlm_workflow`: asc/desc DISP + CAL inputs, GNSS config, output options) with pydantic `extra=forbid`; ADR on what will later be frozen.
 - [ ] T52.3 Product spec draft: layers `vertical`, `east` (where available), `vertical_std`, `east_std`, `mode` (uint8: 0 none, 1 projected, 2 decomposed), `/metadata`, context `gia_rate`, `plate_motion_rate`.

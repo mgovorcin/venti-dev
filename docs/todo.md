@@ -9,9 +9,9 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 ## Phase 0: Gamma 0.3 release
 
-- [!] T01 Confirm the gamma configuration with Talib — blocked on Talib's answers
+- [x] T01 Confirm the gamma configuration with Talib — done 2026-10-06: 600 km, tropo off, unwrap off (cal-disp `docs/decisions/0001-gamma-config.md`)
 - [x] T02 Secure a Docker build host and build the gamma image — done 2026-10-05: aurora has Docker; `cal-disp:0.3.0-rc` built, record on cal-disp `feature/docker-build-record`
-- [ ] T03 Rebuild the golden inside Docker and validate — depends on T01, T02
+- [x] T03 Rebuild the golden inside Docker and validate — done 2026-10-06: `cal-disp:0.3.0-rc2`, 1e-6 in image and on aurora, manifest committed (`8bafac7`)
 - [ ] T04 Fix the delivery documents — depends on T01
 - [ ] T05 Confirm product URLs and version string — depends on T01
 - [ ] T06 Release gamma 0.3 — depends on T03, T04, T05
@@ -23,7 +23,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] T09 Apply standards to cal-disp — depends on T07; T06 only for the upstream PR (ADR-0021)
 - [x] T10 Apply standards to geepers fork — done 2026-10-05 on geepers `feature/standards` (3 commits: env, kit, type fixes)
 - [x] T11 Create the validation package repo — done 2026-10-06: private `mgovorcin/disp2vlm_validation` (`v0.0.0`)
-- [~] T12 geepers dependency audit — T12.1–T12.2 done (`docs/dependency_audit.md` on `feature/extras-split`); T12.3 sign-off requested on geepers fork PR #2 (2026-10-06)
+- [x] T12 geepers dependency audit — done 2026-10-06 (T12.3 approved by the owner on geepers PR #2)
 - [x] T13 geepers lean core — done 2026-10-06 on geepers `feature/extras-split` (provisional on the T12.3 sign-off)
 - [x] T14 `geepers[grid]`: GPS Imaging + Euler, with exclusion areas — done 2026-10-06 on geepers `feature/extras-split` (reinterpolate_nodes, plate tables, plate_velocity_enu)
 - [x] T15 `geepers[analysis]` and `[all]` — done 2026-10-06 on geepers `feature/extras-split` (CI matrix per tier, README install matrix, CHANGELOG)
@@ -68,14 +68,14 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] T45 Populate the frame table — depends on T27, T39, T44
 - [ ] T46 8-frame gate and edge cases — depends on T38, T40, T41, T45
 - [ ] T47 Memory and runtime toward a small EC2 instance — depends on T37
-- [~] T48 Frozen UNR grid snapshot — T48.1 + T48.4 done 2026-10-06 on `feature/unr-snapshot` (`venti.gnss.snapshot`, `scripts/snapshot_unr_grid.py`, `docs/operations.md`); T48.2 blocked on the S3 bucket decision, T48.3 waits for T37
+- [~] T48 Frozen UNR grid snapshot — T48.1, T48.2, T48.4 done 2026-10-06: `unr_grid_0.3_IGS20_20261006` on `s3://opera-adt/opera-ancillary/unr-grid/` (28,492 nodes); T48.3 waits for T37
 - [ ] T49 v0.5 Docker image, golden regeneration, changelog — depends on T46, T47, T48
 - [ ] T50 VnV report and sign-off — depends on T24, T46
 - [ ] T51 Release cal-disp v0.5 — depends on T49, T50
 
 ## Phase 5: VLM v0.1
 
-- [ ] T52 VLM repo skeleton — depends on T07, T17
+- [ ] T52 VLM repo skeleton — depends on T07, T17; products VLM-S1 / VLM-NI, one repo proposed, name pending
 - [x] T53 Venti `[decomposition]`: WLS and projection — done 2026-10-06 on `feature/decomposition` (`venti.decomposition`: `decompose_wls`, `project_vertical`, `decompose` with mode flag)
 - [~] T54 Temporal resampling of asc/desc — T54.1–T54.2 done 2026-10-06 on `feature/temporal-resampling` (`venti.temporal`); T54.3 benchmark waits for the T56 frame choice
 - [ ] T55 GNSS E/N for VLM with provenance check — depends on T28, T37
@@ -104,3 +104,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-06 Phase 2 science port finished on the Venti side: T34 tropo modes (PR #13), T35 σ_CAL (PR #14), T36 unwrap module, gated, 14/14 bench (PR #15); then the unblocked later-phase work: T48.1/T48.4 UNR snapshot + operations doc (PR #16), T53 decomposition (PR #17), T54.1–T54.2 temporal resampling (PR #18). Suite 456 passed, 7 skipped (parity/golden/bench tests need `PYTHONPATH`, `CAL_DISP_GOLDEN_DIR`, `VENTI_UNWRAP_BENCH_DIR`). Everything left open needs a decision or an upstream step: T12.3 sign-off; T11/T52 repo names; T01 → T03–T06 → T09 → T26 → T37 (cal-disp wiring, which also closes T27.4, T30.4, T31.3, T34 CI import, T48.3); T48.2 S3 bucket; T58 beta DISP-NISAR data; fork Actions still to be enabled.
 - 2026-10-06 (later) CI on the fork fixed (full matrix installs every tier; pre-commit under 3.13; files committed before linting formatted at every branch tip). T30.4 benchmark done on `feature/golden-benchmark` (PR #19): gamma path reproduces the trade study exactly (21.4 mm); loclin 50 km 13.6 mm; three bugs found by the full-frame run and fixed mid-stack (gamma GNSS-sigma weights gate, sigma-map trimming, 290 s pass-1 tie). Open from it: TS-B1 on weights, +2 mm bias for T38/T39.
 - 2026-10-06 Gamma release confirmed **not finished** (upstream PR #21 open and unreviewed, no v0.3 tag; T01 sign-off, T03 Docker golden, T04 docs, T05 URLs open). T01.1 memo written (cal-disp fork PR #2: recommends 600 km, tropo off, unwrap off). ADR-0021: v0.5 cal-disp work proceeds on fork branches stacked on `gamma-release`; T06 gates only the upstream merge. T11 done (`disp2vlm_validation`, private). T12.3 sign-off requested on geepers PR #2. T48.2 proposal: `s3://opera-adt/opera-ancillary/unr-grid/<snapshot_id>/`.
+- 2026-10-06 (owner decisions) Talib accepted the gamma config (600 km, tropo off, unwrap off) → T01 done; golden rebuilt and validated at 1e-6 inside `cal-disp:0.3.0-rc2` and on aurora, manifest committed, upstream PR #21 updated → T03 done. geepers tiers approved → T12 done; geepers bug in `download_data_files` (kwargs into thread_map) fixed on geepers PR #3. S3 approved → first UNR snapshot uploaded (T48.2). VLM: products VLM-S1 / VLM-NI, one repo proposed, name pending. Gamma left: T04 docs, T05 URLs/version, T06 tag + delivery.
