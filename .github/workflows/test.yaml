@@ -37,3 +37,40 @@ jobs:
 
       - name: Run tests
         run: pytest
+
+  core-only:
+    # The operational image installs Venti with no extras (ADR-0020): the
+    # calibration core must install, import and pass its own tests without
+    # dask/zarr/asf_search/dem-stitcher/matplotlib.
+    name: Core only (no extras)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install GDAL system libraries
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libgdal-dev gdal-bin
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install GDAL Python bindings matching system libgdal
+        run: |
+          pip install numpy setuptools wheel
+          pip install --no-build-isolation "gdal==$(gdal-config --version)"
+      - name: Install the core + test tooling only
+        run: |
+          pip install -e ".[test]"
+          python - <<'PY'
+          import importlib.util
+          heavy = ["dask", "zarr", "asf_search", "dem_stitcher", "matplotlib", "numba"]
+          present = [m for m in heavy if importlib.util.find_spec(m)]
+          assert not present, f"core install pulled in {present}"
+          PY
+      - name: Import the core
+        run: |
+          python -c "import venti, venti.surface, venti.gnss, venti.io, venti.unwrap, venti.models, venti.staging; from venti.workflow.config import CalibrationOptions; print(venti.__version__)"
+      - name: Core tests
+        run: pytest -o addopts="" -p no:cacheprovider tests/test_packaging.py tests/test_models_plate.py tests/test_staging_package.py tests/test_unwrap_corrections.py tests/test_surface.py tests/test_config_compat.py
