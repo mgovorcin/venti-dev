@@ -302,10 +302,10 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T34. Tropo modes
 **Depends on:** T19, T27
 **Context:** R-T1. cal-disp `prep/tropo.py` (ZTD at DEM surface in 512-row blocks, −ZTD/los_up, sec − ref) is copied into `venti.calibration.tropo` and kept identical by a parity test; `trade studies/two_pass/tropo_mode.py` has the stratified fit ([1, x, y, h, h²] per epoch). `mode=auto` chooses from DEM relief p5–p95: off < 0.3 km; stratified ≥ 1.5 km; 0.3–1.5 km → off (until TS-T1). Data access via `opera_utils.tropo`.
-- [ ] T34.1 Copy `prep/tropo.py` → `venti/calibration/tropo.py`; parity test runs both on a 256×256 fixture and asserts bit-identical output; cal-disp CI imports both.
-- [ ] T34.2 `stratified_tropo(ztd_los, dem, mask) -> model` and `apply_tropo(disp, mode, ...)` returning the `cal_tropo` component.
-- [ ] T34.3 `choose_tropo_mode(dem, table_entry) -> mode` with the relief rule; unit tests for the three bands.
-- [ ] T34.4 Reproduce `tropo_check/independent_check.py` (within 0.5 mm) as a test on the golden pair (skipped without data).
+- [x] T34.1 Copy `prep/tropo.py` → `venti/calibration/tropo.py`; parity test runs both on a 256×256 fixture and asserts bit-identical output; cal-disp CI imports both. *Done 2026-10-06:* `interpolate_in_time`, `interpolate_to_dem_surface`, `compute_los_correction`, `pair_correction` in `venti.calibration.tropo`; `tests/test_calibration_tropo.py::TestParityWithCalDisp` asserts bit-identity (runs when `cal_disp` is importable; verified locally against `00_tools/src/cal-disp`). The cal-disp CI side lands with the T37 wiring, which is when cal-disp can pin this Venti.
+- [x] T34.2 `stratified_tropo(ztd_los, dem, mask) -> model` and `apply_tropo(disp, mode, ...)` returning the `cal_tropo` component. *Done 2026-10-06:* `stratified_tropo` → `StratifiedModel`, `stratified_delay`, `apply_tropo(correction, mode, dem=...)` → `cal_tropo` (None for off); linearity test shows the pair fit equals the per-date difference; integration test feeds it to `calibrate_pair`.
+- [x] T34.3 `choose_tropo_mode(dem, table_entry) -> mode` with the relief rule; unit tests for the three bands. *Done 2026-10-06:* `choose_tropo_mode(TropoOptions, dem)`; the table entry arrives as the frame-applied `TropoOptions` (`FrameParameterTable.apply`); tests cover the bands, `legacy`, and F16940/F08882/unknown-frame table behaviour.
+- [x] T34.4 Reproduce `tropo_check/independent_check.py` (within 0.5 mm) as a test on the golden pair (skipped without data). *Done 2026-10-06:* `test_golden_dem_surface_delay_matches_an_independent_interpolation` (needs `CAL_DISP_GOLDEN_DIR` and `cal_disp`); passes on the F08882 golden inputs.
 
 ### T35. σ_CAL model
 **Depends on:** T27, T33

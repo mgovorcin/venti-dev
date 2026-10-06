@@ -35,7 +35,7 @@ reproduces the gamma 0.3 result, so a version-1 file loads unchanged.
 | `calibration_options.weights.coherence_power` | 0 | — | R-S4 (8 for v0.5) | 2 |
 | `calibration_options.weights.robust` | `false` | — | R-S4 | 2 |
 | `calibration_options.weights.filled_pixel_weight` | 0.02 | — | R-S4 | 2 |
-| `calibration_options.tropo.mode` | `legacy` | — | R-T1 (`auto` for v0.5) | 2 |
+| `calibration_options.tropo.mode` | `legacy` | — | R-T1 (`auto` for v0.5); resolved by `venti.calibration.tropo.choose_tropo_mode`: `legacy` → `apply_tropo_correction`; `auto` → off below `relief_stratified_meters`, stratified at or above (the 0.3–1.5 km band stays off until TS-T1) | 2 |
 | `calibration_options.tropo.relief_off_meters` | 300 | m | R-T1 | 2 |
 | `calibration_options.tropo.relief_stratified_meters` | 1500 | m | R-T1 | 2 |
 | `calibration_options.gnss.buffer_meters` | 0 | m | R-G2 (50000 for v0.5) | 2 |
