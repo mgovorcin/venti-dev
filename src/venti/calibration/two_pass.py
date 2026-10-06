@@ -410,7 +410,7 @@ def calibrate_pair(
         cal_unwrap_shift=cal_unwrap_shift,
         components_applied=applied,
         method=method,
-        reference_point=tuple(ref_point),
+        reference_point=(int(ref_point[0]), int(ref_point[1])),
         reference_value=ref_value,
         coverage=coverage,
         fit_residual_std=fit_std,
