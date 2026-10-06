@@ -26,13 +26,16 @@ from .remove_restore import (
     remove_restore_mask,
     sigma_inflation_inside,
 )
+from .two_pass import CalibrationResult, calibrate_pair
 from .weights import coherence_weights, fit_weights, robust_weights
 
 __all__ = [
     "AreaDB",
+    "CalibrationResult",
     "EventDB",
     "RemoveRestore",
     "base_weights",
+    "calibrate_pair",
     "coherence_weights",
     "fill_gaps",
     "fit_weights",
