@@ -169,3 +169,5 @@ site/
 # Small test fixtures are tracked; the data/ rule above is for staged products.
 !tests/data/
 !tests/data/**
+!src/venti/data/
+!src/venti/data/**
