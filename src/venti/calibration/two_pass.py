@@ -46,10 +46,10 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["CalibrationResult", "UnwrapHook", "calibrate_pair"]
 
+# ``hook(residual, valid, cycle_m) -> (shift, decisions)``: `shift` is the
+# displacement to subtract (same units as the residual, 0 where no change),
+# `decisions` anything the hook wants recorded (plan T36 provides it).
 UnwrapHook = Callable[[np.ndarray, np.ndarray, float], tuple[np.ndarray, Any]]
-"""``hook(residual, valid, cycle_m) -> (shift, decisions)``: `shift` is the
-displacement to subtract (same units as the residual, 0 where no change),
-`decisions` anything the hook wants recorded (plan T36 provides it)."""
 
 COMPONENTS = (
     "cal_gnss_surface",
