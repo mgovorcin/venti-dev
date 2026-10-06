@@ -53,8 +53,11 @@ JUPYTER_PREFER_ENV_PATH=1 pixi run -e docs docs   # mkdocs build --strict
 - `src/venti/workflow/stage_frame_data.py` imports `dem_cli`, `disp_cli`,
   `los_cli`, `tropo_cli` from `scripts/staging/` through a `sys.path` insert.
   Those modules are not part of the installed package, so the stage workflow
-  only works from a source checkout. Resolved in T17 by moving the staging
-  code under `venti/staging/` (or into a `[staging]` extra).
+  only works from a source checkout. **Resolved in T17:** the CLIs are
+  `venti.staging` (shims remain in `scripts/staging/`); their dependencies are
+  the `research` extra. `scripts/staging/unr_cli.py` on upstream `main` is a
+  stale copy of `los_cli.py` (same functions, one comment differs) and was
+  left in place; it is not imported anywhere.
 - `README.md` referenced `environment.yml`, which exists; the pixi route is
   now documented alongside it.
 

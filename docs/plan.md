@@ -155,7 +155,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T17. Venti package layout: lean core + extras
 **Depends on:** T14, T16
 **Context:** PRD §4.1/§4.4: core = `io`, geometry, GNSS→LOS, config, `SensorSpec`; extras `[calibration]` (numba, scikit-image), `[decomposition]`, `[models]` (GIA grids), `[research]` (matplotlib, jupyter), `[all]`. Remove `models/plate_motion.py`, `models/load_itrf.py` (→ `geepers[grid]`) and `gnss/unr.py` (→ geepers core). Keep `models/load_gia.py` in `[models]`.
-- [ ] T17.1 Write `docs/architecture.md` with the target tree:
+- [x] T17.1 Write `docs/architecture.md` with the target tree: *Done 2026-10-06 as `docs/architecture.md` + ADR-0020:* the package layout is **kept** (cal-disp imports it by name; the lean-core goal is a dependency property); the tree sketched here is superseded.
   ```
   venti/
     core/      io, raster, geometry (ENU↔LOS), config base, sensor.py, gnss_sampling.py
@@ -164,10 +164,10 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
     models/        gia
     workflow/      calibration.py, decomposition.py, run.py
   ```
-- [ ] T17.2 Move modules per the tree with `git mv`; update imports; tests green (one PR, `refactor:` only, no behaviour change).
-- [ ] T17.3 Delete `models/plate_motion.py`, `models/load_itrf.py`, `gnss/unr.py`; replace call sites with `geepers.euler` / `geepers.gps_sources.UnrGridSource`; `scripts/get_model_rates.py` uses geepers.
-- [ ] T17.4 Define extras in `pyproject.toml`; add CI job `core-only` (import `venti.core` with no extras) and `calibration-only`.
-- [ ] T17.5 Pin `geepers` from the fork by tag in `pyproject.toml`.
+- [x] T17.2 Move modules per the tree with `git mv`; update imports; tests green (one PR, `refactor:` only, no behaviour change). *Done 2026-10-06 (reduced scope per ADR-0020):* only the staging CLIs move — `scripts/staging/*_cli.py` + `utils.py` → `venti.staging`, thin wrappers remain, the `sys.path` hack in `stage_frame_data` is gone. `scripts/staging/unr_cli.py` (a stale copy of `los_cli.py`) left untouched.
+- [x] T17.3 Delete `models/plate_motion.py`, `models/load_itrf.py`, `gnss/unr.py`; replace call sites with `geepers.euler` / `geepers.gps_sources.UnrGridSource`; `scripts/get_model_rates.py` uses geepers. *Partly done 2026-10-06:* `models/plate_motion.py`, `models/load_itrf.py` and the ITRF tables deleted; `venti.models` re-exports `geepers.euler`; `scripts/get_model_rates.py` ported (`get_frame_pmm` via `plate_velocity_enu`, units label fixed to mm/year). **`gnss/unr.py` stays until T28**: `GNSSReference` and cal-disp's runconfig depend on its on-disk layout (`grid_latlon_lookup.txt`, tenv8 files).
+- [x] T17.4 Define extras in `pyproject.toml`; add CI job `core-only` (import `venti.core` with no extras) and `calibration-only`. *Done 2026-10-06:* extras `calibration`, `decomposition`, `models` (placeholders), `research` (staging + stack data access + notebooks), `test`, `all`; `opera-utils` declared without `[disp]`; pixi envs `ops` (core only) and `core-test`; `core-only` job in `test.yaml`; `tests/test_packaging.py` pins the tiers.
+- [x] T17.5 Pin `geepers` from the fork by tag in `pyproject.toml`. *Done 2026-10-06:* `geepers[grid] @ git+https://github.com/mgovorcin/geepers.git@677f95d…` (commit pin; switch to a tag when the fork tags).
 
 ### T18. `SensorSpec` abstraction
 **Depends on:** T17

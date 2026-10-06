@@ -28,7 +28,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T14 `geepers[grid]`: GPS Imaging + Euler, with exclusion areas — done 2026-10-06 on geepers `feature/extras-split` (reinterpolate_nodes, plate tables, plate_velocity_enu)
 - [x] T15 `geepers[analysis]` and `[all]` — done 2026-10-06 on geepers `feature/extras-split` (CI matrix per tier, README install matrix, CHANGELOG)
 - [x] T16 Venti bug fixes and packaging repair — done 2026-10-05 on `feature/venti-bugfixes` (T16.7 research-branch copy still open, see plan)
-- [ ] T17 Venti package layout: lean core + extras — depends on T14, T16
+- [x] T17 Venti package layout: lean core + extras — done 2026-10-06 on `feature/lean-core` (tiers by dependency, ADR-0020; `venti.staging`; plate motion from geepers; `gnss/unr.py` deferred to T28)
 - [ ] T18 `SensorSpec` abstraction — depends on T17
 - [ ] T19 Venti algorithm-parameters schema — depends on T17
 - [x] T20 Venti documentation site — done 2026-10-05 on `feature/docs-site` (gh-pages deploy verified only after first push to main)

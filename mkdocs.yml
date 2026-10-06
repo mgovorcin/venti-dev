@@ -28,6 +28,7 @@ nav:
   - Home: index.md
   - Product requirements (PRD): specs.md
   - Implementation plan: plan.md
+  - Architecture: architecture.md
   - Task tracker: todo.md
   - Decisions:
       - decisions/README.md
