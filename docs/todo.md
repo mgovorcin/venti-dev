@@ -76,7 +76,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Phase 5: VLM v0.1
 
 - [ ] T52 VLM repo skeleton — depends on T07, T17
-- [ ] T53 Venti `[decomposition]`: WLS and projection — depends on T18, T35
+- [x] T53 Venti `[decomposition]`: WLS and projection — done 2026-10-06 on `feature/decomposition` (`venti.decomposition`: `decompose_wls`, `project_vertical`, `decompose` with mode flag)
 - [ ] T54 Temporal resampling of asc/desc — depends on T17
 - [ ] T55 GNSS E/N for VLM with provenance check — depends on T28, T37
 - [ ] T56 VLM workflow and product writer — depends on T53, T54, T55

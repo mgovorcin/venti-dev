@@ -51,7 +51,7 @@ and cal-disp switches in T37.
 |---|---|---|---|
 | **core** | `pip install venti` | everything above except `staging` and the stack drivers' data access | numpy, scipy, pandas, scikit-image, joblib, tqdm, xarray, rioxarray, netcdf4, h5netcdf, rasterio, gdal, geopandas, shapely, pyproj, requests, pydantic, pyyaml, tyro, opera-utils (no extras), rich, `geepers[grid]` |
 | `[calibration]` | `venti[calibration]` | placeholder today (the core already is the calibration engine); numba etc. land here with the two-pass surface | — |
-| `[decomposition]` | `venti[decomposition]` | placeholder for the WLS/projection work (T53) | — |
+| `[decomposition]` | `venti[decomposition]` | `venti.decomposition`: per-pixel WLS for [E, U] with N from GNSS, single-geometry projection, mode flag (T53); numpy only, so the extra adds nothing today | — |
 | `[models]` | `venti[models]` | GIA / PMM context rasters (`scripts/get_model_rates.py`) | — |
 | `[research]` | `venti[research]` | `venti.staging`, stack drivers that need `opera_utils.disp`, notebooks | opera-utils[disp,asf] (zarr, dask, s3fs), asf_search, dem-stitcher, pyarrow, numba, matplotlib, ipykernel, ipywidgets, folium |
 | `[all]` | `venti[all]` | all of the above | |

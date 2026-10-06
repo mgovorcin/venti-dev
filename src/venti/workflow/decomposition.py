@@ -204,33 +204,29 @@ class DecompositionWorkflow:
 
         Notes
         -----
-        This is a placeholder. Full implementation should:
-        1. Set up least-squares inversion: d = G * m
-           where d = [los_asc, los_desc], m = [east, north, up]
-        2. Apply proper weighting based on geometry and uncertainties
-        3. Handle rank-deficient cases (e.g., only ascending or descending)
-        4. Compute uncertainties for output components
+        Calls `venti.decomposition.decompose_wls` with unit weights and the
+        north component fixed at 0: this driver has no GNSS grid, so the
+        north motion is *not* resolved (two looks cannot separate three
+        components). The VLM workflow (plan T56) passes the GNSS north and
+        the per-look sigmas instead.
 
         """
-        logger.debug("Performing LOS-to-ENU decomposition...")
+        from ..decomposition import decompose_wls
 
-        # Placeholder: Simple 2D decomposition (East-Up only)
-        # Assumes purely vertical and horizontal motion
-        # This is NOT the proper implementation!
-
-        _e_asc, _n_asc, _u_asc = los_vectors_asc
-        _e_desc, _n_desc, _u_desc = los_vectors_desc
-
-        # TODO: Implement proper least-squares inversion
-        # For now, return placeholder arrays
-        shape = los_asc.shape
-        east_disp = np.zeros(shape)
-        north_disp = np.zeros(shape)
-        up_disp = np.zeros(shape)
-
-        logger.warning("Using placeholder decomposition - implement proper inversion!")
-
-        return east_disp, north_disp, up_disp
+        logger.debug("Performing LOS-to-ENU decomposition (north fixed at 0)...")
+        east, up, _se, _su, cond = decompose_wls(
+            [np.asarray(los_asc, float), np.asarray(_los_desc, float)],
+            [1.0, 1.0],
+            [los_vectors_asc, los_vectors_desc],
+            0.0,
+        )
+        if np.nanmedian(cond) > 10:
+            logger.warning(
+                "LOS geometries are ill-conditioned (cond %.1f): east is unreliable",
+                float(np.nanmedian(cond)),
+            )
+        north = np.zeros_like(up)
+        return east, north, up
 
     def process_displacement_pair(
         self,

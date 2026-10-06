@@ -70,9 +70,9 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 # The PRD names these tiers (D11). Today the core already carries everything
-# the calibration engine needs, so `calibration` and `decomposition` are
-# placeholders that keep `venti[calibration]` a valid install target; they
-# will gain numba etc. as the two-pass surface and the WLS decomposition land.
+# the calibration engine (venti.calibration) and the decomposition
+# (venti.decomposition, numpy only) need, so `calibration` and `decomposition`
+# are empty install targets kept for the day they gain a dependency (numba).
 calibration = []
 decomposition = []
 # GIA / PMM context rasters (models/, scripts/get_model_rates.py)

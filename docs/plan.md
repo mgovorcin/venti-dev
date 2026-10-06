@@ -462,10 +462,10 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T53. Venti `[decomposition]`: WLS and projection
 **Depends on:** T18, T35
 **Context:** PRD §3.2. Asc+desc: per pixel solve `[los_a, los_d]ᵀ = A·[E, U]ᵀ + n-term` with N fixed from GNSS, weighted by σ (σ_CAL ⊕ σ_DISP); single geometry: `U = (LOS − e·E_gnss − n·N_gnss)/u`. σ propagation (R-E3). Replace the stub `workflow/decomposition.py`.
-- [ ] T53.1 `decompose_wls(los_a, σ_a, enu_a, los_d, σ_d, enu_d, vN) -> (E, U, σE, σU, cond)`; test against a synthetic ENU field.
-- [ ] T53.2 `project_vertical(los, σ, enu, vE, vN) -> (U, σU)`; test.
-- [ ] T53.3 `decompose(...)` dispatcher producing the mode flag; ill-conditioned pixels (cond > threshold) fall back to projection and are flagged.
-- [ ] T53.4 Document the single-geometry validity assumption (horizontal motion long-wavelength) in the API docs and product spec.
+- [x] T53.1 `decompose_wls(los_a, σ_a, enu_a, los_d, σ_d, enu_d, vN) -> (E, U, σE, σU, cond)`; test against a synthetic ENU field. *Done 2026-10-06:* `venti.decomposition.decompose_wls(los, sigma, enu, north, sigma_north=)` for K ≥ 2 looks (sequences); exact recovery without noise, z-scores 0.93–1.07 with noise, weights tested with a third biased look, singular/ill-conditioned cases.
+- [x] T53.2 `project_vertical(los, σ, enu, vE, vN) -> (U, σU)`; test. *Done 2026-10-06* (+ `sigma_east`, `sigma_north`, `min_up`); the east-leak test shows why the mode flag exists.
+- [x] T53.3 `decompose(...)` dispatcher producing the mode flag; ill-conditioned pixels (cond > threshold) fall back to projection and are flagged. *Done 2026-10-06:* `DecompositionResult(east, up, sigma_east, sigma_up, mode, cond, n_looks)`; `cond_max=10` default; projection = inverse-variance mean over the valid looks.
+- [x] T53.4 Document the single-geometry validity assumption (horizontal motion long-wavelength) in the API docs and product spec. *Done 2026-10-06:* `venti.decomposition.wls` module docstring (API reference) + `docs/architecture.md`; the PRD §3.2 already states the flag; the VLM product spec (T56) inherits the wording.
 
 ### T54. Temporal resampling of asc/desc
 **Depends on:** T17
