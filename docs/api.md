@@ -59,6 +59,8 @@ Generated from the docstrings (NumPyDoc) by mkdocstrings.
 
 ::: venti.decomposition.wls
 
+::: venti.temporal.resample
+
 ::: venti.unwrap.regions
 
 ::: venti.unwrap.cycles

@@ -18,6 +18,8 @@ venti/
   spatial/          gap filling (GDAL), interpolation, resampling, SpatialProcessor
   filtering/        moving-window plane fit, Gaussian and low-pass filters
   solver/           design matrices, lscov, plane fitting
+  temporal/         moving-window robust line fits that resample asc/desc time
+                    series onto common epochs (T54)
   unwrap/           gamma corrector (unwrap_corrections) + v0.5 water-mask regions and
                     whole-cycle estimator (regions, cycles; gated, T36); cycle = lambda/2
   io/               rasters and NetCDF; CalProduct / VlmProduct writers
