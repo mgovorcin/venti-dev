@@ -264,17 +264,17 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T29. Gap filling and continuous surface support
 **Depends on:** T19
 **Context:** R-S3: fill gaps before fitting; the surface is never 0 on masked cells; `_find_data_extent` off-by-one and the Hann taper at edges (TODO.md) go away with the new method. Filled pixels get weight 0.02 (R-S4).
-- [ ] T29.1 `fill_gaps(arr, mask, method="inpaint_biharmonic"|"nearest_then_smooth") -> (filled, filled_mask)`; tests: constant field with holes recovers exactly; ramp with holes recovers within tolerance.
-- [ ] T29.2 Weight map builder: `base_weights(mask, filled_mask, w_filled=0.02)`.
-- [ ] T29.3 Property test: output surface has no zeros/NaNs anywhere inside the frame for any mask pattern.
+- [x] T29.1 `fill_gaps(arr, mask, method="inpaint_biharmonic"|"nearest_then_smooth") -> (filled, filled_mask)`; tests: constant field with holes recovers exactly; ramp with holes recovers within tolerance. *Done 2026-10-06:* `venti.calibration.gaps.fill_gaps(data, mask, method=nearest|nearest_smooth|biharmonic|idw) -> (filled, filled_mask)`; constant field exact for all methods, ramp within tolerance, biharmonic < 0.6 in the enclosed gap.
+- [x] T29.2 Weight map builder: `base_weights(mask, filled_mask, w_filled=0.02)`. *Done 2026-10-06:* `base_weights(valid, filled_mask, w_filled=0.02)`.
+- [x] T29.3 Property test: output surface has no zeros/NaNs anywhere inside the frame for any mask pattern. *Done 2026-10-06:* property test over random masks (finite everywhere, no zeros, filled count = invalid count).
 
 ### T30. Local-linear surface with physical cutoff
 **Depends on:** T29
 **Context:** R-S2. Port `surface_v2.py` (`loclin_v2`, `_loclin_weighted`, also `mw_v2`, `fft_v2` for comparison). The parameter is `cutoff_wavelength_meters` (half-response); gamma's `window_size_meters` is kept for the legacy method only. The trade study showed half-response ≈ 4.5 × window for the old method.
-- [ ] T30.1 `loclin_surface(residual, weights, x, y, cutoff_m) -> surface` with a Gaussian/tricube kernel whose bandwidth is derived from `cutoff_m`; numba or scipy KD-tree implementation; works on the downsampled grid.
-- [ ] T30.2 Half-response calibration test: feed sinusoids of several wavelengths; the transfer function must be 0.5 ± 0.05 at `cutoff_m`.
-- [ ] T30.3 Keep `windowed_plane_surface` (gamma) as `surface.method = windowed_plane`; both share the same signature.
-- [ ] T30.4 Benchmark on the F08882 golden pair: `loclin` at 50 km vs gamma; record RMSE vs real stations (expect ≈ 12.9 mm vs 17.4 mm).
+- [x] T30.1 `loclin_surface(residual, weights, x, y, cutoff_m) -> surface` with a Gaussian/tricube kernel whose bandwidth is derived from `cutoff_m`; numba or scipy KD-tree implementation; works on the downsampled grid. *Done 2026-10-06:* `venti.calibration.loclin.local_linear_surface(field, weights, sigma_px)` (Gaussian-moment solve, O(N log N) for any kernel width) and `loclin_surface(field, weights, pixel_m, cutoff_wavelength_m)` with the low-coverage blend; `kernel_sigma_px` from the cutoff.
+- [x] T30.2 Half-response calibration test: feed sinusoids of several wavelengths; the transfer function must be 0.5 ± 0.05 at `cutoff_m`. *Done 2026-10-06:* transfer-function test — response 0.5 ± 0.05 at the cutoff and matches the Gaussian at 20 and 200 km.
+- [~] T30.3 Keep `windowed_plane_surface` (gamma) as `surface.method = windowed_plane`; both share the same signature. *Pending T33:* the method switch (`surface.method = windowed_plane|loclin`) is wired in the two-pass orchestrator, where the gamma `fit_windowed_plane` and `loclin_surface` are called through one adapter.
+- [~] T30.4 Benchmark on the F08882 golden pair: `loclin` at 50 km vs gamma; record RMSE vs real stations (expect ≈ 12.9 mm vs 17.4 mm). *Pending:* needs the golden-pair data run (after T33 wiring); expected ≈ 12.9 mm vs 17.4 mm RMSE at real stations.
 
 ### T31. Robust coherence weights, no global quantile mask
 **Depends on:** T30

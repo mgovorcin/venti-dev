@@ -59,6 +59,16 @@ Value-changing entries say which product layers move and by how much
 
 ### Added
 
+- `venti.calibration` package — the v0.5 engine next to the gamma `venti.surface`:
+  - `gaps.fill_gaps(data, mask, method)` (plan T29, R-S3): nearest /
+    nearest+smooth (default) / biharmonic / GDAL inverse-distance fill so the
+    field is finite everywhere; `base_weights` gives filled pixels weight 0.02.
+  - `loclin.loclin_surface(field, weights, pixel_m, cutoff_wavelength_meters)`
+    (plan T30, R-S2): weighted local-linear Gaussian-kernel regression solved
+    for every pixel from filtered moments; the kernel sigma follows from the
+    half-response wavelength (`kernel_sigma_px`, response exactly 1/2 at the
+    cutoff); low-coverage regions (sea, outside the swath) blend into a
+    smoothed fallback so the surface is continuous and never 0.
 - `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
   the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
   bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files
