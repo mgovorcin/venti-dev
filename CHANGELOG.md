@@ -59,6 +59,16 @@ Value-changing entries say which product layers move and by how much
 
 ### Added
 
+- `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
+  the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
+  bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files
+  (`variable` only in reprocessing mode, R-G1), optional exclusion of nodes
+  inside defo/event areas with GPS-Imaging re-interpolation (R-G5), E/N/U and
+  sigma fields on the target grid, and a `Provenance` record (grid version/
+  type/frame, snapshot id, lookup hash, node counts, field hash, digest) for
+  the product metadata (R-G4). `project_field_to_los` projects the gridded
+  field per pixel with the LOS rasters, so nodes outside the swath need no
+  LOS look (the trade-study LOS extrapolation is unnecessary).
 - `venti.frames` (plan T27): versioned frame-parameter table
   (`src/venti/data/frame_parameters.json`) with the shape of cal-disp's
   `algorithm_parameters_overrides_json`; precedence default < frame <

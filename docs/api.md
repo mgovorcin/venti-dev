@@ -15,7 +15,11 @@ Generated from the docstrings (NumPyDoc) by mkdocstrings.
 
 ::: venti.surface
 
-## GNSS reference
+## GNSS sampling (the single path for DISP-CAL and VLM)
+
+::: venti.gnss.sampling
+
+## GNSS reference (gamma)
 
 ::: venti.gnss.reference
 

@@ -42,7 +42,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 ## Phase 2: Science port into Venti
 
-- [ ] T28 `sample_gnss_enu` — depends on T14, T18, T19
+- [x] T28 `sample_gnss_enu` — done 2026-10-06 on `feature/gnss-sampling` (`venti.gnss.sampling`: buffer, exclusion + re-interpolation, E/N/U fields, provenance; per-pixel LOS projection replaces LOS extrapolation)
 - [ ] T29 Gap filling and continuous surface support — depends on T19
 - [ ] T30 Local-linear surface with physical cutoff — depends on T29
 - [ ] T31 Robust coherence weights — depends on T30
