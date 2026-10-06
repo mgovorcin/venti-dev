@@ -42,7 +42,10 @@ def test_get_model_rates_uses_geepers(monkeypatch):
     spec.loader.exec_module(gmr)
     frame = gpd.GeoDataFrame(geometry=[box(-96.0, 29.0, -95.0, 30.0)], crs="EPSG:4326")
     ve, vn, attrs = gmr.get_frame_pmm(
-        frame, plate="NA", date=2020, grid_posting=10000  # frame in EPSG:4326, posting in metres
+        frame,
+        plate="NA",
+        date=2020,
+        grid_posting=10000,  # frame in EPSG:4326, posting in metres
     )
     assert ve.shape == vn.shape == (attrs["height"], attrs["width"])
     assert attrs["units"] == "mm/year"
