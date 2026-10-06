@@ -35,6 +35,8 @@ Generated from the docstrings (NumPyDoc) by mkdocstrings.
 
 ::: venti.gnss.sampling
 
+::: venti.gnss.snapshot
+
 ## GNSS reference (gamma)
 
 ::: venti.gnss.reference

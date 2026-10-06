@@ -30,6 +30,7 @@ nav:
   - Implementation plan: plan.md
   - Architecture: architecture.md
   - Algorithm parameters: algorithm_parameters.md
+  - Operations (UNR snapshot): operations.md
   - Task tracker: todo.md
   - Decisions:
       - decisions/README.md
