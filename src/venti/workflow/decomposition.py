@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025-2026 opera-adt
+# SPDX-License-Identifier: BSD-3-Clause
+# Part of Venti, https://github.com/opera-adt/Venti (BSD-3-Clause, see LICENSE).
 """Object-oriented decomposition workflow for InSAR displacement products.
 
 This module provides a high-level DecompositionWorkflow class that orchestrates

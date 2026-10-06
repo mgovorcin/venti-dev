@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025-2026 opera-adt
+# SPDX-License-Identifier: BSD-3-Clause
+# Part of Venti, https://github.com/opera-adt/Venti (BSD-3-Clause, see LICENSE).
 """DEM generation for OPERA frames using GLO30 data.
 
 Note: The DEM generated here might differ from the DEM in DISP-STATIC products,

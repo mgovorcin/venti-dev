@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025-2026 opera-adt
+# SPDX-License-Identifier: BSD-3-Clause
+# Part of Venti, https://github.com/opera-adt/Venti (BSD-3-Clause, see LICENSE).
 """DISP-S1 CLI for previewing and downloading displacement stack products.
 
 This module provides tools to query, preview, and download OPERA DISP-S1
