@@ -41,13 +41,48 @@ to download is retried alone and, if it still fails, listed in
 Snapshots are immutable: the script refuses to write into an existing
 directory, and `verify_snapshot` reports changed, missing and unlisted files.
 
-## Storage
+## Storage (proposal, plan T48.2)
 
-The release snapshot is mirrored to controlled storage (S3 bucket, PRD §7.5
-Q6: **bucket and IAM to be decided**, plan T48.2). Until then the snapshot
-lives on the processing host and its id and hashes are what the product
-records. The bucket layout will mirror the directory above, one prefix per
-snapshot id, read-only for the processing role.
+**Proposed location:** the shared OPERA ancillary prefix the DISP batch
+pipelines already use (`SHARED_ANCILLARY_ROOT` in `disp-s1-batch`,
+`disp-s1-stage-batch`), next to `dem/`, `water-mask/`, `ionosphere/` and
+`algorithm-parameters/`:
+
+```
+s3://opera-adt/opera-ancillary/                      us-west-2, AWS_PROFILE=saml-pub
+    unr-grid/
+        unr_grid_0.3_IGS20_20261006/                 one prefix per snapshot_id, immutable
+            snapshot.json
+            MANIFEST.sha256
+            grid_latlon_lookup.txt
+            nodes/<id:06d>_IGS20_constant.tenv8
+        CURRENT                                      text file: the snapshot_id operations use
+    disp-cal/                                        later (plan T41, T45)
+        defo-areas/<version>.geojson
+        events/<version>.geojson
+        frame-parameters/<version>.json
+```
+
+Why there: same account, region and credentials as the processing that will
+read it; no new bucket, policy or cost centre; the ancillary prefix already
+has the "versioned input, never overwritten" convention (`algorithm-parameters/`).
+
+**Access.** Processing roles read only. Writing a snapshot is a release step
+done by the release manager from aurora with the SAML profile:
+
+```bash
+source 00_tools/batch/disp-s1-batch/config.sh       # AWS_PROFILE=saml-pub, us-west-2
+python scripts/snapshot_unr_grid.py --verify SNAP   # must print OK first
+aws s3 sync SNAP s3://opera-adt/opera-ancillary/unr-grid/$(basename SNAP)/ --no-progress
+aws s3 cp - s3://opera-adt/opera-ancillary/unr-grid/CURRENT <<< "<snapshot_id>"  # only after the T46 gate
+```
+
+A snapshot prefix is never rewritten: a changed file is a new snapshot. If
+the bucket has versioning on, it is a second line of defence, not the
+mechanism. `CURRENT` moves only through the roll-forward procedure below.
+
+**Status:** proposal; nothing has been uploaded. Needs the owner's OK on the
+prefix and on who holds write access.
 
 ## Roll-forward procedure (plan T48.4)
 
