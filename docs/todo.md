@@ -45,8 +45,8 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T28 `sample_gnss_enu` — done 2026-10-06 on `feature/gnss-sampling` (`venti.gnss.sampling`: buffer, exclusion + re-interpolation, E/N/U fields, provenance; per-pixel LOS projection replaces LOS extrapolation)
 - [x] T29 Gap filling and continuous surface support — done 2026-10-06 on `feature/calibration-surface` (`venti.calibration.gaps`)
 - [~] T30 Local-linear surface with physical cutoff — core done 2026-10-06 (`venti.calibration.loclin`, half-response test); method switch (T30.3) lands with T33, golden-pair benchmark (T30.4) after wiring
-- [ ] T31 Robust coherence weights — depends on T30
-- [ ] T32 Remove-restore: defo/event areas — depends on T29
+- [~] T31 Robust coherence weights — core done 2026-10-06 (`venti.calibration.weights`); gamma-mask golden regression (T31.3) is a cal-disp run in T37
+- [x] T32 Remove-restore: defo/event areas — done 2026-10-06 on `feature/calibration-weights-rr` (`venti.calibration.remove_restore`)
 - [ ] T33 Two-pass orchestration and component bookkeeping — depends on T30, T31, T32
 - [ ] T34 Tropo modes — depends on T19, T27
 - [ ] T35 σ_CAL model — depends on T27, T33

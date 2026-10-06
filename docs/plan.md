@@ -279,17 +279,17 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T31. Robust coherence weights, no global quantile mask
 **Depends on:** T30
 **Context:** R-S4. The 15/85% global residual-quantile mask cost ~4.5 mm RMSE; replace with local robust (Huber/MAD on local residuals) × coherence^p, p = 8 default (TS-B1 may change it). Keep the quantile mask behind `weights.quantile_mask` for gamma reproduction.
-- [ ] T31.1 `coherence_weights(coh, p)`; `robust_weights(residual_local, c=1.345)` (Huber) with two IRLS iterations inside `loclin_surface`.
-- [ ] T31.2 Combined weight = base × coh^p × robust; tests: a single 10 cm outlier pixel moves the surface by < 0.1 mm at 50 km.
-- [ ] T31.3 Flag wiring: `weights.quantile_mask=True` reproduces gamma exactly on the golden (regression test).
+- [x] T31.1 `coherence_weights(coh, p)`; `robust_weights(residual_local, c=1.345)` (Huber) with two IRLS iterations inside `loclin_surface`. *Done 2026-10-06:* `venti.calibration.weights.coherence_weights(coh, p)`, `robust_weights(field, w, sigma_px, method=huber|gate, threshold=4 MAD, iterations=2)`.
+- [x] T31.2 Combined weight = base × coh^p × robust; tests: a single 10 cm outlier pixel moves the surface by < 0.1 mm at 50 km. *Done 2026-10-06:* `fit_weights` = base × coh^p × robust; test: a 10 cm 4×4-px blunder moves the 50 km surface by < 0.1 mm with robust weights, > 0.1 mm without.
+- [~] T31.3 Flag wiring: `weights.quantile_mask=True` reproduces gamma exactly on the golden (regression test). *Partly:* `fit_weights` with the gamma defaults (`coherence_power=0`, `robust=False`) is the identity (tested); the golden regression with the gamma quantile mask is a cal-disp run (T37).
 
 ### T32. Remove-restore: defo/event areas
 **Depends on:** T29
 **Context:** A5/R-S5, PRD §2.8. Port `defo_area.py` + `defo_area2.geojson`. Areas are curated GeoJSON (`defo_area_db_json`, `event_db_json`); events carry a time window. Inside areas: InSAR pixels excluded from the fit (surface interpolated through from outside); σ_CAL grows with distance into the area (R-E1). GNSS-node exclusion is in T28.
-- [ ] T32.1 `DefoAreaDB`/`EventDB` pydantic models + GeoJSON loaders (`id`, `name`, `geometry`, `version`; events add `t0`, `t1`, `magnitude`, `source`).
-- [ ] T32.2 `remove_restore_mask(db, event_db, pair_dates, grid) -> mask` (events only when the pair spans `t0`).
-- [ ] T32.3 `sigma_inflation_inside(mask, scale_km) -> factor map` (1 at the boundary, growing inward with a documented function).
-- [ ] T32.4 Tests: synthetic bowl inside a polygon leaves the fitted surface flat (max |surface| inside < 1 mm); a pair not spanning the event ignores it.
+- [x] T32.1 `DefoAreaDB`/`EventDB` pydantic models + GeoJSON loaders (`id`, `name`, `geometry`, `version`; events add `t0`, `t1`, `magnitude`, `source`). *Done 2026-10-06:* `venti.calibration.remove_restore.Area/Event/AreaDB/EventDB`, GeoJSON loaders (`id`, `name`, `source`, `version` required at the collection level; events `t0`, `t1`, `magnitude`).
+- [x] T32.2 `remove_restore_mask(db, event_db, pair_dates, grid) -> mask` (events only when the pair spans `t0`). *Done 2026-10-06:* `remove_restore_mask(grid, crs_epsg, areas, events, ref, sec)` (events only when the pair spans `t0` / overlaps `[t0, t1]`); `RemoveRestore.for_pair` records versions and active events.
+- [x] T32.3 `sigma_inflation_inside(mask, scale_km) -> factor map` (1 at the boundary, growing inward with a documented function). *Done 2026-10-06:* `sigma_inflation_inside(mask, scale_px, max_factor)` = 1 + (max−1)(1 − e^{−d/scale}).
+- [x] T32.4 Tests: synthetic bowl inside a polygon leaves the fitted surface flat (max |surface| inside < 1 mm); a pair not spanning the event ignores it. *Done 2026-10-06:* synthetic 20 cm bowl inside a polygon → surface flat inside (< 1 mm vs the regional plane; > 10 mm without exclusion); a pair not spanning the event gives the same mask as no event DB.
 
 ### T33. Two-pass orchestration and component bookkeeping
 **Depends on:** T30, T31, T32

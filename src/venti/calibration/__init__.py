@@ -16,5 +16,31 @@ flags in `calibration_options`, so the gamma algorithm stays reproducible:
 """
 
 from .gaps import base_weights, fill_gaps
+from .loclin import kernel_sigma_px, loclin_surface
+from .remove_restore import (
+    AreaDB,
+    EventDB,
+    RemoveRestore,
+    load_area_db,
+    load_event_db,
+    remove_restore_mask,
+    sigma_inflation_inside,
+)
+from .weights import coherence_weights, fit_weights, robust_weights
 
-__all__ = ["base_weights", "fill_gaps"]
+__all__ = [
+    "AreaDB",
+    "EventDB",
+    "RemoveRestore",
+    "base_weights",
+    "coherence_weights",
+    "fill_gaps",
+    "fit_weights",
+    "kernel_sigma_px",
+    "load_area_db",
+    "load_event_db",
+    "loclin_surface",
+    "remove_restore_mask",
+    "robust_weights",
+    "sigma_inflation_inside",
+]
