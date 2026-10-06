@@ -23,10 +23,22 @@ NOAM = {"omega_x": 0.024, "omega_y": -0.694, "omega_z": -0.063}
 
 
 def test_convert_to_euler_poles_matches_plate_motion():
-    df = pd.DataFrame({"plate": ["NOAM"], "name": ["North America"], **{k: [v] for k, v in NOAM.items()}})
+    df = pd.DataFrame(
+        {
+            "plate": ["NOAM"],
+            "name": ["North America"],
+            **{k: [v] for k, v in NOAM.items()},
+        }
+    )
     out = load_itrf.convert_to_euler_poles(df)
 
-    assert list(out.columns) == ["plate", "euler_longitude", "euler_latitude", "angular_velocity", "name"]
+    assert list(out.columns) == [
+        "plate",
+        "euler_longitude",
+        "euler_latitude",
+        "angular_velocity",
+        "name",
+    ]
     assert out.loc[0, "plate"] == "NOAM"
     assert out.loc[0, "name"] == "North America"
 

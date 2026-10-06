@@ -19,6 +19,8 @@ repos:
       - id: check-toml
       - id: check-yaml
         args: [--allow-multiple-documents]
+        # mkdocs.yml uses the !!python/name: tag for pymdownx superfences
+        exclude: '^mkdocs\.yml$'
       - id: debug-statements
         exclude: '\.ipynb$'
       - id: end-of-file-fixer
@@ -66,4 +68,4 @@ repos:
         entry: python scripts/spdx_check.py --license BSD-3-Clause
         language: python
         types: [python]
-        exclude: '(^scripts/spdx_check\.py$|^docs/|^notebooks/)'
+        exclude: '(^docs/|^notebooks/)'

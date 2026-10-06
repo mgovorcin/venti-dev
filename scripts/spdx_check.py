@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# SPDX-FileCopyrightText: 2025, opera-adt
+# SPDX-License-Identifier: BSD-3-Clause
+# Part of Venti, https://github.com/opera-adt/Venti.
+# Kit copy of 00_tools/standards/scripts/spdx_check.py; re-apply the kit, do not edit.
 """Check (or add) SPDX license headers on Python files.
 
 Every ``.py`` file must declare the repository's license in its first lines::
@@ -59,14 +63,14 @@ def header_insert_index(lines: list[str]) -> int:
 
 
 def build_header(
-    license_id: str, copyright_text: str | None, notice: str | None
+    license_id: str, copyright_text: str | None, notices: list[str] | None
 ) -> list[str]:
     """Build the header lines for `--fix`."""
     header = []
     if copyright_text:
         header.append(f"# SPDX-FileCopyrightText: {copyright_text}")
     header.append(f"# SPDX-License-Identifier: {license_id}")
-    if notice:
+    for notice in notices or []:
         header.append(f"# {notice}")
     return header
 
@@ -77,7 +81,7 @@ def check_file(
     *,
     fix: bool = False,
     copyright_text: str | None = None,
-    notice: str | None = None,
+    notices: list[str] | None = None,
 ) -> str | None:
     """Check one file. Return a problem description, or None when it passes.
 
@@ -96,7 +100,7 @@ def check_file(
         return f"{path}: missing '# SPDX-License-Identifier: {license_id}' header"
     lines = text.splitlines(keepends=True)
     index = header_insert_index([line.rstrip("\n") for line in lines])
-    header = [line + "\n" for line in build_header(license_id, copyright_text, notice)]
+    header = [line + "\n" for line in build_header(license_id, copyright_text, notices)]
     path.write_text("".join(lines[:index] + header + lines[index:]), encoding="utf-8")
     return None
 
@@ -114,7 +118,9 @@ def main(argv: list[str] | None = None) -> int:
         "--copyright", help="SPDX-FileCopyrightText value used by --fix"
     )
     parser.add_argument(
-        "--notice", help="Extra comment line after the identifier, used by --fix"
+        "--notice",
+        action="append",
+        help="Extra comment line after the identifier, used by --fix; repeatable",
     )
     parser.add_argument("files", nargs="*", type=Path)
     args = parser.parse_args(argv)
@@ -128,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
             args.license,
             fix=args.fix,
             copyright_text=args.copyright,
-            notice=args.notice,
+            notices=args.notice,
         )
         if problem:
             problems.append(problem)
