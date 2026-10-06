@@ -28,6 +28,9 @@ classifiers = [
 ]
 license = { file = "LICENSE.txt" }
 # Keep in sync with environment.yml and [tool.pixi.dependencies].
+# Core = the calibration engine: what `cal-disp` (and the future VLM SAS)
+# installs. Everything a research workstation also wants (staging, notebooks,
+# stack drivers) is an extra. See docs/architecture.md and ADR-0020.
 dependencies = [
   "numpy",
   "pandas",
@@ -43,23 +46,21 @@ dependencies = [
   "rasterio",
   "gdal",
   # geospatial
-  "geopandas",
+  "geopandas",  # GNSS station frames in gnss.los/reference; revisited in plan T28
   "shapely",
   "pyproj>=3.3",
-  "pyarrow",  # staging writes GNSS velocities to parquet
   "requests",
   # configuration and CLI
   "pydantic>=2.0",
   "pyyaml",
   "tyro>=0.9.24",
-  # OPERA products; the `disp` extra brings what `opera_utils.disp` imports
-  # (zarr, dask, s3fs, ...), used for the reference-point selection
-  "opera-utils[disp]",
+  # OPERA frame database and product helpers (core, no extras: the `disp`
+  # extra pulls in zarr/dask, which the operational image must not carry)
+  "opera-utils",
   # imported by `opera_utils` at the top level but not declared by it
   "rich",
-  # data staging (scripts/staging)
-  "asf_search",
-  "dem-stitcher",
+  # GNSS retrieval, GPS Imaging and plate motion: single source (plan D10)
+  "geepers[grid] @ git+https://github.com/mgovorcin/geepers.git@677f95ddd863f9edd5f6bc5a0adca98e4297d857",
 ]
 
 # The version will be written into a version.py upon install, auto-generated
@@ -68,6 +69,26 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
+# The PRD names these tiers (D11). Today the core already carries everything
+# the calibration engine needs, so `calibration` and `decomposition` are
+# placeholders that keep `venti[calibration]` a valid install target; they
+# will gain numba etc. as the two-pass surface and the WLS decomposition land.
+calibration = []
+decomposition = []
+# GIA / PMM context rasters (models/, scripts/get_model_rates.py)
+models = []
+# Staging of frame inputs (venti.staging), stack drivers, notebooks, analysis
+research = [
+  "opera-utils[disp,asf]",
+  "asf_search",
+  "dem-stitcher",
+  "pyarrow",  # staging writes GNSS velocities to parquet
+  "numba",
+  "matplotlib>=3.10.3",
+  "ipykernel",
+  "ipywidgets",
+  "folium",
+]
 test = [
   "pytest",
   "pytest-cov",
@@ -76,17 +97,7 @@ test = [
   "pre-commit",
   "ruff",
 ]
-notebooks = [
-  "matplotlib>=3.10.3",
-  "ipykernel",
-  "ipywidgets",  # progress bars in notebooks
-  "folium",
-]
-# Not used by Venti: the GNSS validation and velocity scripts built on it.
-analysis = [
-  "numba",
-  "geepers @ git+https://github.com/opera-adt/geepers.git",
-]
+all = ["venti[calibration,decomposition,models,research]"]
 
 [project.urls]
 Homepage = "https://github.com/opera-adt/Venti"
@@ -106,42 +117,60 @@ platforms = ["osx-arm64", "linux-64"]
 [tool.pixi.pypi-dependencies]
 venti = { path = ".", editable = true }
 
+# Core conda packages (mirrors [project.dependencies] minus pip-only ones)
 [tool.pixi.dependencies]
-python = ">=3.11"
-# Without a floor the solver can pick the 2020 `sqlite 3.32.3` tarball, which
-# clobbers libsqlite and breaks `import sqlite3` (missing sqlite3_deserialize).
-sqlite = ">=3.45"
+# <3.14: several pypi dependencies (numba, dem-stitcher, ...) have no 3.14 wheels
+# yet, and an unbounded floor let the solver pick 3.14 and drop the test tooling.
+python = ">=3.11,<3.14"
 pip = ">=21.3"
 git = "*"
 numpy = "*"
 pandas = "*"
-xarray = "*"
-requests = "*"
-rasterio = "*"
 scipy = "*"
-geopandas = "*"
+scikit-image = "*"
+joblib = "*"
+tqdm = "*"
+xarray = "*"
+rioxarray = "*"
+netcdf4 = "*"
+h5netcdf = "*"
+rasterio = "*"
+gdal = "*"
+libgdal-netcdf = "*"
+# geopandas-base, not geopandas: the conda metapackage drags in matplotlib-base
+geopandas-base = "*"
+shapely = "*"
 pyproj = ">=3.3"
+requests = "*"
 pydantic = ">=2.0"
 pyyaml = "*"
 tyro = ">=0.9.24"
-tqdm = "*"
-scikit-image = "*"
-joblib = "*"
-shapely = "*"
-opera-utils = "*"
+# opera-utils comes from PyPI (the PEP 621 entry): the conda-forge package has
+# no extras and depends on asf_search, dask and zarr, which the operational
+# image must not carry.
+rich = "*"
+# Without a floor the solver can pick the 2020 `sqlite 3.32.3` tarball, which
+# clobbers libsqlite and breaks `import sqlite3` (missing sqlite3_deserialize).
+sqlite = ">=3.45"
+
+# `research` = staging + stack drivers + notebooks (the former default set)
+[tool.pixi.feature.research.dependencies]
 zarr = ">=3"
 dask = "*"
-rich = "*"
-netcdf4 = "*"
-h5netcdf = "*"
-rioxarray = "*"
-gdal = "*"
-libgdal-netcdf = "*"
-pyarrow = "*"
 aiohttp = "*"
 fsspec = "*"
 s3fs = "*"
 asf_search = "*"
+pyarrow = "*"
+numba = "*"
+matplotlib = ">=3.10.3"
+ipython = ">=9.3.0"
+ipykernel = "*"
+ipywidgets = "*"
+folium = "*"
+lxml = "*"
+ipdb = "*"
+contextily = "*"
 
 [tool.pixi.tasks]
 # Shared task names (00_tools/standards/pixi-tasks.toml): test, lint, docs, golden, e2e
@@ -157,6 +186,8 @@ clean = "rm -rf build/ dist/ *.egg-info/ .pytest_cache/ .coverage .ruff_cache/ s
 
 
 # pixi install -e test
+# Test tooling only; notebook/plotting packages live in `research` so the
+# `core-test` environment stays a faithful "core + pytest" check.
 [tool.pixi.feature.test.dependencies]
 pre-commit = "*"
 pytest = "*"
@@ -164,12 +195,6 @@ pytest-cov = "*"
 pytest-randomly = "*"
 pytest-xdist = "*"
 ruff = "*"
-matplotlib = ">=3.10.3"
-ipython = ">=9.3.0"
-ipykernel = "*"
-lxml = "*"
-ipdb = "*"
-contextily = "*"
 
 [tool.pixi.feature.docs.dependencies]
 mkdocs = "*"
@@ -189,19 +214,17 @@ mkdocstrings = { extras = ["python"] }
 mkdocs-section-index = "*"
 
 
-# pixi install -e analysis
-[tool.pixi.feature.analysis.dependencies]
-numba = "*"
-
 
 [tool.pixi.environments]
-test = ["test"]
-docs = ["docs"]
-analysis = ["analysis"]
-# Shared environment names: `dev` for development, `ops` = exactly the default
-# dependency set (what an operational image installs), solved on its own.
-dev = ["test", "docs"]
+# `default` keeps the historical behaviour (core + research tooling).
+default = { features = ["research"], solve-group = "default" }
+test = { features = ["research", "test"], solve-group = "default" }
+docs = { features = ["research", "docs"], solve-group = "default" }
+dev = { features = ["research", "test", "docs"], solve-group = "default" }
+# `ops` = the calibration core only (what the operational image installs);
+# `core-test` = core + test tooling for the import-isolation checks.
 ops = { features = [], solve-group = "ops" }
+core-test = { features = ["test"], solve-group = "ops" }
 
 
 [tool.setuptools_scm]
@@ -261,6 +284,8 @@ ignore = [
 "**/__init__.py" = ["F401", "F403"]
 "tests/**" = ["D", "N", "PTH", "ARG001", "PLR2004", "E501"]
 "scripts/*" = ["F401"]
+# Staging CLIs moved from scripts/ in plan T17; docstring/complexity debt is theirs
+"src/venti/staging/*" = ["D", "PLR2004", "E501", "ARG001", "PLW2901"]
 "src/venti/uncertainty.py" = ["RUF002"]                   # let us use sigma here
 "src/venti/schemas.py" = ["D106"]
 
@@ -276,7 +301,7 @@ plugins = []
 
 [tool.pytest.ini_options]
 doctest_optionflags = "NORMALIZE_WHITESPACE NUMBER"
-addopts = "  --cov=venti  --doctest-modules --randomly-seed=1234 --ignore=scripts --ignore=docs --ignore=data --ignore=src/venti/models"
+addopts = "  --cov=venti  --doctest-modules --randomly-seed=1234 --ignore=scripts --ignore=docs --ignore=data --ignore=src/venti/models --ignore=src/venti/staging"
 filterwarnings = [
   "error",
   # https://github.com/dateutil/dateutil/pull/1285 will be released, but not yet

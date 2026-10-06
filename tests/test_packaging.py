@@ -69,3 +69,61 @@ def test_shared_pixi_environments_exist(pyproject):
     assert "ops" in envs
     # `ops` is the operational set: no extra features.
     assert envs["ops"]["features"] == []
+
+
+# --- dependency tiers (plan T17, ADR-0020) -----------------------------------
+
+FORBIDDEN_IN_CORE = {
+    "dask",
+    "zarr",
+    "matplotlib",
+    "jupyter",
+    "ipykernel",
+    "numba",
+    "asf-search",
+    "dem-stitcher",
+    "folium",
+}
+
+
+def test_core_dependencies_carry_no_research_packages(pyproject):
+    core = {_name(r) for r in pyproject["project"]["dependencies"]}
+    assert not (core & FORBIDDEN_IN_CORE), core & FORBIDDEN_IN_CORE
+
+
+def test_opera_utils_is_declared_without_the_disp_extra(pyproject):
+    """opera-utils[disp] pulls zarr/dask into the operational image (R-O6)."""
+    core = [
+        r for r in pyproject["project"]["dependencies"] if _name(r) == "opera-utils"
+    ]
+    assert core == ["opera-utils"], core
+
+
+def test_extras_are_the_prd_tiers(pyproject):
+    extras = set(pyproject["project"]["optional-dependencies"])
+    assert extras == {
+        "calibration",
+        "decomposition",
+        "models",
+        "research",
+        "test",
+        "all",
+    }
+    assert pyproject["project"]["optional-dependencies"]["all"] == [
+        "venti[calibration,decomposition,models,research]"
+    ]
+
+
+def test_geepers_is_a_core_dependency_with_the_grid_extra(pyproject):
+    geepers = [r for r in pyproject["project"]["dependencies"] if _name(r) == "geepers"]
+    assert len(geepers) == 1
+    assert geepers[0].startswith(
+        "geepers[grid] @ git+https://github.com/mgovorcin/geepers.git@"
+    )
+
+
+def test_ops_environment_is_the_core_only(pyproject):
+    envs = pyproject["tool"]["pixi"]["environments"]
+    assert envs["ops"]["features"] == []
+    assert envs["core-test"]["features"] == ["test"]
+    assert "research" in envs["default"]["features"]
