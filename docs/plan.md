@@ -100,8 +100,8 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 **Depends on:** T07
 **Context:** `00_tools/src/geepers` (`origin` = fork, `upstream` = `opera-adt/geepers`, on `main`, clean). geepers already has SPDX headers and ruff; mainly add templates, `CLAUDE.md`, pixi.
 - [x] T10.1 Run `apply_standards.sh`; commit.
-- [ ] T10.2 Add pixi envs; `pixi run -e dev test` passes (uses `pytest-recording` cassettes, no live network).
-- [ ] T10.3 Create branch `feat/extras-split` for T12–T15.
+- [x] T10.2 Add pixi envs; `pixi run -e dev test` passes (uses `pytest-recording` cassettes, no live network). *Result 2026-10-05:* `dev`/`ops` envs added; full suite 348 passed / 4 skipped (the one failure, the kit checker lacking a header, is fixed); pre-commit green after an `affine` 3 warning filter, mypy 2.3.1 targeting 3.12 and 21 genuine type fixes (`fix(types)` commit). Note: the suite is network-bound (~15–19 min here), not cassette-only as assumed.
+- [x] T10.3 Create branch `feat/extras-split` for T12–T15. *Created as `feature/extras-split` (naming convention) on top of `feature/standards`; holds the T12 audit.*
 
 ### T11. Create the validation package repo
 **Depends on:** T07
