@@ -18,14 +18,16 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from .unwrap.unwrap_corrections import (
+    SENTINEL1_WAVELENGTH_M,
+)
+
 if TYPE_CHECKING:
     import threading
 
     from .workflow.config import CalibrationOptions
 
 logger = logging.getLogger(__name__)
-
-SENTINEL1_WAVELENGTH_M = 0.05546
 
 
 @dataclass(frozen=True)
@@ -105,8 +107,10 @@ def estimate_calibration_surface(
     options : CalibrationOptions, optional
         Algorithm options; defaults to ``CalibrationOptions()``.
     wavelength_m : float, optional
-        Radar wavelength for unwrapping-error correction, by default
-        Sentinel-1 C-band.
+        Radar wavelength in metres (the full, one-way wavelength as written
+        in the product's ``radar_wavelength`` attribute), by default
+        Sentinel-1 C-band. Unwrapping-error correction quantises region
+        offsets in cycles of ``wavelength_m / 2`` of LOS displacement.
     downsample_factor : int, optional
         Fit on a grid downsampled by this factor, by default 1 (none).
     downsample_method : str, optional
@@ -209,7 +213,7 @@ def estimate_calibration_surface(
 
     if opts.unwrap_error_correction:
         disp = correct_region_offset(
-            input_disp=disp, mask=mask, wavelength=wavelength_m
+            input_disp=disp, mask=mask, cycle_length=wavelength_m / 2
         )
 
     disp = np.ma.filled(disp, np.nan)

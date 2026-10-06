@@ -10,6 +10,7 @@ interferograms using watershed segmentation and regional median corrections.
 from __future__ import annotations
 
 import logging
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -24,6 +25,12 @@ except ImportError:
 
 # Set up logger
 logger = logging.getLogger(__name__)
+
+# Sentinel-1 C-band radar wavelength. One 2-pi cycle of unwrapped phase is
+# half a wavelength of two-way LOS displacement, so region offsets are
+# quantised in units of SENTINEL1_CYCLE_M, not of the wavelength.
+SENTINEL1_WAVELENGTH_M = 0.05546
+SENTINEL1_CYCLE_M = SENTINEL1_WAVELENGTH_M / 2
 
 
 class UnwrapCorrector:
@@ -71,33 +78,66 @@ class UnwrapCorrector:
 
     Correct phase data (radians)::
 
-        corrector = UnwrapCorrector(wavelength=2*np.pi)
+        corrector = UnwrapCorrector(cycle_length=2*np.pi)
         corrected = corrector.correct(phase, mask)
 
     """
 
-    def __init__(self, min_region_area: int = 20, wavelength: float = 0.0555):
+    def __init__(
+        self,
+        min_region_area: int = 20,
+        cycle_length: float | None = None,
+        *,
+        wavelength: float | None = None,
+    ):
         """Initialize the UnwrapCorrector.
 
         Parameters
         ----------
         min_region_area : int, optional
             Minimum area (in pixels) for valid regions, by default 20
+        cycle_length : float, optional
+            Length of one unwrapping cycle in the units of the input, i.e.
+            the quantum by which region offsets are corrected. For LOS
+            displacement in metres this is **half** the radar wavelength
+            (one 2-pi cycle of two-way phase): 0.02773 m for Sentinel-1
+            C-band (the default), 0.1207 m for NISAR L-band. For phase in
+            radians use 2*pi.
         wavelength : float, optional
-            The wavelength value for unwrap correction
-            (default is 0.0555m for Sentinel-1).
-            For phase in radians, use 2π. Common values:
-            - Sentinel-1 (C-band): 0.0555 m
-            - ALOS-2 (L-band): 0.236 m
+            Deprecated alias of `cycle_length`, kept for one release. It was
+            never halved internally, so callers that passed the full radar
+            wavelength were correcting by twice the true cycle; pass
+            ``cycle_length=wavelength / 2`` instead.
 
         """
+        if wavelength is not None:
+            if cycle_length is not None:
+                msg = "Pass either cycle_length or the deprecated wavelength, not both"
+                raise TypeError(msg)
+            warnings.warn(
+                "UnwrapCorrector(wavelength=...) is deprecated; pass "
+                "cycle_length=<wavelength / 2> for LOS displacement",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            cycle_length = wavelength
         self.min_region_area = min_region_area
-        self.wavelength = wavelength
+        self.cycle_length = SENTINEL1_CYCLE_M if cycle_length is None else cycle_length
         self.labeled_regions_: np.ndarray | None = None
         self.valid_labels_: np.ndarray | None = None
         self.medians_: np.ndarray | None = None
         self.unwrap_cycles_: np.ndarray | None = None
         self.n_regions_: int | None = None
+
+    @property
+    def wavelength(self) -> float:
+        """Deprecated name for `cycle_length`."""
+        warnings.warn(
+            "UnwrapCorrector.wavelength is deprecated; use cycle_length",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.cycle_length
 
     def _prepare_displacement(
         self, input_disp: np.ndarray
@@ -229,15 +269,15 @@ class UnwrapCorrector:
         # Compute the number of cycles (round to nearest integer)
         # Handle NaN values by replacing them with 0
         with np.errstate(invalid="ignore"):
-            cycles = np.round(offsets / self.wavelength)
+            cycles = np.round(offsets / self.cycle_length)
         cycles = np.nan_to_num(cycles, nan=0.0).astype(np.int32)
 
         logger.info(
             f"Unwrap correction: {np.count_nonzero(cycles)} of {cycles.size} "
-            "regions shifted by whole wavelengths"
+            "regions shifted by whole cycles"
         )
         logger.debug(f"Unwrap cycles per region: {cycles}")
-        logger.debug(f"Wavelength corrections (in units): {cycles * self.wavelength}")
+        logger.debug(f"Cycle corrections (in units): {cycles * self.cycle_length}")
 
         return cycles
 
@@ -276,7 +316,7 @@ class UnwrapCorrector:
         # value. Writing only region pixels into an uninitialised array left
         # those pixels as leftover memory.
         corrections = np.zeros(labeled_regions.max() + 1, dtype=np.float32)
-        corrections[valid_labels] = unwrap_cycles * self.wavelength
+        corrections[valid_labels] = unwrap_cycles * self.cycle_length
         disp_updated = (input_disp - corrections[labeled_regions]).astype(np.float32)
         return np.ma.masked_array(disp_updated, mask=disp_mask)
 
@@ -378,7 +418,9 @@ class UnwrapCorrector:
             "medians": self.medians_,
             "unwrap_cycles": self.unwrap_cycles_,
             "labeled_regions": self.labeled_regions_,
-            "wavelength": self.wavelength,
+            "cycle_length": self.cycle_length,
+            # kept for one release; same number as cycle_length
+            "wavelength": self.cycle_length,
         }
 
     def save_geotiff(
@@ -446,9 +488,11 @@ class UnwrapCorrector:
 def correct_region_offset(
     input_disp: np.ndarray | str | Path,
     mask: np.ndarray | None = None,
-    wavelength: float = 0.0555,
+    cycle_length: float | None = None,
     min_region_area: int = 20,
     output_file: str | Path | None = None,
+    *,
+    wavelength: float | None = None,
 ) -> np.ndarray:
     """Correct unwrapping errors by removing wavelength cycle offsets.
 
@@ -466,17 +510,18 @@ def correct_region_offset(
         Binary mask indicating valid data regions. If None and input_disp
         is a NetCDF file, mask will be read from 'water_mask' variable.
         Required if input_disp is an array.
-    wavelength : float, optional
-        The wavelength value for unwrap correction, by default 0.0555m for Sentinel-1.
-        Common values:
-        - Sentinel-1 (C-band): 0.0555 m
-        - ALOS-2 (L-band): 0.236 m
-        - Phase data (radians): 2π (6.283)
+    cycle_length : float, optional
+        Length of one unwrapping cycle in the units of `input_disp`: half the
+        radar wavelength for LOS displacement in metres (Sentinel-1 C-band
+        0.02773 m, the default; NISAR L-band 0.1207 m), or 2*pi for phase in
+        radians. See `UnwrapCorrector`.
     min_region_area : int, optional
         Minimum area (in pixels) for valid regions, by default 20
     output_file : str or Path, optional
         If provided, save the corrected displacement to this GeoTIFF file.
         Georeferencing is automatically extracted from input NetCDF file.
+    wavelength : float, optional
+        Deprecated alias of `cycle_length` (same number, not halved).
 
     Returns
     -------
@@ -501,16 +546,16 @@ def correct_region_offset(
         corrected = correct_region_offset(
             'displacement.nc',
             output_file='corrected.tif',
-            wavelength=0.0555
+            cycle_length=0.02773
         )
 
     For phase data (radians)::
 
-        corrected = correct_region_offset(phase, mask, wavelength=2*np.pi)
+        corrected = correct_region_offset(phase, mask, cycle_length=2*np.pi)
 
-    For ALOS-2 displacement (meters)::
+    For NISAR L-band displacement (meters, half of the 0.2413 m wavelength)::
 
-        corrected = correct_region_offset(disp, mask, wavelength=0.236)
+        corrected = correct_region_offset(disp, mask, cycle_length=0.1207)
 
     Notes
     -----
@@ -523,7 +568,7 @@ def correct_region_offset(
     For more control and access to intermediate results, use the
     UnwrapCorrector class directly::
 
-        corrector = UnwrapCorrector(wavelength=0.0555, min_region_area=20)
+        corrector = UnwrapCorrector(cycle_length=0.02773, min_region_area=20)
         corrected = corrector.correct(disp, mask)
         corrector.save_geotiff(corrected, 'corrected.tif', reference_file='input.tif')
         region_info = corrector.get_region_info()
@@ -568,7 +613,11 @@ def correct_region_offset(
     logger.info(f"Valid pixels: {n_valid}/{n_total} ({100 * n_valid / n_total:.1f}%)")
 
     # Run correction
-    corrector = UnwrapCorrector(min_region_area=min_region_area, wavelength=wavelength)
+    corrector = UnwrapCorrector(
+        min_region_area=min_region_area,
+        cycle_length=cycle_length,
+        wavelength=wavelength,
+    )
     # Plain array with NaN for invalid pixels, like the rest of Venti's API.
     corrected = np.ma.filled(
         np.ma.asarray(corrector.correct(disp_masked, mask), dtype=float), np.nan

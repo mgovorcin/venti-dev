@@ -29,13 +29,24 @@ class TestUnwrapCorrector:
         """Test initialization with default parameters."""
         corrector = UnwrapCorrector()
         assert corrector.min_region_area == 20
-        assert corrector.wavelength == 0.0555
+        # One LOS cycle is half the Sentinel-1 wavelength, not the wavelength.
+        assert corrector.cycle_length == pytest.approx(0.05546 / 2)
 
     def test_init_custom(self):
         """Test initialization with custom parameters."""
-        corrector = UnwrapCorrector(min_region_area=50, wavelength=0.06)
+        corrector = UnwrapCorrector(min_region_area=50, cycle_length=0.06)
         assert corrector.min_region_area == 50
-        assert corrector.wavelength == 0.06
+        assert corrector.cycle_length == 0.06
+
+    def test_wavelength_alias_is_deprecated_and_not_halved(self):
+        """The old keyword still works, warns, and keeps its numeric meaning."""
+        with pytest.warns(DeprecationWarning, match="cycle_length"):
+            corrector = UnwrapCorrector(wavelength=0.06)
+        assert corrector.cycle_length == 0.06
+        with pytest.warns(DeprecationWarning, match="use cycle_length"):
+            assert corrector.wavelength == 0.06
+        with pytest.raises(TypeError, match="not both"):
+            UnwrapCorrector(cycle_length=0.03, wavelength=0.06)
 
     def test_prepare_displacement(self):
         """Test displacement preparation and masking."""
@@ -100,7 +111,7 @@ class TestUnwrapCorrector:
 
     def test_compute_unwrap_cycles(self):
         """Test unwrap cycle computation."""
-        corrector = UnwrapCorrector(wavelength=0.0555)
+        corrector = UnwrapCorrector(cycle_length=0.0555)
 
         # Create medians with known offsets
         medians = np.array([0.0, 0.0555, -0.0555, 0.111, 0.02])
@@ -108,14 +119,14 @@ class TestUnwrapCorrector:
         cycles = corrector._compute_unwrap_cycles(medians, ref_label=0)
 
         assert cycles[0] == 0  # Reference
-        assert cycles[1] == 1  # One wavelength above
-        assert cycles[2] == -1  # One wavelength below
-        assert cycles[3] == 2  # Two wavelengths above
-        assert cycles[4] == 0  # Less than half wavelength, rounds to 0
+        assert cycles[1] == 1  # One cycle above
+        assert cycles[2] == -1  # One cycle below
+        assert cycles[3] == 2  # Two cycles above
+        assert cycles[4] == 0  # Less than half a cycle, rounds to 0
 
     def test_compute_unwrap_cycles_with_nan(self):
         """Test unwrap cycle computation with NaN values."""
-        corrector = UnwrapCorrector(wavelength=0.0555)
+        corrector = UnwrapCorrector(cycle_length=0.0555)
 
         medians = np.array([0.0, 0.0555, np.nan, 0.111])
         cycles = corrector._compute_unwrap_cycles(medians, ref_label=0)
@@ -125,14 +136,14 @@ class TestUnwrapCorrector:
         assert not np.isnan(cycles).any()
 
     def test_correct_simple(self):
-        """An island one wavelength off is brought back to the reference island."""
+        """An island one cycle off is brought back to the reference island."""
         rng = np.random.default_rng(0)
         disp = np.full((40, 60), np.nan)
         disp[5:35, 3:25] = 0.010 + 0.002 * rng.standard_normal((30, 22))
-        # Separated by no-data, and one full wavelength off.
+        # Separated by no-data, and one full cycle off.
         disp[5:35, 33:57] = 0.010 + 0.0555 + 0.002 * rng.standard_normal((30, 24))
 
-        corrector = UnwrapCorrector(wavelength=0.0555)
+        corrector = UnwrapCorrector(cycle_length=0.0555)
         corrected = np.ma.filled(corrector.correct(disp, np.isfinite(disp)), np.nan)
 
         np.testing.assert_array_equal(corrector.unwrap_cycles_, [0, 1])
@@ -156,7 +167,7 @@ class TestUnwrapCorrector:
             disp[r : r + 3, c : c + 3] = 0.002  # 9 px < min_region_area
 
         corrected = np.ma.filled(
-            UnwrapCorrector(wavelength=0.0555).correct(disp, np.isfinite(disp)),
+            UnwrapCorrector(cycle_length=0.0555).correct(disp, np.isfinite(disp)),
             np.nan,
         )
 
@@ -175,7 +186,7 @@ class TestCorrectRegionOffset:
         mask[:5, :5] = False
 
         corrected = correct_region_offset(
-            input_disp=disp, mask=mask, wavelength=0.0555, min_region_area=20
+            input_disp=disp, mask=mask, cycle_length=0.0555, min_region_area=20
         )
 
         # A plain array with NaN where masked, usable by other Venti functions.
@@ -209,7 +220,7 @@ class TestCorrectRegionOffset:
 
             # Test correction
             corrected = correct_region_offset(
-                input_disp=tmp_path, wavelength=0.0555, min_region_area=20
+                input_disp=tmp_path, cycle_length=0.0555, min_region_area=20
             )
 
             assert corrected is not None
@@ -253,7 +264,7 @@ class TestCorrectRegionOffset:
             # Test correction with output
             corrected = correct_region_offset(
                 input_disp=nc_path,
-                wavelength=0.0555,
+                cycle_length=0.0555,
                 min_region_area=20,
                 output_file=tif_path,
             )
@@ -325,3 +336,50 @@ class TestSaveGeoTIFF:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestCycleLengthRegression:
+    """Regression tests for the lambda-vs-lambda/2 bug (Venti plan T16.3).
+
+    A Sentinel-1 island offset by exactly one true cycle (lambda/2 = 27.7 mm)
+    must be corrected with the default settings. With the wavelength (55.5 mm)
+    used as the cycle, the offset rounds to half a cycle and is left in place,
+    which is the behaviour the gamma 0.3 delivery had to switch off.
+    """
+
+    @staticmethod
+    def _two_islands(offset: float) -> np.ndarray:
+        rng = np.random.default_rng(1)
+        disp = np.full((40, 60), np.nan, dtype=np.float32)
+        disp[5:35, 3:25] = 0.001 * rng.standard_normal((30, 22))
+        disp[5:35, 33:57] = offset + 0.001 * rng.standard_normal((30, 24))
+        return disp
+
+    def test_default_corrects_one_true_cycle(self):
+        from venti.unwrap.unwrap_corrections import SENTINEL1_CYCLE_M
+
+        disp = self._two_islands(SENTINEL1_CYCLE_M)
+        corrector = UnwrapCorrector()
+        corrected = np.ma.filled(corrector.correct(disp, np.isfinite(disp)), np.nan)
+        np.testing.assert_array_equal(corrector.unwrap_cycles_, [0, 1])
+        assert abs(np.nanmedian(corrected[5:35, 33:57])) < 0.002
+
+    def test_full_wavelength_as_cycle_misses_it(self):
+        from venti.unwrap.unwrap_corrections import (
+            SENTINEL1_CYCLE_M,
+            SENTINEL1_WAVELENGTH_M,
+        )
+
+        disp = self._two_islands(SENTINEL1_CYCLE_M)
+        corrector = UnwrapCorrector(cycle_length=SENTINEL1_WAVELENGTH_M)
+        corrected = np.ma.filled(corrector.correct(disp, np.isfinite(disp)), np.nan)
+        # 0.5 cycle rounds to 0 (numpy rounds half to even): nothing corrected.
+        np.testing.assert_array_equal(corrector.unwrap_cycles_, [0, 0])
+        assert np.nanmedian(corrected[5:35, 33:57]) == pytest.approx(
+            SENTINEL1_CYCLE_M, abs=0.002
+        )
+
+    def test_convenience_function_forwards_cycle_length(self):
+        disp = self._two_islands(0.1)
+        corrected = correct_region_offset(disp, np.isfinite(disp), cycle_length=0.1)
+        assert abs(np.nanmedian(corrected[5:35, 33:57])) < 0.002
