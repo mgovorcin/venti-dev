@@ -10,7 +10,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Phase 0: Gamma 0.3 release
 
 - [!] T01 Confirm the gamma configuration with Talib — blocked on Talib's answers
-- [ ] T02 Secure a Docker build host and build the gamma image — docker daemon is available on aurora (needs --network=host)
+- [x] T02 Secure a Docker build host and build the gamma image — done 2026-10-05: aurora has Docker; `cal-disp:0.3.0-rc` built, record on cal-disp `feature/docker-build-record`
 - [ ] T03 Rebuild the golden inside Docker and validate — depends on T01, T02
 - [ ] T04 Fix the delivery documents — depends on T01
 - [ ] T05 Confirm product URLs and version string — depends on T01
@@ -96,3 +96,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Log
 
 - 2026-10-05 Tracker created. Phase 0 is blocked on external inputs (Talib, a Docker host); starting phase 1 at T07.
+- 2026-10-05 T07 done (`00_tools/standards`, 16 kit tests). T08 done: Venti `feature/prd-docs` → `feature/standards` (pixi fix, kit, SPDX) → `feature/docs-site` (T20) and `feature/venti-bugfixes` (T16: λ/2 cycle, ITRF import, cal-disp YAML compat; 271 tests, lint clean). T10/T12 in progress on geepers `feature/standards` (dependency audit written; `affine` 3 warning filter + mypy hook bump needed for a green dev env). T02 unblocked: Docker daemon available on aurora; gamma image build started (`cal-disp:0.3.0-rc`).

@@ -31,16 +31,16 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T02. Secure a Docker build host and build the gamma image
 **Depends on:** none
 **Context:** No Docker daemon was available on aurora, so `docker/Dockerfile` + `conda-lock.txt` on `gamma-release` have never been built. The golden must be produced inside the image because tropo reprojection depends on the GDAL version. Use the `docker-build` skill (BuildKit, pinned, non-root).
-- [ ] T02.1 Pick the build host (a laptop with Docker, an EC2 builder, or a rootless `podman` on aurora); document it in `docker/README.md`.
-- [ ] T02.2 Build `cal-disp:0.3.0-rc` from the checkout with `docker/build-docker-image.sh`; fix any lock or Dockerfile breakage in small PRs.
-- [ ] T02.3 Record the image digest and the resolved package list; compare with `OPERA_TROPO_CalVal_Installed_Packages.csv`-style listing and commit it as `docker/installed_packages_0.3.0.csv`.
+- [x] T02.1 Pick the build host (a laptop with Docker, an EC2 builder, or a rootless `podman` on aurora); document it in `docker/README.md`. *Result:* aurora itself has a working Docker daemon (`/var/lib/docker` 64 GB, 25 GB free); `docker/build-docker-image.sh` already passes `--network=host`, which this host needs.
+- [x] T02.2 Build `cal-disp:0.3.0-rc` from the checkout with `docker/build-docker-image.sh`; fix any lock or Dockerfile breakage in small PRs. *Result 2026-10-05:* built first time from `gamma-release` `7085ec9` without changes, 1.5 GB; log `tmp/caldisp_docker_build.log`.
+- [x] T02.3 Record the image digest and the resolved package list; compare with `OPERA_TROPO_CalVal_Installed_Packages.csv`-style listing and commit it as `docker/installed_packages_0.3.0.csv`. *Done 2026-10-05:* `docker/BUILD_RECORD.md` + `docker/installed_packages_0.3.0rc.csv` on cal-disp `feature/docker-build-record` (`a3e4fd7`).
 
 ### T03. Rebuild the golden inside Docker and validate
 **Depends on:** T01, T02
 **Context:** `scripts/build_golden_output.sh` builds the reference product; `scripts/run_validation.sh --golden-dir test_golden` reruns the workflow and compares at tolerance 1e-6 (`cal-disp validate` checks values, attrs, CRS, dtype and identification). Both must run inside the image, mounting `test_golden/` (4.9 GB: `configs`, `input_data`, `golden_output`).
 - [ ] T03.1 Run `build_golden_output.sh` inside the image with the T01 config; store the product in `test_golden/golden_output` (exactly one `OPERA_L4_DISP-CAL-S1_*.nc`).
 - [ ] T03.2 Run `run_validation.sh` inside the image; it must print `✓ Validation passed`. Save the log as `test_golden/validation_0.3.0.log`.
-- [ ] T03.3 Run `run_validation.sh` on aurora with the pixi `dev` env against the Docker-built golden; record whether it passes at 1e-6 (expected: possibly not, because of GDAL). Document the result in `docs/development.md`.
+- [ ] T03.3 Run `run_validation.sh` on aurora with the pixi `dev` env against the Docker-built golden; record whether it passes at 1e-6 (expected: possibly not, because of GDAL). Document the result in `docs/development.md`. *Dry run 2026-10-05 (before T01):* the reverse direction already holds — `run_validation.sh` inside `cal-disp:0.3.0-rc` (GDAL 3.13.3, Python 3.13.15, rasterio 1.5.1) reproduces the aurora-built golden at 1e-6, peak 6.31 GB (log `tmp/caldisp_docker_validate.log`). So for the gamma configuration the GDAL-version dependence of the tropo reprojection does not change the product at that tolerance.
 - [ ] T03.4 Write `test_golden/MANIFEST.sha256` for inputs and golden output and commit it (data itself stays out of git).
 
 ### T04. Fix the delivery documents
