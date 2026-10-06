@@ -43,8 +43,8 @@ reproduces the gamma 0.3 result, so a version-1 file loads unchanged.
 | `calibration_options.gnss.reinterpolate_excluded` | `false` | — | R-G5 | 2 |
 | `calibration_options.gnss.reprocessing` | `false` | — | R-G1 (`variable` grid only here) | 2 |
 | `calibration_options.gnss.snapshot_id` | `null` | — | R-G4 | 2 |
-| `calibration_options.uncertainty.k_grid` | 1.0 | — | R-E1 (`frame_table` for v0.5) | 2 |
-| `calibration_options.uncertainty.inflate_inside_areas` | `true` | — | R-E1 | 2 |
+| `calibration_options.uncertainty.k_grid` | 1.0 | — | R-E1 (`frame_table` for v0.5); multiplies the GNSS LOS sigma in `venti.calibration.uncertainty.sigma_cal`; `frame_table` must be resolved by `FrameParameterTable.apply` before `calibrate_pair` | 2 |
+| `calibration_options.uncertainty.inflate_inside_areas` | `true` | — | R-E1; `sigma_inflation_inside` with the kernel sigma as scale, saturating at 3x | 2 |
 | `calibration_options.uncertainty.sigma_disp_placeholder_mm` | 10 | mm | R-E2 | 2 |
 | `calibration_options.unwrap.region_source` | `water_mask` | — | R-U1 | 2 |
 | `calibration_options.unwrap.whole_cycles_only` | `true` | — | R-U1 | 2 |

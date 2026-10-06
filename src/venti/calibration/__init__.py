@@ -14,7 +14,9 @@ flags in `calibration_options`, so the gamma algorithm stays reproducible:
 - `two_pass` (T33): robust tie -> unwrap hook -> final surface, with the
   component bookkeeping `calibration == sum(cal_*)`;
 - `tropo` (T34): the cal-disp tropo numerics and the off/full/stratified/auto
-  modes that produce the ``cal_tropo`` component.
+  modes that produce the ``cal_tropo`` component;
+- `uncertainty` (T35): sigma_CAL from the kernel's effective pixel count and
+  the inflated GNSS grid sigma.
 """
 
 from .gaps import base_weights, fill_gaps
@@ -38,6 +40,7 @@ from .tropo import (
     stratified_tropo,
 )
 from .two_pass import CalibrationResult, calibrate_pair
+from .uncertainty import effective_n, fit_sigma, resolve_k, sigma_cal
 from .weights import coherence_weights, fit_weights, robust_weights
 
 __all__ = [
@@ -52,7 +55,9 @@ __all__ = [
     "choose_tropo_mode",
     "coherence_weights",
     "dem_relief",
+    "effective_n",
     "fill_gaps",
+    "fit_sigma",
     "fit_weights",
     "kernel_sigma_px",
     "load_area_db",
@@ -60,7 +65,9 @@ __all__ = [
     "loclin_surface",
     "pair_correction",
     "remove_restore_mask",
+    "resolve_k",
     "robust_weights",
+    "sigma_cal",
     "sigma_inflation_inside",
     "stratified_delay",
     "stratified_tropo",

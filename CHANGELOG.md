@@ -100,6 +100,18 @@ Value-changing entries say which product layers move and by how much
     returns the ``cal_tropo`` component for `calibrate_pair`. Schema v2
     defaults (`tropo.mode = legacy`) change nothing. `TropoOptions` now
     rejects `relief_off_meters > relief_stratified_meters`.
+  - `uncertainty` (plan T35, R-E1/R-E2): `fit_sigma` (kernel-weighted
+    residual variance over the kernel's effective pixel count
+    ``4 pi sigma_px**2`` for unit weights), `sigma_cal` (``sqrt((k
+    sigma_grid)**2 + sigma_fit**2 + sigma_tropo**2 + sigma_ref**2)`` times the
+    inflation inside interpolated defo/event areas) and `resolve_k`
+    (`uncertainty.k_grid`; `'frame_table'` must be applied first).
+    `calibrate_pair` (loclin path) now returns `sigma_cal`, `sigma_fit` and
+    `n_eff` in the units of `disp`, and takes `sigma_tropo` / `sigma_ref`
+    terms (0 by default); the gamma path leaves them None. On synthetic data
+    with white noise and a k-inflated grid error, (surface - truth) /
+    sigma_CAL has std 0.8-1.25 (test). sigma_CAL covers the calibration
+    only: users add DISP noise below the cutoff (R-E2).
 - `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
   the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
   bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files
