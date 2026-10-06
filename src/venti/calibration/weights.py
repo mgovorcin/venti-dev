@@ -38,7 +38,10 @@ MAD_SCALE = 1.4826
 def coherence_weights(
     coherence: np.ndarray | None, power: float, shape: tuple[int, int]
 ) -> np.ndarray:
-    """Return ``clip(coherence, 0, 1) ** power`` (all ones for power 0 or no coherence)."""
+    """Return ``clip(coherence, 0, 1) ** power``.
+
+    All ones for ``power == 0`` or when no coherence is given.
+    """
     if power < 0:
         msg = f"power must be >= 0, got {power}"
         raise ValueError(msg)
