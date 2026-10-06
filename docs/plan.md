@@ -137,9 +137,9 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T15. `geepers[analysis]` and `[all]`
 **Depends on:** T13
 **Context:** MIDAS, strain, cross-validation, variability, plotting, zarr/dask workflows go here. Validation package (T21) depends on `[analysis]`.
-- [ ] T15.1 Define `analysis` (dask, zarr, xarray, rioxarray, rasterio, geopandas, pyogrio, pandera, lxml, matplotlib) and `all = ["geepers[grid,analysis,plot]"]`.
-- [ ] T15.2 CI matrix: `core`, `grid`, `analysis`, `all`; full test suite runs under `all`, subset markers under the others.
-- [ ] T15.3 Update `README.md` install matrix and `CHANGELOG.md`; open PR on the fork; (optionally) draft the upstream PR text for later.
+- [x] T15.1 Define `analysis` (dask, zarr, xarray, rioxarray, rasterio, geopandas, pyogrio, pandera, lxml, matplotlib) and `all = ["geepers[grid,analysis,plot]"]`. *Done in T13's build commit:* `analysis` and `all = ["geepers[grid,analysis,plot]"]`.
+- [x] T15.2 CI matrix: `core`, `grid`, `analysis`, `all`; full test suite runs under `all`, subset markers under the others. *Done 2026-10-06:* the pytest CI job is a matrix over pixi envs `test` (full suite) and `core-test` (core subset: `test_core_imports`, `test_plate_table`, `gps_sources`) × {ubuntu, macos}; the pip route is the separate `core-only` job. Path-based selection instead of markers — the core subset is small and explicit.
+- [x] T15.3 Update `README.md` install matrix and `CHANGELOG.md`; open PR on the fork; (optionally) draft the upstream PR text for later. *Done 2026-10-06:* README `## Installation` matrix (core / [grid] / [analysis] / [plot] / [all], pixi envs); `CHANGELOG.md` created with the Unreleased entry for the split, the seams, the plate tables and `reinterpolate_nodes`. Upstream PR text: the geepers fork PR #2 body serves as the draft.
 
 ### T16. Venti bug fixes and packaging repair
 **Depends on:** T08
