@@ -179,9 +179,9 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T19. Venti algorithm-parameters schema (additive, versioned)
 **Depends on:** T17
 **Context:** PRD §2.2: new science options live only in `algorithm_parameters.yaml`, with defaults that reproduce gamma. Existing cal-disp keys: `grid_type`, `reference_frame`, `unwrap_error_correction`, `apply_tropo_correction`, SET flag, `window_size_meters`, `downsample_factor`, MAD thresholds, `mask_fit_residual_outliers`, `weight_fit_by_gnss_uncertainty`, gaussian smoothing. New keys (all optional): `surface.method: windowed_plane|loclin`, `surface.cutoff_wavelength_meters: 50000`, `surface.fill_gaps: bool`, `weights.coherence_power: 8`, `weights.quantile_mask: bool`, `two_pass: bool`, `tropo.mode: off|stratified|full|auto`, `gnss.buffer_meters: 50000`, `gnss.exclude_defo_nodes: bool`, `uncertainty.k_grid: float|"frame_table"`, `unwrap.enabled: false`, `schema_version: 2`.
-- [ ] T19.1 Add the pydantic model in `venti/core/config.py` with `schema_version` and defaults = gamma behaviour; `extra="forbid"`.
-- [ ] T19.2 Loader accepts the gamma file unchanged (schema_version 1 → upgraded in memory) with a test on `test_golden/configs/algorithm_parameters.yaml`.
-- [ ] T19.3 `docs/algorithm_parameters.md`: every key, default, unit, which requirement it implements, which release introduced it.
+- [x] T19.1 Add the pydantic model in `venti/core/config.py` with `schema_version` and defaults = gamma behaviour; `extra="forbid"`. *Done 2026-10-06 in `venti/workflow/config.py` (layout kept):* `SurfaceOptions`, `WeightOptions`, `TropoOptions`, `GnssOptions`, `UncertaintyOptions`, `UnwrapOptions` nested in `CalibrationOptions`; downsample keys modelled; `schema_version` on `AlgorithmParameters`; `extra="forbid"`; `unwrap_error_correction` default → off (R-U1).
+- [x] T19.2 Loader accepts the gamma file unchanged (schema_version 1 → upgraded in memory) with a test on `test_golden/configs/algorithm_parameters.yaml`. *Done 2026-10-06:* `AlgorithmParameters.from_dict/from_yaml` treat a file without `schema_version` as 1 and upgrade it in memory; tested on `tests/data/caldisp_algorithm_parameters_gamma.yaml` (values preserved, groups at gamma defaults).
+- [x] T19.3 `docs/algorithm_parameters.md`: every key, default, unit, which requirement it implements, which release introduced it. *Done 2026-10-06:* `docs/algorithm_parameters.md` — every key with default, unit, requirement, since-version and the v0.5 target values.
 
 ### T20. Venti documentation site
 **Depends on:** T08
