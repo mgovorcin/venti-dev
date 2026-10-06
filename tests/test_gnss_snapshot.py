@@ -71,6 +71,7 @@ def snapshot(tmp_path):
         fetch_lookup=fake_fetch,
         download=fake_download,
         notes="test",
+        allow_missing=True,
     )
 
 
@@ -127,6 +128,7 @@ def test_bounds_select_nodes_and_both_grid_types(tmp_path):
         snapshot_date=date(2026, 1, 1),
         fetch_lookup=fake_fetch,
         download=fake_download,
+        allow_missing=True,
     )
     info = load_snapshot(out)
     assert info.n_selected_nodes == 3
@@ -232,3 +234,66 @@ def test_script_verify_and_argument_errors(snapshot, capsys):
     (snapshot / "snapshot.json").write_text(json.dumps({"bad": 1}))
     with pytest.raises(TypeError):
         load_snapshot(snapshot)
+
+
+def test_missing_nodes_fail_the_build_by_default(tmp_path):
+    """Regression: a build where nodes fail must not leave a snapshot behind."""
+    with pytest.raises(RuntimeError, match="could not be downloaded"):
+        snapshot_unr_grid(
+            tmp_path,
+            snapshot_date=date(2026, 3, 3),
+            fetch_lookup=fake_fetch,
+            download=fake_download,  # node 3 fails
+        )
+    assert not (tmp_path / "unr_grid_0.3_20260303").exists()
+
+    def nothing(ids, out_dir, grid_type):
+        return []  # e.g. every request rejected
+
+    with pytest.raises(RuntimeError, match="5 of 5"):
+        snapshot_unr_grid(
+            tmp_path,
+            snapshot_date=date(2026, 3, 4),
+            fetch_lookup=fake_fetch,
+            download=nothing,
+        )
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_default_downloader_calls_geepers_per_file(tmp_path, monkeypatch):
+    """The real downloader passes explicit arguments to geepers' one-file download.
+
+    Regression: geepers' download_data_files forwards its keyword arguments
+    through tqdm's thread_map, which rejects them, so every node failed.
+    """
+    from geepers.gps_sources.unr_grid import UnrGridSource
+
+    from venti.gnss import snapshot as snap
+
+    calls = []
+
+    def fake_one(self, grid_id, plate, output_dir, session, version, gridded_type):
+        calls.append((grid_id, plate, version, gridded_type, session is not None))
+        if grid_id == "000004":
+            msg = "404"
+            raise OSError(msg)
+        dest = Path(output_dir) / f"{grid_id}_{plate}.tenv8"
+        dest.write_text("2015.0 0 0 0 0.3 0.3 0.9 0\n2016.0 1 1 1 0.3 0.3 0.9 0\n")
+        return dest
+
+    monkeypatch.setattr(UnrGridSource, "_download_file", fake_one)
+    download = snap._default_downloader("0.3", "IGS20", max_workers=3)
+    files = download([1, 2, 4], tmp_path, "constant")
+    assert sorted(p.name for p in files) == ["000001_IGS20.tenv8", "000002_IGS20.tenv8"]
+    assert sorted(c[0] for c in calls) == ["000001", "000002", "000004"]
+    assert {c[1:] for c in calls} == {("IGS20", "0.3", "constant", True)}
+    # end to end through snapshot_unr_grid with the real downloader
+    out = snapshot_unr_grid(
+        tmp_path / "root",
+        bounds_snwe=(29.0, 31.0, -96.0, -94.0),  # nodes 1-3
+        snapshot_date=date(2026, 4, 4),
+        fetch_lookup=fake_fetch,
+        max_workers=2,
+    )
+    assert load_snapshot(out).n_downloaded == {"constant": 3}
+    assert verify_snapshot(out) == []

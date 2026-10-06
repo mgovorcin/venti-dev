@@ -134,31 +134,55 @@ def _default_fetch_lookup(url: str) -> str:
 def _default_downloader(
     version: str, reference_frame: str, max_workers: int
 ) -> NodeDownloader:
-    """Download through geepers; a failing node is retried alone and recorded."""
+    """Download through geepers, one node per task in a thread pool.
+
+    Uses `UnrGridSource._download_file` (one file, explicit arguments) rather
+    than `download_data_files`: the latter forwards its keyword arguments
+    through ``tqdm.contrib.concurrent.thread_map``, which rejects them, so
+    every node failed (geepers 677f95d). A node that still fails after the
+    session's retries is logged and left out; the caller decides whether the
+    snapshot may be written without it.
+    """
 
     def download(ids: Sequence[int], out_dir: Path, grid_type: str) -> list[Path]:
+        import requests
         from geepers.gps_sources.unr_grid import UnrGridSource
+        from requests.adapters import HTTPAdapter, Retry
 
         src = UnrGridSource(version=version, gridded_type=grid_type, cache_dir=out_dir)  # type: ignore[arg-type]
-        id_strs = [f"{int(i):06d}" for i in ids]
-        kwargs: dict[str, Any] = {
-            "plate": reference_frame,
-            "output_dir": out_dir,
-            "version": version,
-            "gridded_type": grid_type,
-        }
-        try:
-            return list(
-                src.download_data_files(id_strs, max_workers=max_workers, **kwargs)
-            )
-        except Exception as exc:
-            logger.warning("bulk download failed (%s); retrying node by node", exc)
-        files: list[Path] = []
-        for s in id_strs:
+        session = requests.Session()
+        retries = Retry(
+            total=5, backoff_factor=1, status_forcelist=[429, 502, 503, 504]
+        )
+        session.mount(
+            "https://", HTTPAdapter(max_retries=retries, pool_maxsize=max_workers)
+        )
+
+        def one(node: int) -> Path | None:
             try:
-                files.extend(src.download_data_files([s], max_workers=1, **kwargs))
+                return Path(
+                    src._download_file(
+                        f"{int(node):06d}",
+                        plate=reference_frame,  # type: ignore[arg-type]
+                        output_dir=out_dir,
+                        session=session,
+                        version=version,  # type: ignore[arg-type]
+                        gridded_type=grid_type,  # type: ignore[arg-type]
+                    )
+                )
             except Exception as exc:
-                logger.warning("node %s: %s", s, exc)
+                logger.warning("node %06d: %s", int(node), exc)
+                return None
+
+        from concurrent.futures import ThreadPoolExecutor
+
+        files: list[Path] = []
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            for k, path in enumerate(pool.map(one, ids), start=1):
+                if path is not None:
+                    files.append(path)
+                if k % 1000 == 0:
+                    logger.info("%s: %d / %d nodes", grid_type, k, len(ids))
         return files
 
     return download
@@ -228,6 +252,7 @@ def snapshot_unr_grid(
     notes: str = "",
     fetch_lookup: LookupFetcher | None = None,
     download: NodeDownloader | None = None,
+    allow_missing: bool = False,
 ) -> Path:
     """Write a frozen snapshot of the UNR grid and return its directory.
 
@@ -249,11 +274,17 @@ def snapshot_unr_grid(
         Free text recorded in ``snapshot.json``.
     fetch_lookup, download : callables, optional
         Replace the network access (tests, mirrors).
+    allow_missing : bool
+        Write the snapshot even if some lookup nodes could not be downloaded
+        (their ids are recorded in ``snapshot.json``). By default any missing
+        node fails the build and nothing is left on disk.
 
     Raises
     ------
     FileExistsError
         If the snapshot directory already exists (snapshots are immutable).
+    RuntimeError
+        If nodes are missing and `allow_missing` is False.
 
     """
     root = Path(output_root)
@@ -286,6 +317,7 @@ def snapshot_unr_grid(
             fetch,
             get_nodes,
             notes,
+            allow_missing,
         )
     except BaseException:
         # a half-written directory must never pass for a snapshot
@@ -305,6 +337,7 @@ def _build(
     fetch: LookupFetcher,
     get_nodes: NodeDownloader,
     notes: str,
+    allow_missing: bool = False,
 ) -> None:
     nodes_dir = snapshot_dir / NODES_DIR
     nodes_dir.mkdir()
@@ -346,6 +379,13 @@ def _build(
             len(missing),
             span[gt],
         )
+        if missing and not allow_missing:
+            msg = (
+                f"{len(missing)} of {len(sel.ids)} {gt} nodes could not be "
+                f"downloaded (first: {missing[:5]}); nothing written. Rerun, or "
+                "pass allow_missing=True (--allow-missing) to record them as missing"
+            )
+            raise RuntimeError(msg)
 
     info = SnapshotInfo(
         snapshot_id=snapshot_id,

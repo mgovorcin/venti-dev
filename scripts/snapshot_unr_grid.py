@@ -59,6 +59,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--date", type=date.fromisoformat, help="snapshot date (default today)"
     )
     p.add_argument("--max-workers", type=int, default=8)
+    p.add_argument(
+        "--allow-missing",
+        action="store_true",
+        help="write the snapshot even if some nodes fail (ids recorded)",
+    )
     p.add_argument("--notes", default="")
     p.add_argument(
         "--verify", type=Path, metavar="SNAPSHOT_DIR", help="verify instead of writing"
@@ -95,6 +100,7 @@ def main(argv: list[str] | None = None) -> int:
         snapshot_date=args.date,
         max_workers=args.max_workers,
         notes=args.notes,
+        allow_missing=args.allow_missing,
     )
     info = load_snapshot(out)
     print(f"{info.snapshot_id} -> {out}")
