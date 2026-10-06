@@ -112,6 +112,23 @@ Value-changing entries say which product layers move and by how much
     with white noise and a k-inflated grid error, (surface - truth) /
     sigma_CAL has std 0.8-1.25 (test). sigma_CAL covers the calibration
     only: users add DISP noise below the cutoff (R-E2).
+- `venti.unwrap.regions` and `venti.unwrap.cycles` (plan T36, R-U1, D7): the
+  v0.5 unwrap-error estimator next to the gamma `UnwrapCorrector`.
+  `segment_regions(water_mask, valid_mask)` is the trade-study water-mask
+  recipe (erode 3x, regrow, drop < 20 px, label connected land);
+  `estimate_cycles(residual, labels, gnss_los, coherent, cycle_m, pixel_m,
+  options)` visits regions largest first, measures each against anchored
+  coherent land within 12 km on `DISP - CAL_1`, shifts whole cycles only
+  when the jump is within 0.15 of an integer and the shift moves the region
+  toward the GNSS field (veto), and lets only measured-0 or shifted regions
+  anchor others; optional inversion-residual gate; free offsets refused.
+  `apply_shifts` / `shift_field` give the `cal_unwrap_shift` component and
+  `make_unwrap_hook` plugs it into `calibrate_pair`. `Decisions` records
+  every region (CSV, summary). `UnwrapOptions` gains `anchor_distance_meters`,
+  `cycle_tolerance`, `min_coherent_area_km2`, `min_edge_area_km2`,
+  `residual_gate_cycles`. The 14-case F08882 bench (`tests/test_unwrap_bench.py`,
+  needs `VENTI_UNWRAP_BENCH_DIR`) scores 14/14 with and without the gate.
+  Still gated: `unwrap_error_correction` stays False until TS-U1.
 - `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
   the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
   bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files
