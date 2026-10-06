@@ -17,7 +17,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import rioxarray  # noqa: F401
+import rioxarray
 import xarray as xr
 from pyproj import Transformer
 from scipy.interpolate import RegularGridInterpolator
@@ -43,7 +43,7 @@ def dem() -> xr.DataArray:
     rng = np.random.default_rng(1)
     x = X0 + (np.arange(NX) + 0.5) * PIXEL_M
     y = Y0 - (np.arange(NY) + 0.5) * PIXEL_M
-    xx, yy = np.meshgrid(x, y)
+    xx, _yy = np.meshgrid(x, y)
     h = (
         50.0
         + 0.002 * (xx - X0)
@@ -125,8 +125,10 @@ class TestParityWithCalDisp:
         assert ours2.dtype == np.float32
 
     def test_interpolate_in_time_is_bit_identical(self, cube):
-        t0, t1, t = datetime(2022, 1, 11, 0), datetime(2022, 1, 11, 6), datetime(
-            2022, 1, 11, 0, 17
+        t0, t1, t = (
+            datetime(2022, 1, 11, 0),
+            datetime(2022, 1, 11, 6),
+            datetime(2022, 1, 11, 0, 17),
         )
         late = cube * 1.03
         ours = tropo.interpolate_in_time(
@@ -158,7 +160,9 @@ class TestNumerics:
 
     def test_time_interpolation_rules(self, cube):
         t0, t1 = datetime(2022, 1, 11, 0), datetime(2022, 1, 11, 6)
-        mid = tropo.interpolate_in_time(cube, cube * 3, t0, t1, datetime(2022, 1, 11, 3))
+        mid = tropo.interpolate_in_time(
+            cube, cube * 3, t0, t1, datetime(2022, 1, 11, 3)
+        )
         np.testing.assert_allclose(mid.values, 2 * cube.values, rtol=1e-6)
         assert mid.attrs["interpolation_weight"] == 0.5
         with pytest.raises(ValueError, match="must be before"):
@@ -248,7 +252,7 @@ class TestStratified:
 
 
 def _dem_with_relief(relief_m: float, n: int = 64) -> np.ndarray:
-    yy, xx = np.mgrid[0:n, 0:n].astype(float)
+    _yy, xx = np.mgrid[0:n, 0:n].astype(float)
     # linear ramp: p95 - p5 of a uniform distribution is 0.9 of the range
     return relief_m / 0.9 * xx / (n - 1)
 
@@ -266,8 +270,14 @@ class TestChooseMode:
 
     @pytest.mark.parametrize(
         ("relief", "expected"),
-        [(130.0, "off"), (270.0, "off"), (410.0, "off"), (900.0, "off"),
-         (1500.0, "stratified"), (2500.0, "stratified")],
+        [
+            (130.0, "off"),
+            (270.0, "off"),
+            (410.0, "off"),
+            (900.0, "off"),
+            (1500.0, "stratified"),
+            (2500.0, "stratified"),
+        ],
     )
     def test_auto_bands(self, relief, expected):
         o = TropoOptions(mode="auto")
@@ -276,10 +286,14 @@ class TestChooseMode:
     def test_auto_needs_dem_and_bands_are_configurable(self):
         with pytest.raises(ValueError, match="needs the DEM"):
             tropo.choose_tropo_mode(TropoOptions(mode="auto"))
-        o = TropoOptions(mode="auto", relief_off_meters=300, relief_stratified_meters=1000)
+        o = TropoOptions(
+            mode="auto", relief_off_meters=300, relief_stratified_meters=1000
+        )
         assert tropo.choose_tropo_mode(o, _dem_with_relief(1200.0)) == "stratified"
         with pytest.raises(ValueError, match="must not exceed"):
-            TropoOptions(mode="auto", relief_off_meters=2000, relief_stratified_meters=1000)
+            TropoOptions(
+                mode="auto", relief_off_meters=2000, relief_stratified_meters=1000
+            )
 
     def test_legacy_defers_to_apply_tropo_correction(self):
         o = TropoOptions()  # legacy
@@ -295,14 +309,19 @@ class TestChooseMode:
         base.calibration_options.tropo.mode = "auto"
         la = table.apply(base, 16940).calibration_options
         assert la.tropo.mode == "stratified"
-        assert tropo.choose_tropo_mode(la.tropo, _dem_with_relief(100.0)) == "stratified"
+        assert (
+            tropo.choose_tropo_mode(la.tropo, _dem_with_relief(100.0)) == "stratified"
+        )
         houston = table.apply(base, 8882).calibration_options
         assert houston.tropo.mode == "off"
         assert tropo.choose_tropo_mode(houston.tropo, _dem_with_relief(3000.0)) == "off"
         # a frame without an entry keeps auto and follows the relief
         other = table.apply(base, 99999).calibration_options
         assert other.tropo.mode == "auto"
-        assert tropo.choose_tropo_mode(other.tropo, _dem_with_relief(2000.0)) == "stratified"
+        assert (
+            tropo.choose_tropo_mode(other.tropo, _dem_with_relief(2000.0))
+            == "stratified"
+        )
 
 
 class TestApplyTropo:
@@ -334,7 +353,7 @@ class TestApplyTropo:
         """Integration: stratified cal_tropo is restored into the calibration (D6)."""
         h = np.nan_to_num(dem.values.astype(float), nan=50.0)
         x, y = _grid_xy()
-        xx, yy = np.meshgrid(x, y)
+        xx, _yy = np.meshgrid(x, y)
         gnss = 0.002 * (xx - X0) / (NX * PIXEL_M)
         rng = np.random.default_rng(5)
         tropo_full = -0.007 * h / 1e3 + 0.002 * np.sin(xx / 800.0)
@@ -342,10 +361,15 @@ class TestApplyTropo:
         valid = np.ones(h.shape, bool)
         comp = tropo.apply_tropo(tropo_full, "stratified", dem=h, x=x, y=y)
         o = CalibrationOptions(
-            surface={"method": "loclin", "cutoff_wavelength_meters": 20_000.0,
-                     "two_pass": False},
+            surface={
+                "method": "loclin",
+                "cutoff_wavelength_meters": 20_000.0,
+                "two_pass": False,
+            },
         )
-        res = calibrate_pair(disp, gnss, valid, (128, 128), o, PIXEL_M, 0.02773, tropo=comp)
+        res = calibrate_pair(
+            disp, gnss, valid, (128, 128), o, PIXEL_M, 0.02773, tropo=comp
+        )
         np.testing.assert_array_equal(res.cal_tropo, comp)
         assert res.components_applied["cal_tropo"]
         res.assert_closed()
@@ -405,4 +429,3 @@ def test_golden_dem_surface_delay_matches_an_independent_interpolation():
     assert np.isfinite(d_mm).mean() > 0.95
     assert abs(np.nanmedian(d_mm)) < 0.5
     assert np.nanpercentile(np.abs(d_mm), 99) < 2.0
-

@@ -64,8 +64,8 @@ __all__ = [
     "stratified_tropo",
 ]
 
+# A resolved mode: what `apply_tropo` does; ``auto`` and ``legacy`` resolve to one.
 TropoMode = Literal["off", "stratified", "full"]
-"""A resolved mode: what `apply_tropo` does. ``auto`` and ``legacy`` resolve to one."""
 
 # The stratified fit subsamples the delay grid for the normal equations; the
 # prototype used every 7th pixel (~4 km on a 600 m grid).  The model has five
@@ -113,15 +113,17 @@ def interpolate_in_time(
 
     """
     if early_date > late_date:
-        raise ValueError(
+        msg = (
             f"Early product date ({early_date}) must be before "
             f"late product date ({late_date})"
         )
+        raise ValueError(msg)
     if target_datetime < early_date or target_datetime > late_date:
-        raise ValueError(
+        msg = (
             f"Target datetime ({target_datetime}) must be between "
             f"early ({early_date}) and late ({late_date}) dates"
         )
+        raise ValueError(msg)
 
     delta_total = (late_date - early_date).total_seconds()
     delta_target = (target_datetime - early_date).total_seconds()
@@ -182,10 +184,11 @@ def interpolate_to_dem_surface(
         da_tropo_cube = da_tropo_cube.rename({"latitude": "y", "longitude": "x"})
 
     if not hasattr(dem, "rio") or dem.rio.crs is None:
-        raise ValueError(
+        msg = (
             "DEM is missing CRS information. "
             "Use dem.rio.write_crs() to set the CRS before calling this function."
         )
+        raise ValueError(msg)
     dem_crs = dem.rio.crs
 
     if not hasattr(da_tropo_cube, "rio") or da_tropo_cube.rio.crs is None:
@@ -197,9 +200,8 @@ def interpolate_to_dem_surface(
         td_utm = da_tropo_cube
 
     if "height" not in td_utm.dims:
-        raise ValueError(
-            f"No height dimension found. Available dims: {list(td_utm.dims)}"
-        )
+        msg = f"No height dimension found. Available dims: {list(td_utm.dims)}"
+        raise ValueError(msg)
 
     rgi = RegularGridInterpolator(
         (td_utm["height"].values, td_utm.y.values, td_utm.x.values),
@@ -259,10 +261,11 @@ def compute_los_correction(
         if hasattr(los_up, "rio") and hasattr(zenith_delay_2d, "rio"):
             los_up = los_up.rio.reproject_match(zenith_delay_2d)
         else:
-            raise ValueError(
+            msg = (
                 f"Shape mismatch: los_up {los_up.shape} vs "
                 f"zenith_delay {zenith_delay_2d.shape}"
             )
+            raise ValueError(msg)
 
     los_correction = -1 * (zenith_delay_2d / los_up)
 
@@ -360,7 +363,9 @@ class StratifiedModel:
         h = np.asarray(dem, dtype=np.float64)
         out[valid] = (
             _design(
-                x[valid] / self.xy_scale, y[valid] / self.xy_scale, h[valid] / self.h_scale
+                x[valid] / self.xy_scale,
+                y[valid] / self.xy_scale,
+                h[valid] / self.h_scale,
             )
             @ self.coefficients
         )
