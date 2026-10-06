@@ -75,16 +75,16 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T07. Shared engineering-standards kit
 **Depends on:** none
 **Context:** PRD §6 and §11. The kit is applied to every repo (T08–T11, T52). Source material: `00_tools/.claude/skills/` (`git-commit-pr`, `unit-tests`, `workflow-regression`, `docker-build`, `install.sh`), geepers' SPDX/NOTICE convention, and cal-disp's existing `.pre-commit-config.yaml`.
-- [ ] T07.1 Create `00_tools/standards/` with: `.pre-commit-config.yaml` (ruff lint+format, mypy, nbstripout, check-yaml/toml, end-of-file-fixer, SPDX header check script), `pixi` task block template (`test`, `lint`, `docs`, `golden`, `e2e`; envs `default`, `dev`, `ops`), `.github/ISSUE_TEMPLATE/{feature,bug,science,release}.yml`, `.github/pull_request_template.md`, `CLAUDE.md` template with sections *Architecture*, *Invariants*, *Commands*, *Golden policy*.
-- [ ] T07.2 Write `scripts/spdx_check.py` (fails on `.py` files missing the Apache-2.0 + repo citation header) with tests.
-- [ ] T07.3 Write `apply_standards.sh <repo>` that copies the kit without overwriting repo-specific content, and installs the skills via `install.sh`.
-- [ ] T07.4 Document the branch/PR policy (small single-concern PRs, conventional commits, no direct pushes to `main`, Claude PRs reviewed by owner) in `00_tools/standards/CONTRIBUTING.md`.
+- [x] T07.1 Create `00_tools/standards/` with: `.pre-commit-config.yaml` (ruff lint+format, mypy, nbstripout, check-yaml/toml, end-of-file-fixer, SPDX header check script), `pixi` task block template (`test`, `lint`, `docs`, `golden`, `e2e`; envs `default`, `dev`, `ops`), `.github/ISSUE_TEMPLATE/{feature,bug,science,release}.yml`, `.github/pull_request_template.md`, `CLAUDE.md` template with sections *Architecture*, *Invariants*, *Commands*, *Golden policy*.
+- [x] T07.2 Write `scripts/spdx_check.py` (fails on `.py` files missing the Apache-2.0 + repo citation header) with tests.
+- [x] T07.3 Write `apply_standards.sh <repo>` that copies the kit without overwriting repo-specific content, and installs the skills via `install.sh`.
+- [x] T07.4 Document the branch/PR policy (small single-concern PRs, conventional commits, no direct pushes to `main`, Claude PRs reviewed by owner) in `00_tools/standards/CONTRIBUTING.md`.
 
 ### T08. Apply standards to Venti (`venti-dev`)
 **Depends on:** T07
 **Context:** Clone at `00_tools/src/Venti` (`origin` = `mgovorcin/venti-dev`, `upstream` = `opera-adt/Venti`). Venti has `.readthedocs.yaml` and a pixi docs task but no `docs/` or `mkdocs.yml`; `environment.yml` was emptied on the `models` branch. `docs/specs.md` and `docs/plan.md` are untracked.
 - [ ] T08.1 On branch `feature/prd-docs` (the tree rule in `00_tools/CLAUDE.md`: never commit on `main`), commit `docs/specs.md` and `docs/plan.md` (`docs: add PRD and implementation plan`); push to `origin` and open the PR on the fork.
-- [ ] T08.2 Run `apply_standards.sh`; commit pre-commit config, templates, `CLAUDE.md` (Invariants: sensor-agnostic core, `calibration == Σ components`, no heavy deps in core).
+- [x] T08.2 Run `apply_standards.sh`; commit pre-commit config, templates, `CLAUDE.md` (Invariants: sensor-agnostic core, `calibration == Σ components`, no heavy deps in core).
 - [ ] T08.3 Add `pixi.toml`/`[tool.pixi]` with `default`, `dev`, `ops` envs; commit `pixi.lock`; `pixi run -e dev test` passes on the existing 132 tests.
 - [ ] T08.4 Enable pre-commit.ci and a GitHub Actions `test` workflow on the fork.
 
@@ -99,7 +99,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T10. Apply standards to geepers fork
 **Depends on:** T07
 **Context:** `00_tools/src/geepers` (`origin` = fork, `upstream` = `opera-adt/geepers`, on `main`, clean). geepers already has SPDX headers and ruff; mainly add templates, `CLAUDE.md`, pixi.
-- [ ] T10.1 Run `apply_standards.sh`; commit.
+- [x] T10.1 Run `apply_standards.sh`; commit.
 - [ ] T10.2 Add pixi envs; `pixi run -e dev test` passes (uses `pytest-recording` cassettes, no live network).
 - [ ] T10.3 Create branch `feat/extras-split` for T12–T15.
 
@@ -113,8 +113,8 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T12. geepers dependency audit
 **Depends on:** T10
 **Context:** geepers core deps are heavy (dask, zarr, pandera, lxml, rasterio, rioxarray, geopandas, pyogrio). The operational image needs only UNR grid/station retrieval (`gps_sources/unr_grid.py`, `gps_sources/unr.py`, `gps_sources/base.py`, `schemas.py`) and, in `[grid]`, GPS Imaging (`gps_imaging.py`) and Euler (`euler.py`). PRD §4.4: ≤ 4 extras + `[all]`.
-- [ ] T12.1 Generate an import graph (`pydeps` or a script over `ast`) of `src/geepers`; list third-party imports per module; commit as `docs/dependency_audit.md`.
-- [ ] T12.2 Propose the partition: `core` = {`gps_sources/*`, `schemas`, `utils`, `io` (reduced)}, `[grid]` = {`gps_imaging`, `euler`, `surface`?}, `[analysis]` = everything else. Record which modules need lazy imports or splitting (e.g. `schemas.py` using pandera).
+- [x] T12.1 Generate an import graph (`pydeps` or a script over `ast`) of `src/geepers`; list third-party imports per module; commit as `docs/dependency_audit.md`.
+- [x] T12.2 Propose the partition: `core` = {`gps_sources/*`, `schemas`, `utils`, `io` (reduced)}, `[grid]` = {`gps_imaging`, `euler`, `surface`?}, `[analysis]` = everything else. Record which modules need lazy imports or splitting (e.g. `schemas.py` using pandera).
 - [ ] T12.3 Get owner sign-off on the partition (issue on the fork).
 
 ### T13. geepers lean core
@@ -185,9 +185,9 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T20. Venti documentation site
 **Depends on:** T08
 **Context:** `.readthedocs.yaml` exists but no `mkdocs.yml`. Mirror cal-disp's mkdocs setup (material, mkdocstrings, mkdocs-jupyter).
-- [ ] T20.1 Add `mkdocs.yml`, `docs/index.md`, nav: Specs, Plan, Architecture, Algorithm parameters, API.
+- [x] T20.1 Add `mkdocs.yml`, `docs/index.md`, nav: Specs, Plan, Architecture, Algorithm parameters, API.
 - [ ] T20.2 `pixi run docs` builds with `--strict`; CI job publishes to `gh-pages` on the fork.
-- [ ] T20.3 Add `docs/decisions/` (ADR format) and backfill D1–D19 from the PRD decision log as ADR-0001…0019 (one file each, short).
+- [x] T20.3 Add `docs/decisions/` (ADR format) and backfill D1–D19 from the PRD decision log as ADR-0001…0019 (one file each, short).
 
 ### T21. Validation package: port the e2e core
 **Depends on:** T11, T15

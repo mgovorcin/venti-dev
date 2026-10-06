@@ -10,7 +10,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Phase 0: Gamma 0.3 release
 
 - [!] T01 Confirm the gamma configuration with Talib — blocked on Talib's answers
-- [!] T02 Secure a Docker build host and build the gamma image — no Docker/podman on aurora
+- [ ] T02 Secure a Docker build host and build the gamma image — docker daemon is available on aurora (needs --network=host)
 - [ ] T03 Rebuild the golden inside Docker and validate — depends on T01, T02
 - [ ] T04 Fix the delivery documents — depends on T01
 - [ ] T05 Confirm product URLs and version string — depends on T01
@@ -18,10 +18,10 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 ## Phase 1: Foundations
 
-- [ ] T07 Shared engineering-standards kit
-- [ ] T08 Apply standards to Venti (`venti-dev`) — depends on T07
+- [x] T07 Shared engineering-standards kit
+- [~] T08 Apply standards to Venti (`venti-dev`) — depends on T07
 - [ ] T09 Apply standards to cal-disp — depends on T06, T07
-- [ ] T10 Apply standards to geepers fork — depends on T07
+- [~] T10 Apply standards to geepers fork — depends on T07
 - [ ] T11 Create the validation package repo — depends on T07
 - [ ] T12 geepers dependency audit — depends on T10
 - [ ] T13 geepers lean core — depends on T12
