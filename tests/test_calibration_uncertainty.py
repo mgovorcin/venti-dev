@@ -272,3 +272,31 @@ class TestCalibrated:
         )
         assert res.sigma_cal is None
         assert res.sigma_fit is None
+
+
+def test_sigma_maps_cover_a_frame_that_is_not_a_multiple_of_the_factor():
+    """Regression: a 97 x 101 frame at factor 6 (the F08882 frame is 7733 x 9464)."""
+    rng = np.random.default_rng(3)
+    disp = 0.004 * rng.standard_normal((97, 101))
+    o = _opts()
+    o.downsample_factor = 6
+    res = calibrate_pair(
+        disp,
+        np.zeros_like(disp),
+        np.ones(disp.shape, bool),
+        (10, 10),
+        o,
+        PIXEL_M,
+        CYCLE_M,
+        gnss_los_std=np.full(disp.shape, 0.0003),
+    )
+    assert res.sigma_cal is not None
+    assert res.sigma_cal.shape == disp.shape
+    assert res.sigma_fit is not None
+    assert res.sigma_fit.shape == disp.shape
+    assert res.n_eff is not None
+    assert res.n_eff.shape == disp.shape
+    assert np.isfinite(res.sigma_cal).all()
+    # the trailing rows/columns beyond the last full block take the nearest node
+    np.testing.assert_array_equal(res.sigma_fit[96], res.sigma_fit[95])
+    np.testing.assert_array_equal(res.sigma_fit[:, 100], res.sigma_fit[:, 99])

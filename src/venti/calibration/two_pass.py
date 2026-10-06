@@ -136,11 +136,18 @@ def _downsample_bool(mask: np.ndarray, factor: int) -> np.ndarray:
 
 
 def _upsample_nan(arr: np.ndarray, shape: tuple[int, int], factor: int) -> np.ndarray:
-    """Upsample a map that may hold NaN (nearest: each block takes its node)."""
+    """Upsample a map that may hold NaN (nearest: each pixel takes its block's node).
+
+    `downsample_array` trims the frame to a multiple of `factor`, so the last
+    rows/columns of the full grid fall beyond the last block; they take the
+    nearest node rather than being cut off.
+    """
+    a = np.asarray(arr, dtype=np.float64)
     if factor <= 1:
-        return np.asarray(arr, dtype=np.float64)
-    big = np.kron(np.asarray(arr, dtype=np.float64), np.ones((factor, factor)))
-    return big[: shape[0], : shape[1]]
+        return a
+    rows = np.minimum(np.arange(shape[0]) // factor, a.shape[0] - 1)
+    cols = np.minimum(np.arange(shape[1]) // factor, a.shape[1] - 1)
+    return a[rows][:, cols]
 
 
 def _frame_cutoff_m(shape: tuple[int, int], pixel_m: float) -> float:
