@@ -20,10 +20,10 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 - [x] T07 Shared engineering-standards kit
 - [x] T08 Apply standards to Venti (`venti-dev`) — done 2026-10-05 on `feature/standards` (pre-commit.ci switch-on is a manual owner step)
-- [ ] T09 Apply standards to cal-disp — depends on T06, T07
+- [ ] T09 Apply standards to cal-disp — depends on T07; T06 only for the upstream PR (ADR-0021)
 - [x] T10 Apply standards to geepers fork — done 2026-10-05 on geepers `feature/standards` (3 commits: env, kit, type fixes)
-- [ ] T11 Create the validation package repo — depends on T07
-- [~] T12 geepers dependency audit — T12.1–T12.2 done (`docs/dependency_audit.md` on `feature/extras-split`); T12.3 owner sign-off pending
+- [x] T11 Create the validation package repo — done 2026-10-06: private `mgovorcin/disp2vlm_validation` (`v0.0.0`)
+- [~] T12 geepers dependency audit — T12.1–T12.2 done (`docs/dependency_audit.md` on `feature/extras-split`); T12.3 sign-off requested on geepers fork PR #2 (2026-10-06)
 - [x] T13 geepers lean core — done 2026-10-06 on geepers `feature/extras-split` (provisional on the T12.3 sign-off)
 - [x] T14 `geepers[grid]`: GPS Imaging + Euler, with exclusion areas — done 2026-10-06 on geepers `feature/extras-split` (reinterpolate_nodes, plate tables, plate_velocity_enu)
 - [x] T15 `geepers[analysis]` and `[all]` — done 2026-10-06 on geepers `feature/extras-split` (CI matrix per tier, README install matrix, CHANGELOG)
@@ -37,7 +37,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] T23 Gate logic and comparison modes — depends on T21
 - [ ] T24 Reports and traceability — depends on T22, T23
 - [ ] T25 Validation CLI, caching, batch execution — depends on T24
-- [ ] T26 cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget — depends on T09, T13, T17
+- [ ] T26 cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget — depends on T09, T13, T17 (T06 only for upstream, ADR-0021)
 - [x] T27 Frame-parameter table — done 2026-10-06 on `feature/frame-table` (`venti.frames`, `calibration_options.frame`, bundled table for 4 frames; T27.4 cal-disp consumption waits for T37)
 
 ## Phase 2: Science port into Venti
@@ -103,3 +103,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-06 T17 done on `feature/lean-core` (PR #5): tiers by dependency (ADR-0020), `venti.staging`, plate motion from geepers, `ops`/`core-test` envs; suite 291 passed in 19 s. Next: T18 `SensorSpec`, T19 algorithm-parameters schema, T27 frame table.
 - 2026-10-06 Phase 2 science port finished on the Venti side: T34 tropo modes (PR #13), T35 σ_CAL (PR #14), T36 unwrap module, gated, 14/14 bench (PR #15); then the unblocked later-phase work: T48.1/T48.4 UNR snapshot + operations doc (PR #16), T53 decomposition (PR #17), T54.1–T54.2 temporal resampling (PR #18). Suite 456 passed, 7 skipped (parity/golden/bench tests need `PYTHONPATH`, `CAL_DISP_GOLDEN_DIR`, `VENTI_UNWRAP_BENCH_DIR`). Everything left open needs a decision or an upstream step: T12.3 sign-off; T11/T52 repo names; T01 → T03–T06 → T09 → T26 → T37 (cal-disp wiring, which also closes T27.4, T30.4, T31.3, T34 CI import, T48.3); T48.2 S3 bucket; T58 beta DISP-NISAR data; fork Actions still to be enabled.
 - 2026-10-06 (later) CI on the fork fixed (full matrix installs every tier; pre-commit under 3.13; files committed before linting formatted at every branch tip). T30.4 benchmark done on `feature/golden-benchmark` (PR #19): gamma path reproduces the trade study exactly (21.4 mm); loclin 50 km 13.6 mm; three bugs found by the full-frame run and fixed mid-stack (gamma GNSS-sigma weights gate, sigma-map trimming, 290 s pass-1 tie). Open from it: TS-B1 on weights, +2 mm bias for T38/T39.
+- 2026-10-06 Gamma release confirmed **not finished** (upstream PR #21 open and unreviewed, no v0.3 tag; T01 sign-off, T03 Docker golden, T04 docs, T05 URLs open). T01.1 memo written (cal-disp fork PR #2: recommends 600 km, tropo off, unwrap off). ADR-0021: v0.5 cal-disp work proceeds on fork branches stacked on `gamma-release`; T06 gates only the upstream merge. T11 done (`disp2vlm_validation`, private). T12.3 sign-off requested on geepers PR #2. T48.2 proposal: `s3://opera-adt/opera-ancillary/unr-grid/<snapshot_id>/`.

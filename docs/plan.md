@@ -24,7 +24,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T01. Confirm the gamma configuration with Talib
 **Depends on:** none
 **Context:** The delivered gamma 0.3 (600 km window, tropo on, unwrap on) was never validated end to end; our `gamma-release` has unwrap **off** and differs from the delivered `calibration` by a median of −6.7 cm. Talib's own validation used 30 km and tropo off. The release can't be tagged until one configuration is agreed. Open questions are in `gamma_release/delivery_docs_review.md`.
-- [ ] T01.1 Write a one-page decision memo: the three configurations (delivered, Talib's validated, ours), the GNSS-grid bias of each (−9.3 cm vs +0.5 cm), and the recommendation (600 km, tropo on, unwrap off).
+- [x] T01.1 Write a one-page decision memo: the three configurations (delivered, Talib's validated, ours), the GNSS-grid bias of each (−9.3 cm vs +0.5 cm), and the recommendation (600 km, tropo on, unwrap off). *Done 2026-10-06:* cal-disp `docs/decisions/0001-gamma-config.md` (fork PR #2). The station evidence changed the recommendation to **600 km, tropo off, unwrap off** (36.9 → 21.4 mm RMSE at 83 real stations on the golden pair).
 - [ ] T01.2 Send the memo and the four questions from `delivery_docs_review.md` to Talib; record the answers in `cal-disp/docs/decisions/0001-gamma-config.md`.
 - [ ] T01.3 Freeze `test_golden/configs/algorithm_parameters.yaml` to the agreed values; revert the `output2` paths noted in `GAMMA_RELEASE_HANDOFF.md`.
 
@@ -89,8 +89,8 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 - [x] T08.4 Enable pre-commit.ci and a GitHub Actions `test` workflow on the fork. (Actions: enabled on `mgovorcin/venti-dev`, `test.yaml` + `pre-commit.yaml` + `docs.yaml` run on PRs. pre-commit.ci: must be switched on at https://pre-commit.ci by the repo owner — not scriptable.)
 
 ### T09. Apply standards to cal-disp
-**Depends on:** T06, T07
-**Context:** Do this after the gamma release so the release diff stays clean. cal-disp already has pre-commit.ci, mkdocs and pixi; align them with the kit rather than replacing them. Two pytest configs existed (structural review); keep one.
+**Depends on:** T07 (development); T06 for the upstream PR only (ADR-0021)
+**Context:** Do this after the gamma release so the release diff stays clean. *ADR-0021 (2026-10-06):* developed now on fork branches stacked on `gamma-release`; upstream only after the gamma tag. cal-disp already has pre-commit.ci, mkdocs and pixi; align them with the kit rather than replacing them. Two pytest configs existed (structural review); keep one.
 - [ ] T09.1 Run `apply_standards.sh`; reconcile with the existing pre-commit config; one pytest config.
 - [ ] T09.2 Add `ops` pixi env mirroring the Docker image; `conda-lock` generated from it; document in `docker/README.md`.
 - [ ] T09.3 `CLAUDE.md` with Invariants: CLI and runconfig frozen (PRD §2.2), additive `algorithm_parameters.yaml`, golden policy.
@@ -105,17 +105,17 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 
 ### T11. Create the validation package repo
 **Depends on:** T07
-**Context:** New repo under `mgovorcin/`, name TBD (PRD §7.5 Q4; proposal `disp-validate`). It will depend on `geepers[analysis]` and must never be in the operational image.
-- [ ] T11.1 Create the repo from the kit (the `sas-scaffold` skill in `00_tools` provides the CLI/pixi/pre-commit/CI skeleton; skip its PGE runconfig and product-writer parts, this is a tool, not a SAS): `src/<pkg>/`, `tests/`, `docs/`, pixi, CI, `CLAUDE.md` (Invariants: uses only independent GNSS — UNR daily stations and MIDAS — never the calibration grid).
-- [ ] T11.2 Add the dependency list: `geepers[analysis]`, `xarray`, `rioxarray`, `scipy`, `pandas`, `jinja2`, `matplotlib`; pin `venti-dev` only as an optional extra.
-- [ ] T11.3 Write `docs/scope.md` from PRD §3.4 and §2.7 (metrics, modes, gate, outputs, audience).
+**Context:** New repo under `mgovorcin/`, name TBD (PRD §7.5 Q4; proposal `disp-validate`). *Done 2026-10-06:* named **`disp2vlm_validation`** by the owner; private `mgovorcin/disp2vlm_validation` (`v0.0.0`), lean tool skeleton (not the SAS scaffold), CLI `disp2vlm-validate gate`, gate and benchmark frames as data, licensing template (draft, so private). It will depend on `geepers[analysis]` and must never be in the operational image.
+- [x] T11.1 Create the repo from the kit (the `sas-scaffold` skill in `00_tools` provides the CLI/pixi/pre-commit/CI skeleton; skip its PGE runconfig and product-writer parts, this is a tool, not a SAS): `src/<pkg>/`, `tests/`, `docs/`, pixi, CI, `CLAUDE.md` (Invariants: uses only independent GNSS — UNR daily stations and MIDAS — never the calibration grid).
+- [x] T11.2 Add the dependency list: `geepers[analysis]`, `xarray`, `rioxarray`, `scipy`, `pandas`, `jinja2`, `matplotlib`; pin `venti-dev` only as an optional extra.
+- [x] T11.3 Write `docs/scope.md` from PRD §3.4 and §2.7 (metrics, modes, gate, outputs, audience).
 
 ### T12. geepers dependency audit
 **Depends on:** T10
 **Context:** geepers core deps are heavy (dask, zarr, pandera, lxml, rasterio, rioxarray, geopandas, pyogrio). The operational image needs only UNR grid/station retrieval (`gps_sources/unr_grid.py`, `gps_sources/unr.py`, `gps_sources/base.py`, `schemas.py`) and, in `[grid]`, GPS Imaging (`gps_imaging.py`) and Euler (`euler.py`). PRD §4.4: ≤ 4 extras + `[all]`.
 - [x] T12.1 Generate an import graph (`pydeps` or a script over `ast`) of `src/geepers`; list third-party imports per module; commit as `docs/dependency_audit.md`.
 - [x] T12.2 Propose the partition: `core` = {`gps_sources/*`, `schemas`, `utils`, `io` (reduced)}, `[grid]` = {`gps_imaging`, `euler`, `surface`?}, `[analysis]` = everything else. Record which modules need lazy imports or splitting (e.g. `schemas.py` using pandera).
-- [ ] T12.3 Get owner sign-off on the partition (issue on the fork).
+- [ ] T12.3 Get owner sign-off on the partition (issue on the fork). *Requested 2026-10-06* as a comment on geepers fork PR #2 (issues are disabled on the fork); waiting for "approved".
 
 ### T13. geepers lean core
 **Depends on:** T12
@@ -229,7 +229,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 - [ ] T25.4 Reproduce the F08882 baseline numbers from `trade studies/e2e_validation/README.md` (sill 257 mm² raw-vs-calibrated, RMSE 5.07) within tolerance; record in `docs/baselines.md`.
 
 ### T26. cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget
-**Depends on:** T09, T13, T17
+**Depends on:** T09, T13, T17 (T06 only for the upstream PR, ADR-0021)
 **Context:** cal-disp pins `Venti@2a7e61f`; has its own UNR code (`download/_stage_unr.py`, `product/_unr.py`) duplicating geepers; `worker_settings` unused; TODO lists `mask_file` accepted but ignored, NISAR filename unsupported. R-O6: the ops image must exclude dask, zarr, matplotlib, jupyter; CI enforces allow-list, size budget, peak memory.
 - [ ] T26.1 Pin `venti-dev[calibration]` and `geepers[grid]` by tag; `opera-utils[tropo]`; remove `[download]` extra deps not needed in ops (asf_search → optional).
 - [ ] T26.2 Replace `_stage_unr.py` / `_unr.py` with `geepers.gps_sources.UnrGridSource`; keep the CLI `cal-disp download unr` behaviour identical (tests with cassettes).
