@@ -83,10 +83,10 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T08. Apply standards to Venti (`venti-dev`)
 **Depends on:** T07
 **Context:** Clone at `00_tools/src/Venti` (`origin` = `mgovorcin/venti-dev`, `upstream` = `opera-adt/Venti`). Venti has `.readthedocs.yaml` and a pixi docs task but no `docs/` or `mkdocs.yml`; `environment.yml` was emptied on the `models` branch. `docs/specs.md` and `docs/plan.md` are untracked.
-- [ ] T08.1 On branch `feature/prd-docs` (the tree rule in `00_tools/CLAUDE.md`: never commit on `main`), commit `docs/specs.md` and `docs/plan.md` (`docs: add PRD and implementation plan`); push to `origin` and open the PR on the fork.
+- [x] T08.1 On branch `feature/prd-docs` (the tree rule in `00_tools/CLAUDE.md`: never commit on `main`), commit `docs/specs.md` and `docs/plan.md` (`docs: add PRD and implementation plan`); push to `origin` and open the PR on the fork.
 - [x] T08.2 Run `apply_standards.sh`; commit pre-commit config, templates, `CLAUDE.md` (Invariants: sensor-agnostic core, `calibration == Σ components`, no heavy deps in core).
-- [ ] T08.3 Add `pixi.toml`/`[tool.pixi]` with `default`, `dev`, `ops` envs; commit `pixi.lock`; `pixi run -e dev test` passes on the existing 132 tests.
-- [ ] T08.4 Enable pre-commit.ci and a GitHub Actions `test` workflow on the fork.
+- [x] T08.3 Add `pixi.toml`/`[tool.pixi]` with `default`, `dev`, `ops` envs; commit `pixi.lock`; `pixi run -e dev test` passes on the existing 132 tests.
+- [x] T08.4 Enable pre-commit.ci and a GitHub Actions `test` workflow on the fork. (Actions: enabled on `mgovorcin/venti-dev`, `test.yaml` + `pre-commit.yaml` + `docs.yaml` run on PRs. pre-commit.ci: must be switched on at https://pre-commit.ci by the repo owner — not scriptable.)
 
 ### T09. Apply standards to cal-disp
 **Depends on:** T06, T07
@@ -186,7 +186,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 **Depends on:** T08
 **Context:** `.readthedocs.yaml` exists but no `mkdocs.yml`. Mirror cal-disp's mkdocs setup (material, mkdocstrings, mkdocs-jupyter).
 - [x] T20.1 Add `mkdocs.yml`, `docs/index.md`, nav: Specs, Plan, Architecture, Algorithm parameters, API.
-- [ ] T20.2 `pixi run docs` builds with `--strict`; CI job publishes to `gh-pages` on the fork.
+- [x] T20.2 `pixi run docs` builds with `--strict`; CI job publishes to `gh-pages` on the fork.
 - [x] T20.3 Add `docs/decisions/` (ADR format) and backfill D1–D19 from the PRD decision log as ADR-0001…0019 (one file each, short).
 
 ### T21. Validation package: port the e2e core
