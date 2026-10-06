@@ -25,7 +25,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] T11 Create the validation package repo — depends on T07
 - [~] T12 geepers dependency audit — T12.1–T12.2 done (`docs/dependency_audit.md` on `feature/extras-split`); T12.3 owner sign-off pending
 - [x] T13 geepers lean core — done 2026-10-06 on geepers `feature/extras-split` (provisional on the T12.3 sign-off)
-- [ ] T14 `geepers[grid]`: GPS Imaging + Euler, with exclusion areas — depends on T13; includes T14.3a ITRF2020 plate table (TODO added 2026-10-06)
+- [x] T14 `geepers[grid]`: GPS Imaging + Euler, with exclusion areas — done 2026-10-06 on geepers `feature/extras-split` (reinterpolate_nodes, plate tables, plate_velocity_enu)
 - [ ] T15 `geepers[analysis]` and `[all]` — depends on T13
 - [x] T16 Venti bug fixes and packaging repair — done 2026-10-05 on `feature/venti-bugfixes` (T16.7 research-branch copy still open, see plan)
 - [ ] T17 Venti package layout: lean core + extras — depends on T14, T16
