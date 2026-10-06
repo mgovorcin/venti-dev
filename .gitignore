@@ -165,3 +165,7 @@ Thumbs.db
 # GNSS downloads (e.g. from staging examples); src/venti/gnss is code
 /gnss/
 site/
+
+# Small test fixtures are tracked; the data/ rule above is for staged products.
+!tests/data/
+!tests/data/**
