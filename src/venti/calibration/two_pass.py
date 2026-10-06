@@ -155,6 +155,13 @@ def _frame_cutoff_m(shape: tuple[int, int], pixel_m: float) -> float:
     return 4.0 * max(shape) * pixel_m
 
 
+# The pass-1 tie is a near-planar fit, so it is computed on a grid of at most
+# this many pixels across and interpolated back: the Gaussian moments of a
+# 4-frame-wide kernel on a 1300 x 1600 fit grid cost minutes, on 130 x 160
+# they cost nothing, and the two agree to well below a millimetre.
+TIE_MAX_PX = 256
+
+
 def calibrate_pair(
     disp: np.ndarray,
     gnss_los: np.ndarray,
@@ -293,7 +300,9 @@ def calibrate_pair(
             valid,
             ref_point,
             window_px,
-            gnss_los_std=gnss_los_std,
+            gnss_los_std=(
+                gnss_los_std if options.weight_fit_by_gnss_uncertainty else None
+            ),
             event_mask=event_mask,
             options=gamma_opts,
             wavelength_m=2.0 * cycle_m,
@@ -328,9 +337,21 @@ def calibrate_pair(
         gnss_ds = down(np.where(np.isfinite(gnss), gnss, 0.0))
 
         def fit(
-            residual_ds: np.ndarray, cutoff_m: float, robust: bool
+            residual_ds: np.ndarray,
+            cutoff_m: float,
+            robust: bool,
+            *,
+            grids: (
+                tuple[np.ndarray, np.ndarray, np.ndarray | None, float] | None
+            ) = None,
         ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-            fit_valid = valid_ds & ~exclude_ds & np.isfinite(residual_ds)
+            f_valid, f_exclude, f_coh, f_pixel = grids or (
+                valid_ds,
+                exclude_ds,
+                coh_ds,
+                pixel_ds,
+            )
+            fit_valid = f_valid & ~f_exclude & np.isfinite(residual_ds)
             if not fit_valid.any():
                 msg = "no valid pixel left for the fit after masking and exclusion"
                 raise ValueError(msg)
@@ -340,26 +361,43 @@ def calibrate_pair(
             w = base_weights(
                 fit_valid, filled_mask, options.weights.filled_pixel_weight
             )
-            sigma_px = kernel_sigma_px(cutoff_m, pixel_ds)
+            sigma_px = kernel_sigma_px(cutoff_m, f_pixel)
             w = fit_weights(
                 filled,
                 w,
                 sigma_px,
-                coherence=coh_ds,
+                coherence=f_coh,
                 coherence_power=options.weights.coherence_power,
                 robust=robust,
             )
-            surface_ds, cov = loclin_surface(filled, w, pixel_ds, cutoff_m)
+            surface_ds, cov = loclin_surface(filled, w, f_pixel, cutoff_m)
             return surface_ds, cov, w, filled
+
+        def tie(residual_ds: np.ndarray) -> np.ndarray:
+            """Pass-1 robust tie; coarse grid when the fit grid is large."""
+            tie_factor = max(1, int(np.ceil(max(residual_ds.shape) / TIE_MAX_PX)))
+            cutoff = _frame_cutoff_m(residual_ds.shape, pixel_ds)
+            if tie_factor == 1:
+                return fit(residual_ds, cutoff, robust=True)[0]
+            fit_valid = valid_ds & ~exclude_ds & np.isfinite(residual_ds)
+            coarse = downsample_array(
+                np.where(fit_valid, residual_ds, np.nan), tie_factor, method="mean"
+            )
+            grids = (
+                np.isfinite(coarse),
+                np.zeros(coarse.shape, dtype=bool),
+                downsample_array(coh_ds, tie_factor) if coh_ds is not None else None,
+                pixel_ds * tie_factor,
+            )
+            tie_coarse = fit(coarse, cutoff, robust=True, grids=grids)[0]
+            return upsample_array(tie_coarse, residual_ds.shape)
 
         work_ds = down(np.where(valid, work, 0.0))
         residual_ds = work_ds - gnss_ds
         passes = 1
         if options.surface.two_pass:
             passes = 2
-            tie_ds, _, _, _ = fit(
-                residual_ds, _frame_cutoff_m(residual_ds.shape, pixel_ds), robust=True
-            )
+            tie_ds = tie(residual_ds)
             if options.unwrap_error_correction and unwrap_hook is not None:
                 shift_ds, decisions = unwrap_hook(
                     residual_ds - tie_ds, valid_ds & ~exclude_ds, cycle_m

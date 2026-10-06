@@ -289,3 +289,68 @@ def test_result_dataclass_round_trip():
     )
     np.testing.assert_array_equal(r.calibration, 3.5)
     r.assert_closed()
+
+
+class TestFidelityFixes:
+    def test_gamma_path_uses_gnss_sigma_only_when_asked(self):
+        """cal-disp passes gnss_los_std to the gamma fit only with weight_fit_by_gnss_uncertainty."""
+        disp, gnss, valid, *_ = scene(island=False, bowl=False)
+        std = 0.001 + 0.002 * np.linspace(0, 1, disp.shape[1])[None, :].repeat(
+            disp.shape[0], 0
+        )
+        o = CalibrationOptions(
+            unwrap_error_correction=False, window_size_meters=60 * PIXEL_M
+        )
+        plain = calibrate_pair(disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M, n_jobs=1)
+        with_std = calibrate_pair(
+            disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M, gnss_los_std=std, n_jobs=1
+        )
+        np.testing.assert_array_equal(plain.calibration, with_std.calibration)
+        o.weight_fit_by_gnss_uncertainty = True
+        weighted = calibrate_pair(
+            disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M, gnss_los_std=std, n_jobs=1
+        )
+        assert np.abs(weighted.calibration - plain.calibration).max() > 1e-6
+
+    def test_coarse_pass_one_tie_matches_the_fine_one(self, monkeypatch):
+        """The near-planar tie computed on a coarse grid agrees with the full-grid one."""
+        from venti.calibration import two_pass as tp
+
+        disp, gnss, valid, _ramp, bowl_mask, _island_mask, coh = scene()
+        seen = {}
+
+        def hook(residual, fit_valid, cycle_m):
+            seen["residual"] = residual.copy()
+            return np.zeros_like(residual), None
+
+        o = opts_v05(two_pass=True, unwrap=True)
+        monkeypatch.setattr(tp, "TIE_MAX_PX", 10_000)
+        calibrate_pair(
+            disp,
+            gnss,
+            valid,
+            REF,
+            o,
+            PIXEL_M,
+            CYCLE_M,
+            coherence=coh,
+            exclude_mask=bowl_mask,
+            unwrap_hook=hook,
+        )
+        fine = seen["residual"]
+        monkeypatch.setattr(tp, "TIE_MAX_PX", 50)  # 160 x 200 -> factor 4
+        calibrate_pair(
+            disp,
+            gnss,
+            valid,
+            REF,
+            o,
+            PIXEL_M,
+            CYCLE_M,
+            coherence=coh,
+            exclude_mask=bowl_mask,
+            unwrap_hook=hook,
+        )
+        coarse = seen["residual"]
+        ok = valid & ~bowl_mask
+        assert np.nanmax(np.abs(fine - coarse)[ok]) < 0.0005
