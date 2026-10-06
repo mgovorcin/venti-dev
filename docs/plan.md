@@ -143,13 +143,13 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T16. Venti bug fixes and packaging repair
 **Depends on:** T08
 **Context:** Verified on `upstream/main` `2a7e61f` (2026-10-05): `surface.py:208` calls `correct_region_offset(input_disp=disp, mask=mask, wavelength=wavelength_m)` with the **full radar wavelength** read from the DISP product, but one LOS displacement cycle is λ/2 (2.77 cm for S1) — the corrector shifts by twice the right amount (this is why gamma ships with unwrap off); `models/load_itrf.py:110` imports `.plate_motion.euler_pole`, but `plate_motion` is a module, not a package. Earlier survey items (missing `gnss.reference`/`spatial.processor`, wrong positional arguments, missing pyproject deps) came from a stale `staging` checkout and are already fixed on `main`; re-verify each before working on it. One PR per bullet.
-- [ ] T16.1 Audit `pyproject.toml` against actual imports in a clean env (`pip install -e .`; import every module); fix what is missing; check the license path and README install instructions.
-- [ ] T16.2 Fix `load_itrf.py` import (temporary; module is deleted in T17).
-- [ ] T16.3 Make the unwrap cycle λ/2: `correct_region_offset`/`UnwrapCorrector` take `cycle_m` (documented as λ/2 for displacement, 2π for phase) and `surface.py` passes `wavelength_m / 2`; regression test with a synthetic +1-cycle region.
-- [ ] T16.4 Confirm the `unwrap_error_correction` flag is honoured end to end (default `False`) with a test.
-- [ ] T16.5 Round-trip test of cal-disp's `test_golden/configs/algorithm_parameters.yaml` through Venti's config loader.
-- [ ] T16.6 Run the full test suite and `pre-commit run -a` on `main`; fix anything red; record the baseline in `docs/development.md`.
-- [ ] T16.7 Rebase the unmerged `models`-branch tropo research into `research/tropo` on the fork (notebooks and `tropo_paper/` only; drop the 1.3 M-line logs).
+- [x] T16.1 Audit `pyproject.toml` against actual imports in a clean env (`pip install -e .`; import every module); fix what is missing; check the license path and README install instructions.
+- [x] T16.2 Fix `load_itrf.py` import (temporary; module is deleted in T17).
+- [x] T16.3 Make the unwrap cycle λ/2: `correct_region_offset`/`UnwrapCorrector` take `cycle_m` (documented as λ/2 for displacement, 2π for phase) and `surface.py` passes `wavelength_m / 2`; regression test with a synthetic +1-cycle region.
+- [x] T16.4 Confirm the `unwrap_error_correction` flag is honoured end to end (default `False`) with a test.
+- [x] T16.5 Round-trip test of cal-disp's `test_golden/configs/algorithm_parameters.yaml` through Venti's config loader.
+- [x] T16.6 Run the full test suite and `pre-commit run -a` on `main`; fix anything red; record the baseline in `docs/development.md`.
+- [~] T16.7 Rebase the unmerged `models`-branch tropo research into `research/tropo` on the fork (notebooks and `tropo_paper/` only; drop the 1.3 M-line logs). *Done so far:* local branch `research/tropo` = `upstream/models` (`399da80`). *Open:* the uncommitted research in `01_OPERA/VLM/Venti/notebooks/corrections/` (`tropo1.ipynb`, `tropo_gps1.ipynb`, `run_tropo_gps.py`, `tropo_paper/`, `scripts/_stage_static.py`) still has to be copied onto that branch and committed; the 1.3 M-line logs and the UNR zip are left behind.
 
 ### T17. Venti package layout: lean core + extras
 **Depends on:** T14, T16
@@ -232,7 +232,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 **Context:** cal-disp pins `Venti@2a7e61f`; has its own UNR code (`download/_stage_unr.py`, `product/_unr.py`) duplicating geepers; `worker_settings` unused; TODO lists `mask_file` accepted but ignored, NISAR filename unsupported. R-O6: the ops image must exclude dask, zarr, matplotlib, jupyter; CI enforces allow-list, size budget, peak memory.
 - [ ] T26.1 Pin `venti-dev[calibration]` and `geepers[grid]` by tag; `opera-utils[tropo]`; remove `[download]` extra deps not needed in ops (asf_search → optional).
 - [ ] T26.2 Replace `_stage_unr.py` / `_unr.py` with `geepers.gps_sources.UnrGridSource`; keep the CLI `cal-disp download unr` behaviour identical (tests with cassettes).
-- [ ] T26.3 Thin wrappers over `venti.core.sensor.S1Spec` in `product/_disp.py`, `_static.py`.
+- [ ] T26.3 Thin wrappers over `venti.core.sensor.S1Spec` in `product/_disp.py`, `_static.py`. When the Venti pin moves past the T16.3 fix, drop `_unwrap_cycle_length_m()` and pass the full radar wavelength to `estimate_calibration_surface` (Venti now halves internally; see Venti CHANGELOG).
 - [ ] T26.4 `scripts/check_env_budget.py`: resolve the `ops` env, fail if a forbidden package is present or the image exceeds `MAX_IMAGE_MB` (start at current size; tighten later); CI job.
 - [ ] T26.5 Peak-memory CI check on the golden pair (`/usr/bin/time -v` or `tracemalloc` wrapper) with a threshold file `budget.yaml` (start at 7 GB; target 4 GB in T47).
 - [ ] T26.6 Honour `mask_file` (TODO item) or reject it explicitly with a clear error; decide and test.

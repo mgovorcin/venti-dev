@@ -27,7 +27,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] T13 geepers lean core — depends on T12
 - [ ] T14 `geepers[grid]`: GPS Imaging + Euler, with exclusion areas — depends on T13
 - [ ] T15 `geepers[analysis]` and `[all]` — depends on T13
-- [ ] T16 Venti bug fixes and packaging repair — depends on T08
+- [x] T16 Venti bug fixes and packaging repair — done 2026-10-05 on `feature/venti-bugfixes` (T16.7 research-branch copy still open, see plan)
 - [ ] T17 Venti package layout: lean core + extras — depends on T14, T16
 - [ ] T18 `SensorSpec` abstraction — depends on T17
 - [ ] T19 Venti algorithm-parameters schema — depends on T17
