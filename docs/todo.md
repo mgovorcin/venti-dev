@@ -29,7 +29,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T15 `geepers[analysis]` and `[all]` — done 2026-10-06 on geepers `feature/extras-split` (CI matrix per tier, README install matrix, CHANGELOG)
 - [x] T16 Venti bug fixes and packaging repair — done 2026-10-05 on `feature/venti-bugfixes` (T16.7 research-branch copy still open, see plan)
 - [x] T17 Venti package layout: lean core + extras — done 2026-10-06 on `feature/lean-core` (tiers by dependency, ADR-0020; `venti.staging`; plate motion from geepers; `gnss/unr.py` deferred to T28)
-- [ ] T18 `SensorSpec` abstraction — depends on T17
+- [x] T18 `SensorSpec` abstraction — done 2026-10-06 on `feature/sensor-spec` (`venti.sensor`: S1 implemented, NISAR registered/refused until T58)
 - [ ] T19 Venti algorithm-parameters schema — depends on T17
 - [x] T20 Venti documentation site — done 2026-10-05 on `feature/docs-site` (gh-pages deploy verified only after first push to main)
 - [ ] T21 Validation package: port the e2e core — depends on T11, T15

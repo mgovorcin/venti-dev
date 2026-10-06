@@ -3,6 +3,10 @@
 Entry points the operational products call, then the supporting modules.
 Generated from the docstrings (NumPyDoc) by mkdocstrings.
 
+## Sensors
+
+::: venti.sensor
+
 ## Calibration surface
 
 ::: venti.surface
