@@ -380,7 +380,7 @@ def load_snapshot(snapshot_dir: Path | str) -> SnapshotInfo:
 
 
 def verify_snapshot(snapshot_dir: Path | str) -> list[str]:
-    """Check every file against ``MANIFEST.sha256``; return the problems (empty = OK)."""
+    """Check every file against ``MANIFEST.sha256``; return the problems, [] if OK."""
     root = Path(snapshot_dir)
     manifest = root / MANIFEST_NAME
     if not manifest.exists():
