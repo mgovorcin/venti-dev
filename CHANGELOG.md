@@ -59,6 +59,12 @@ Value-changing entries say which product layers move and by how much
 
 ### Added
 
+- `venti.frames` (plan T27): versioned frame-parameter table
+  (`src/venti/data/frame_parameters.json`) with the shape of cal-disp's
+  `algorithm_parameters_overrides_json`; precedence default < frame <
+  explicit; `materialized()` for the frozen cal-disp field;
+  `calibration_options.frame` (plate validated against geepers' tables, name,
+  benchmark category). Initial entries for F08882, F08886, F16940, F08622.
 - `algorithm_parameters` schema v2 (plan T19): nested option groups
   `surface`, `weights`, `tropo`, `gnss`, `uncertainty`, `unwrap` under
   `calibration_options`, the three downsampling keys cal-disp already used,

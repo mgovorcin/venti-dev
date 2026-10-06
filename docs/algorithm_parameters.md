@@ -51,9 +51,23 @@ reproduces the gamma 0.3 result, so a version-1 file loads unchanged.
 | `calibration_options.unwrap.free_offsets` | `false` | — | R-U1 (never for v0.5) | 2 |
 | `calibration_options.unwrap.gnss_veto` | `true` | — | R-U1 | 2 |
 | `calibration_options.unwrap.min_region_area` | 20 | px | R-U1 | 2 |
+| `calibration_options.frame.plate` | `NA` | — | D3 / R-G6 (`PA` Hawaii, `CA` Puerto Rico; from the frame table) | 2 |
+| `calibration_options.frame.name` | `null` | — | — | 2 |
+| `calibration_options.frame.benchmark_category` | `null` | — | PRD §2.7 | 2 |
 
 Groups `processing_options`, `decomposition_options` and `output_options` are
 unchanged from version 1 (see `venti.workflow.config`).
+
+## Frame-parameter table
+
+`venti.frames` loads a versioned JSON (`src/venti/data/frame_parameters.json`
+by default) with the same shape as cal-disp's `algorithm_parameters_overrides_json`:
+`default` overrides for every frame plus `data["<frame>"]` entries. Precedence:
+schema defaults < `default` < frame entry < explicit overrides.
+`FrameParameterTable.write(path, materialize=True)` folds `default` into each
+entry so the frozen cal-disp field can consume the file unchanged. Today's
+table carries the plate, `tropo.mode` and `uncertainty.k_grid` (3.9 placeholder
+until TS-G1) for F08882, F08886, F16940 and F08622.
 
 ## Rules
 
