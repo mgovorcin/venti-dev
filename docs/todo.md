@@ -75,7 +75,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 ## Phase 5: VLM v0.1
 
-- [ ] T52 VLM repo skeleton — depends on T07, T17; products VLM-S1 / VLM-NI, one repo proposed, name pending
+- [~] T52 VLM repo skeleton — T52.1 done 2026-10-06: private `mgovorcin/opera_vlm` (VLM-S1 + VLM-NI, scaffold `v0.0.0`, PR #1 invariants); T52.2 runconfig ADR and T52.3 product spec open
 - [x] T53 Venti `[decomposition]`: WLS and projection — done 2026-10-06 on `feature/decomposition` (`venti.decomposition`: `decompose_wls`, `project_vertical`, `decompose` with mode flag)
 - [~] T54 Temporal resampling of asc/desc — T54.1–T54.2 done 2026-10-06 on `feature/temporal-resampling` (`venti.temporal`); T54.3 benchmark waits for the T56 frame choice
 - [ ] T55 GNSS E/N for VLM with provenance check — depends on T28, T37
