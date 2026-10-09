@@ -45,7 +45,7 @@ from typing import Any
 import numpy as np
 from scipy import ndimage
 
-from ..workflow.config import UnwrapOptions
+from ..workflow.config import CalibrationOptions, UnwrapOptions
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,7 @@ __all__ = [
     "estimate_cycles",
     "make_unwrap_hook",
     "shift_field",
+    "unwrap_hook_for_pair",
 ]
 
 
@@ -375,3 +376,71 @@ def make_unwrap_hook(
         return -shift_field(lab, decisions, cycle_m), decisions
 
     return hook
+
+
+def unwrap_hook_for_pair(
+    land: np.ndarray,
+    data_valid: np.ndarray,
+    gnss_los: np.ndarray,
+    coherent: np.ndarray,
+    options: CalibrationOptions,
+    pixel_m: float,
+    *,
+    inversion_residual: np.ndarray | None = None,
+    pair: str = "",
+) -> Any:
+    """Build the unwrap hook of `calibrate_pair` from full-resolution layers.
+
+    Segments the water-mask regions and puts every layer on the loclin fit
+    grid (``options.downsample_factor`` and ``downsample_method``, the same
+    trimming as `calibrate_pair`), so the caller cannot get the grids wrong.
+
+    Parameters
+    ----------
+    land : np.ndarray
+        True on land (the DISP ``water_mask`` layer).
+    data_valid : np.ndarray
+        Pixels with data (e.g. finite ``temporal_coherence``); land without
+        data does not join regions.
+    gnss_los : np.ndarray
+        GNSS LOS displacement of the pair, as passed to `calibrate_pair`.
+    coherent : np.ndarray
+        Pixels trusted for the medians (the recommended mask and water mask,
+        finite DISP).
+    options : CalibrationOptions
+        The options `calibrate_pair` runs with.
+    pixel_m : float
+        Posting of the full-resolution layers.
+    inversion_residual : np.ndarray, optional
+        DISP ``timeseries_inversion_residuals`` for the optional gate.
+    pair : str
+        Label recorded in the decisions.
+
+    """
+    from ..spatial.resample import downsample_array
+    from .regions import downsample_labels, segment_regions
+
+    factor = max(1, int(options.downsample_factor))
+    labels = segment_regions(
+        land, data_valid, min_region_area=options.unwrap.min_region_area
+    )
+    g = np.where(np.isfinite(gnss_los), gnss_los, 0.0)
+    coh = np.asarray(coherent, dtype=bool)
+    res = inversion_residual
+    if factor > 1:
+        labels = downsample_labels(labels, factor)
+        g = downsample_array(g, factor, method=options.downsample_method)
+        coh = downsample_array(coh.astype(np.float32), factor, method="mean") > 0.5
+        if res is not None:
+            res = downsample_array(
+                np.nan_to_num(np.asarray(res, dtype=np.float64)), factor, method="mean"
+            )
+    return make_unwrap_hook(
+        labels,
+        g,
+        coh,
+        options.unwrap,
+        pixel_m * factor,
+        inversion_residual=res,
+        pair=pair,
+    )

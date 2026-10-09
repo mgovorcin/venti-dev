@@ -326,6 +326,41 @@ class TestHook:
                 disp, gnss, land, (20, 100), opts, pixel_m, CYCLE, unwrap_hook=bad
             )
 
+    def test_hook_for_pair_builds_the_fit_grid_itself(self):
+        """`unwrap_hook_for_pair` from full-resolution layers, factor 3."""
+        from venti.unwrap import unwrap_hook_for_pair
+
+        disp, gnss, land, _island, pixel_m = self._scene()
+        opts = CalibrationOptions(
+            unwrap_error_correction=True,
+            surface={
+                "method": "loclin",
+                "cutoff_wavelength_meters": 12_000.0,
+                "two_pass": True,
+            },
+            unwrap={"min_coherent_area_km2": 0.3, "min_edge_area_km2": 0.1},
+        )
+        opts.downsample_factor = 3
+        hook = unwrap_hook_for_pair(
+            land,
+            np.isfinite(disp),
+            gnss,
+            land & np.isfinite(disp),
+            opts,
+            pixel_m,
+            pair="p",
+        )
+        res = calibrate_pair(
+            disp, gnss, land, (20, 100), opts, pixel_m, CYCLE, unwrap_hook=hook
+        )
+        assert [r.cycles for r in res.unwrap_decisions.shifted] == [-1]
+        assert res.unwrap_decisions.pair == "p"
+        assert np.median(res.cal_unwrap_shift[115:140, 140:170]) == pytest.approx(
+            CYCLE, rel=1e-5
+        )
+        assert np.all(res.cal_unwrap_shift[:100] == 0)
+        res.assert_closed()
+
     def test_disabled_means_zero_component_and_no_decisions(self):
         disp, gnss, land, _island, pixel_m = self._scene()
         labels = segment_regions(land)

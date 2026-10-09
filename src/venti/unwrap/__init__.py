@@ -17,6 +17,7 @@ from .cycles import (
     estimate_cycles,
     make_unwrap_hook,
     shift_field,
+    unwrap_hook_for_pair,
 )
 from .regions import downsample_labels, largest_region, segment_regions
 from .unwrap_corrections import UnwrapCorrector, correct_region_offset
@@ -33,4 +34,5 @@ __all__ = [
     "make_unwrap_hook",
     "segment_regions",
     "shift_field",
+    "unwrap_hook_for_pair",
 ]
