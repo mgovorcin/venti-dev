@@ -372,11 +372,11 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T42. TS-U1 phase 1: islands with trusted GNSS
 **Depends on:** T36, T38
 **Context:** Truth = islands / cut-off peninsulas with trusted GNSS (Galveston on F08882; LA harbour islands on F16940; candidates on Hawaii/PR after T40). Pass: estimated whole-cycle shift equals the GNSS-derived offset on every truth island, no shifts on decoys (regions with real fractional motion), e2e sill does not rise. Free offsets stay out of v0.5.
-- [ ] T42.1 Build the truth set: per island region, GNSS offset (station vs mainland reference) per pair, over ≥ 30 pairs per frame; label integer cycles; store `studies/TS-U1/truth_islands.csv`.
-- [ ] T42.2 Run `estimate_cycles` (whole cycles + veto) over the truth set; precision/recall per frame; confusion by jump fraction.
-- [ ] T42.3 Decoy test: regions with real motion (e.g. Terminal Island subsidence) must receive 0 shifts.
-- [ ] T42.4 e2e with `unwrap.enabled=True` on F08882 and F16940; sill and velocity vs baseline.
-- [ ] T42.5 `studies/TS-U1/REPORT.md` with a go/no-go for enabling the flag in v0.5 (default remains off unless precision ≥ 0.99 and recall ≥ 0.8 on ≥ 100 cases).
+- [x] T42.1 Build the truth set: per island region, GNSS offset (station vs mainland reference) per pair, over ≥ 30 pairs per frame; label integer cycles; store `studies/TS-U1/truth_islands.csv`.
+- [x] T42.2 Run `estimate_cycles` (whole cycles + veto) over the truth set; precision/recall per frame; confusion by jump fraction.
+- [x] T42.3 Decoy test: regions with real motion (e.g. Terminal Island subsidence) must receive 0 shifts.
+- [x] T42.4 e2e with `unwrap.enabled=True` on F08882 and F16940; sill and velocity vs baseline. *Done 2026-10-09:* required three fixes first (cal-disp passed no hook on the loclin route, PR #7; hook fed DISP − G − CAL1, Venti `8219a52`; shift upsample crashed on non-divisible frames, `c10ba88`; venti-dev PR #21). F08882: sill −0.2% (n.s.), RMSE 4.79 → 4.31, Galveston stations 3–6 mm/yr better, 0 mainland false shifts; |bias| +0.22 → gate FAIL (artefact: the corrected outliers had masked the positive bias). F16940: 0 shifts (islands beyond the 12 km anchor).
+- [x] T42.5 `studies/TS-U1/REPORT.md` with a go/no-go for enabling the flag in v0.5 (default remains off unless precision ≥ 0.99 and recall ≥ 0.8 on ≥ 100 cases). *Done 2026-10-09:* **no-go for v0.5, default stays off**: truth has 2 error blocks (PRD needs ≥ 100 cases), 0/2 corrected — the Galveston −2-cycle error is sub-region (→ T62).
 
 ### T43. TS-S1: DISP noise model (σ_DISP < 50 km)
 **Depends on:** T21, T38

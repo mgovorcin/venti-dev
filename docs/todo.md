@@ -59,7 +59,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T39 TS-G1: grid fidelity and per-frame k — depends on T21, T28 (σ₀ term proposal open)
 - [ ] T40 Benchmark data staging (frames 5–8) — depends on T11
 - [ ] T41 Curate defo and event GeoJSON databases — depends on T32, T40
-- [ ] T42 TS-U1 phase 1 — depends on T36, T38
+- [x] T42 TS-U1 phase 1 — depends on T36, T38 (no-go for v0.5; 3 bugs fixed on the way)
 - [x] T43 TS-S1: DISP noise model — depends on T21, T38
 - [~] T44 TS-T1 and TS-B1 — TS-B1 done 2026-10-09 (keep p = 8); TS-T1 waits for a 0.3–1.5 km relief frame (T40)
 
@@ -109,3 +109,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-09 T37 wired: cal-disp calls `calibrate_pair`; schema-v2 options exposed; gamma golden passes at 1e-6; v0.5 on the golden pair closes exactly, 55 s / 7.27 GB. Wiring exposed two Venti memory regressions, fixed (`f7da024`, `2b2678b`, −3 GB). Next: T37.3 metadata + golden update, then T38 e2e on the four frames.
 - 2026-10-09 T21–T25 done in disp2vlm_validation (PR #1; T25.3 batch deferred to T46): pipeline, classes, gate, reports, traceability, `run`/`summary` CLI; reproduces the trade-study F08882 numbers to the printed digit. T38 done: v0.5 (cal-disp PR #6) PASSES on all four frames vs gamma (sill −65 to −82%); Houston bias +1.14 mm/yr misses the 1 mm/yr target; bias issue #2 (inside the products, not chaining). Next: T39 (TS-G1), T42 (TS-U1: per-region offsets), T44 (TS-B1), T37.3 with T49.
 - 2026-10-09 (later) T39 TS-G1, T43 TS-S1, T44.2 TS-B1 done (disp2vlm_validation `studies/TS-*/REPORT.md`). k per frame in the frame table (Venti PR #20). Open owner decisions: an additive σ₀ (2.6–4.9 mm) in σ_CAL; the class rule for 'coastal'. Issue #2 corrected: coherence power does not move the bias; the 50 km surface does. Next: T40 (stage frames 5–8), T42 (TS-U1), T47 (memory).
+- 2026-10-09 (later) T42 TS-U1 phase 1 done: no-go for v0.5 (flag stays off). The v0.5 unwrap path had never run: fixed in cal-disp PR #7 and venti-dev PR #21. Galveston's real error is sub-region (T62); LA islands are beyond the 12 km anchor. Gate note: |bias| rule penalises fixing negative outliers on a positively biased frame (owner decision).
