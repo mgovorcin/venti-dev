@@ -530,6 +530,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 
 ### T62. TS-U1 phase 2: inland unwrap errors
 **Depends on:** T42
+**Owner decision 2026-10-09:** unwrap-error correction stays **off** (as TS-U1 phase 1 recommends). Come back to it here: no release enables `unwrap_error_correction` until a trade study on a truth set large enough for the PRD bar (precision ≥ 0.99, recall ≥ 0.8, ≥ 100 cases; e.g. Hawaii/PR after T40, bay frames) confirms it. Phase 1 evidence: `disp2vlm_validation/studies/TS-U1/REPORT.md` (Galveston's −2-cycle error is sub-region; LA islands are beyond the 12 km anchor; whole cycles alone don't reproduce the trade-study gains, free offsets did).
 - [ ] T62.1 Use `timeseries_inversion_residuals` and temporal step detection (k·cycle steps persistent across epochs) to propose inland regions and labels.
 - [ ] T62.2 Extend the T36 estimator to non-water regions; test bench with the new labels.
 - [ ] T62.3 Report and decision on enabling inland correction in a later release.
