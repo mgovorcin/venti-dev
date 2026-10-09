@@ -239,6 +239,17 @@ class UncertaintyOptions(BaseModel):
         True,
         description="Grow sigma with distance inside interpolated defo/event areas",
     )
+    sigma_nonsecular_meters: float = Field(
+        0.0,
+        ge=0,
+        description=(
+            "Optional per-pair term for non-secular station motion (seasonal "
+            "loading etc.) that a constant-velocity grid cannot carry; added in "
+            "quadrature to sigma_CAL. 0 (default): sigma_CAL is the uncertainty of "
+            "the calibration surface only. TS-G1 measured 2.6-4.9 mm on the four "
+            "validation frames. Units of the displacement (metres); loclin route"
+        ),
+    )
     sigma_disp_placeholder_mm: float = Field(
         10.0,
         ge=0,

@@ -357,3 +357,21 @@ def test_without_diagnostic_maps_the_product_layers_are_identical():
     assert not ref.flags.writeable
     assert np.all(ref == lean.reference_value)
     lean.assert_closed()
+
+
+def test_nonsecular_term_adds_in_quadrature():
+    """`uncertainty.sigma_nonsecular_meters` (TS-G1 sigma0): off by default;
+    when set, sigma_CAL^2 grows by exactly sigma0^2 and nothing else moves."""
+    rng = np.random.default_rng(6)
+    disp = 0.004 * rng.standard_normal((60, 70))
+    args = (disp, np.zeros_like(disp), np.ones(disp.shape, bool), (5, 5))
+    kw = {"gnss_los_std": np.full(disp.shape, 0.0003)}
+    o = _opts()
+    assert o.uncertainty.sigma_nonsecular_meters == 0.0
+    base = calibrate_pair(*args, o, PIXEL_M, CYCLE_M, **kw)
+    o.uncertainty.sigma_nonsecular_meters = 0.003
+    more = calibrate_pair(*args, o, PIXEL_M, CYCLE_M, **kw)
+    np.testing.assert_allclose(
+        more.sigma_cal**2 - base.sigma_cal**2, 0.003**2, rtol=1e-4
+    )
+    np.testing.assert_array_equal(more.calibration, base.calibration)

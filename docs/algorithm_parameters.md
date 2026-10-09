@@ -45,6 +45,7 @@ reproduces the gamma 0.3 result, so a version-1 file loads unchanged.
 | `calibration_options.gnss.snapshot_id` | `null` | — | R-G4 | 2 |
 | `calibration_options.uncertainty.k_grid` | 1.0 | — | R-E1 (`frame_table` for v0.5); multiplies the GNSS LOS sigma in `venti.calibration.uncertainty.sigma_cal`; `frame_table` must be resolved by `FrameParameterTable.apply` before `calibrate_pair` | 2 |
 | `calibration_options.uncertainty.inflate_inside_areas` | `true` | — | R-E1; `sigma_inflation_inside` with the kernel sigma as scale, saturating at 3x | 2 |
+| `calibration_options.uncertainty.sigma_nonsecular_meters` | 0 | m | R-E1 option (owner, 2026-10-09): σ_CAL is the calibration-surface uncertainty; this opt-in adds non-secular station motion per pair in quadrature (TS-G1: 2.6–4.9 mm on the validation frames). loclin route only | 2 |
 | `calibration_options.uncertainty.sigma_disp_placeholder_mm` | 10 | mm | R-E2 | 2 |
 | `calibration_options.unwrap.region_source` | `water_mask` | — | R-U1 | 2 |
 | `calibration_options.unwrap.whole_cycles_only` | `true` | — | R-U1 | 2 |
