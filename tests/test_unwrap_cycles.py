@@ -227,6 +227,41 @@ class TestHook:
         disp[~land] = np.nan
         return disp, gnss, land, island, pixel_m
 
+    def test_hook_sees_disp_minus_cal1_with_the_gnss_signal(self):
+        """Regression: the hook gets DISP - CAL1, not DISP - GNSS - CAL1.
+
+        `estimate_cycles` subtracts the GNSS field itself for the veto; given
+        a residual with GNSS already removed it subtracted it twice. With
+        DISP equal to the GNSS field the pass-1 tie is ~0, so the hook must
+        see the GNSS field (before the fix it saw ~0).
+        """
+        ny, nx = 90, 120
+        yy, xx = np.mgrid[0:ny, 0:nx].astype(float)
+        gnss = 0.02 * xx / nx - 0.01 * yy / ny
+        disp = gnss.copy()
+        land = np.ones((ny, nx), bool)
+        seen = {}
+
+        def spy(residual, valid, cycle_m):
+            seen["residual"], seen["valid"] = residual, valid
+            return np.zeros_like(residual), None
+
+        opts = CalibrationOptions(
+            unwrap_error_correction=True,
+            surface={
+                "method": "loclin",
+                "cutoff_wavelength_meters": 12_000.0,
+                "two_pass": True,
+            },
+        )
+        calibrate_pair(disp, gnss, land, (0, 0), opts, 180.0, CYCLE, unwrap_hook=spy)
+        r = seen["residual"][seen["valid"]]
+        expected = gnss - gnss[0, 0]  # the reference pixel is removed
+        np.testing.assert_allclose(
+            seen["residual"][seen["valid"]], expected[seen["valid"]], atol=2e-4
+        )
+        assert np.ptp(r) > 0.02  # the GNSS signal is there
+
     def test_hook_removes_the_island_cycle(self):
         disp, gnss, land, island, pixel_m = self._scene()
         labels = segment_regions(land)
