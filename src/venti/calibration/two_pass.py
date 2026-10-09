@@ -92,14 +92,17 @@ class CalibrationResult:
 
     @property
     def calibration(self) -> np.ndarray:
-        """The layer users subtract from DISP: the exact sum of the components."""
-        total = np.zeros_like(self.cal_gnss_surface)
-        for name in COMPONENTS:
-            total = total + getattr(self, name)
+        """The layer users subtract from DISP: the exact sum of the components.
+
+        One output array, accumulated in place in `COMPONENTS` order.
+        """
+        total = np.array(self.cal_gnss_surface, copy=True)
+        for name in COMPONENTS[1:]:
+            total += getattr(self, name)
         return total
 
     def assert_closed(self, atol: float = 1e-6) -> None:
-        """Check ``calibration == sum(components)`` (always true by construction)."""
+        """Check ``calibration == sum(components)`` (true by construction; tests)."""
         total = sum(getattr(self, name) for name in COMPONENTS)
         diff = np.nanmax(np.abs(self.calibration - total))
         if not diff <= atol:
@@ -226,7 +229,9 @@ def calibrate_pair(
         Passed to the gamma windowed fit.
 
     """
-    disp = np.array(disp, dtype=np.promote_types(np.asarray(disp).dtype, np.float32))
+    disp = np.asarray(disp)
+    if disp.dtype not in (np.float32, np.float64):
+        disp = disp.astype(np.promote_types(disp.dtype, np.float32))
     _check_shapes(
         disp,
         gnss_los=gnss_los,
@@ -238,7 +243,9 @@ def calibrate_pair(
         exclude_mask=exclude_mask,
         sigma_tropo=sigma_tropo if np.ndim(sigma_tropo) > 0 else None,
     )
+    # one read-only zero layer shared by every component that is not applied
     zeros = np.zeros(disp.shape, dtype=disp.dtype)
+    zeros.setflags(write=False)
     applied = {
         "cal_gnss_surface": True,
         "cal_reference_offset": True,
@@ -253,10 +260,13 @@ def calibrate_pair(
         else zeros
     )
 
-    # 1. corrections off, reference off: the field the fit works on
-    work = disp - cal_tropo - cal_set
+    # 1. corrections off, reference off: the field the fit works on. One
+    # allocation, then in place, in the order ((disp - tropo) - set) - ref.
+    work = np.subtract(disp, cal_tropo, dtype=disp.dtype)
+    if set_correction is not None:
+        work -= cal_set
     ref_value = _reference_offset(work, ref_point)
-    work = work - ref_value
+    work -= np.asarray(ref_value, dtype=work.dtype)
     mask = np.asarray(mask, dtype=bool)
     valid = mask & np.isfinite(work) & np.isfinite(np.asarray(gnss_los))
     exclude = (
@@ -264,8 +274,12 @@ def calibrate_pair(
         if exclude_mask is not None
         else np.zeros(disp.shape, dtype=bool)
     )
-    gnss = np.asarray(np.ma.filled(gnss_los, np.nan), dtype=np.float64)
-    cal_unwrap_shift = zeros.copy()
+    # keep the caller's float dtype (float32 from cal-disp): a float64 copy of a
+    # full frame costs ~0.6 GB and the gamma estimator always received float32
+    gnss = np.asarray(np.ma.filled(gnss_los, np.nan))
+    if gnss.dtype not in (np.float32, np.float64):
+        gnss = gnss.astype(np.float64)
+    cal_unwrap_shift = zeros
     decisions = None
 
     method = options.surface.method
@@ -290,12 +304,15 @@ def calibrate_pair(
             )
             cal_unwrap_shift = shift.astype(disp.dtype)
             applied["cal_unwrap_shift"] = bool(np.any(cal_unwrap_shift != 0))
-            work = work - cal_unwrap_shift
+            work -= cal_unwrap_shift
         gamma_opts = options.model_copy(update={"unwrap_error_correction": False})
         window_px = max(1, round(options.window_size_meters / pixel_m))
         event_mask = ~exclude if exclude.any() else None
+        # the estimator removes and restores the offset itself; `work` is not
+        # used after this call, so the offset goes back in place
+        work += np.asarray(ref_value, dtype=work.dtype)
         gamma = estimate_calibration_surface(
-            work + ref_value,  # the estimator removes and restores the offset itself
+            work,
             gnss,
             valid,
             ref_point,
@@ -421,7 +438,7 @@ def calibrate_pair(
                         np.isfinite(work), shift_full, 0.0
                     ).astype(disp.dtype)
                     applied["cal_unwrap_shift"] = True
-                    work = work - cal_unwrap_shift
+                    work -= cal_unwrap_shift
                     residual_ds = residual_ds - shift_ds
         elif options.unwrap_error_correction and unwrap_hook is not None:
             shift_ds, decisions = unwrap_hook(
@@ -440,7 +457,7 @@ def calibrate_pair(
                     disp.dtype
                 )
                 applied["cal_unwrap_shift"] = True
-                work = work - cal_unwrap_shift
+                work -= cal_unwrap_shift
                 residual_ds = residual_ds - shift_ds
 
         surface_ds, coverage_ds, w_ds, filled_ds = fit(
@@ -515,7 +532,6 @@ def calibrate_pair(
         n_excluded_pixels=int(exclude.sum()),
         passes=passes,
     )
-    result.assert_closed()
     logger.info(
         "calibrate_pair(%s, %d pass%s): components %s; fit residual std %s",
         method,
