@@ -254,8 +254,8 @@ def calibrate_pair(
         sigma_tropo=sigma_tropo if np.ndim(sigma_tropo) > 0 else None,
     )
     # one read-only zero layer shared by every component that is not applied
-    zeros = np.zeros(disp.shape, dtype=disp.dtype)
-    zeros.setflags(write=False)
+    # (a broadcast view: no full frame at all)
+    zeros = np.broadcast_to(np.zeros((), dtype=disp.dtype), disp.shape)
     applied = {
         "cal_gnss_surface": True,
         "cal_reference_offset": True,
@@ -525,7 +525,8 @@ def calibrate_pair(
             inflation=inflation,
         ).astype(disp.dtype, copy=False)
         sigma[~(valid | exclude)] = np.nan
-        fit_term_median = float(np.nanmedian(sigma_fit_map))
+        # log only: the fit-grid map, not a full-frame copy (nanmedian copies)
+        fit_term_median = float(np.nanmedian(sigma_fit_ds))
         if not diagnostic_maps:
             sigma_fit_map = None
     else:  # pragma: no cover - Literal in the schema prevents it
@@ -565,7 +566,7 @@ def calibrate_pair(
     if sigma is not None:
         logger.info(
             "sigma_cal median %.4g (k = %.2f, fit term median %.4g)",
-            float(np.nanmedian(sigma)),
+            float(np.nanmedian(sigma[::8, ::8])),  # log only: a sample
             resolve_k(options.uncertainty),
             fit_term_median,
         )
