@@ -414,10 +414,10 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T47. Memory and runtime toward a small EC2 instance
 **Depends on:** T37
 **Context:** R-O3: target ≤ 4 GB peak (from 6.35 GB); `worker_settings` unused; `NUMPY_MADVISE_HUGEPAGE=0` needed on aurora. Blocked row processing already exists for tropo; extend to the fit on the downsampled grid and to the product write.
-- [ ] T47.1 Profile the v0.5 run (`memray`/`tracemalloc`) on the golden pair; identify the top 3 allocations.
-- [ ] T47.2 Stream displacement/mask/coherence loads and the final subtraction in row blocks; downsampled fit arrays only in memory.
-- [ ] T47.3 Honour `worker_settings` (threads for numba/BLAS) or remove the field from the docs (field itself stays, runconfig is frozen).
-- [ ] T47.4 Lower `budget.yaml` to the achieved value; measure on a `t3.medium`/`t3.large`-class instance and record runtime; the 72 h latency requirement is trivially met and documented.
+- [x] T47.1 Profile the v0.5 run (`memray`/`tracemalloc`) on the golden pair; identify the top 3 allocations. *Done 2026-10-09:* memray: LOS bands kept through the fit, decoded masks/coherence cached in the xarray dataset, unused full-res diagnostics, `np.nanmedian` copies for log lines.
+- [x] T47.2 Stream displacement/mask/coherence loads and the final subtraction in row blocks; downsampled fit arrays only in memory. *Done 2026-10-09:* masks/coherence via row-block `_load_layer`, LOS freed after the GNSS projection, `calibrate_pair(diagnostic_maps=False)`.
+- [x] T47.3 Honour `worker_settings` (threads for numba/BLAS) or remove the field from the docs (field itself stays, runconfig is frozen). *Done 2026-10-09:* BLAS/OpenMP pools capped at n_workers × threads_per_worker (threadpoolctl); `block_shape` documented as reserved.
+- [~] T47.4 Lower `budget.yaml` to the achieved value; measure on a `t3.medium`/`t3.large`-class instance and record runtime; the 72 h latency requirement is trivially met and documented. *Done 2026-10-09 (partly):* v0.5 7.27 → 4.0–4.1 GB, gamma 6.0 → 3.6–4.0 GB, products bit-identical; budget 7.0 → 4.5 GB (cal-disp PR #8, venti-dev PR #22); two-core emulation 1 min 43 s at 4.02 GB → t3.large fits, t3.medium does not. **Open:** a measurement on EC2 itself.
 
 ### T48. Frozen UNR grid snapshot
 **Depends on:** T28

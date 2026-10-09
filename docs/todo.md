@@ -67,7 +67,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 - [ ] T45 Populate the frame table — depends on T27, T39, T44
 - [ ] T46 8-frame gate and edge cases — depends on T38, T40, T41, T45
-- [ ] T47 Memory and runtime toward a small EC2 instance — depends on T37
+- [~] T47 Memory and runtime toward a small EC2 instance — v0.5 7.27 → 4.1 GB, budget 4.5 GB (cal-disp PR #8, venti-dev PR #22); EC2 measurement open
 - [~] T48 Frozen UNR grid snapshot — T48.1, T48.2, T48.4 done 2026-10-06: `unr_grid_0.3_IGS20_20261006` on `s3://opera-adt/opera-ancillary/unr-grid/` (28,492 nodes); T48.3 waits for T37
 - [ ] T49 v0.5 Docker image, golden regeneration, changelog — depends on T46, T47, T48
 - [ ] T50 VnV report and sign-off — depends on T24, T46
@@ -110,3 +110,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-09 T21–T25 done in disp2vlm_validation (PR #1; T25.3 batch deferred to T46): pipeline, classes, gate, reports, traceability, `run`/`summary` CLI; reproduces the trade-study F08882 numbers to the printed digit. T38 done: v0.5 (cal-disp PR #6) PASSES on all four frames vs gamma (sill −65 to −82%); Houston bias +1.14 mm/yr misses the 1 mm/yr target; bias issue #2 (inside the products, not chaining). Next: T39 (TS-G1), T42 (TS-U1: per-region offsets), T44 (TS-B1), T37.3 with T49.
 - 2026-10-09 (later) T39 TS-G1, T43 TS-S1, T44.2 TS-B1 done (disp2vlm_validation `studies/TS-*/REPORT.md`). k per frame in the frame table (Venti PR #20). Open owner decisions: an additive σ₀ (2.6–4.9 mm) in σ_CAL; the class rule for 'coastal'. Issue #2 corrected: coherence power does not move the bias; the 50 km surface does. Next: T40 (stage frames 5–8), T42 (TS-U1), T47 (memory).
 - 2026-10-09 (later) T42 TS-U1 phase 1 done: no-go for v0.5 (flag stays off). The v0.5 unwrap path had never run: fixed in cal-disp PR #7 and venti-dev PR #21. Galveston's real error is sub-region (T62); LA islands are beyond the 12 km anchor. Gate note: |bias| rule penalises fixing negative outliers on a positively biased frame (owner decision).
+- 2026-10-09 (later) T47: memray-guided cuts, products bit-identical: v0.5 peak 7.27 → 4.0–4.1 GB, gamma 6.0 → 3.6–4.0 GB; budget 7.0 → 4.5 GB; worker_settings cap BLAS threads; 2-core run 1 min 43 s → t3.large fits. Unwrap correction stays off until a trade study confirms it (owner; note in T62).
