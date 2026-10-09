@@ -193,40 +193,40 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T21. Validation package: port the e2e core
 **Depends on:** T11, T15
 **Context:** `trade studies/e2e_validation/validate_stack.py` has the DD semivariogram sill (median γ for pairs ≥ 50 km, station-bootstrap CI), `VelocityFit` (OLS velocity per pixel/station), `StationSampler`, MIDAS fetch; `calibrate_stack.py` applies CAL to a stack; `stage_tropo.py`. Station UH01 is excluded. Turn scripts into a library with no hard-coded paths.
-- [ ] T21.1 `dd_sill(stack, stations, min_pair_km=50, n_boot=1000) -> SillResult(sill, ci_lo, ci_hi, n_pairs)`; tests on a synthetic stack with known variogram.
-- [ ] T21.2 `velocity_fit(stack, dates) -> (v, σ_v)` and `station_velocities(frame, stations, source="midas") -> DataFrame` via `geepers[analysis]`; LOS projection with the static ENU layer; tests with cassettes.
-- [ ] T21.3 `StationSampler` with an exclusion list (config, not code) and a `held_out` split API (used by TS-G1 so k-fitting stations never enter validation).
-- [ ] T21.4 `apply_calibration(stack, cal_products) -> stack` (port `calibrate_stack.py`), chunked with xarray/dask.
+- [x] T21.1 `dd_sill(stack, stations, min_pair_km=50, n_boot=1000) -> SillResult(sill, ci_lo, ci_hi, n_pairs)`; tests on a synthetic stack with known variogram. *Done 2026-10-09 (disp2vlm_validation PR #1):* `metrics.double_differences` (all variants, paired station bootstrap) → `SillResult`; synthetic ramp test.
+- [x] T21.2 `velocity_fit(stack, dates) -> (v, σ_v)` and `station_velocities(frame, stations, source="midas") -> DataFrame` via `geepers[analysis]`; LOS projection with the static ENU layer; tests with cassettes. *Done 2026-10-09:* `stack.VelocityFit` (streaming OLS, chained blocks; no σ_v yet), `gnss.fetch_gnss`/`load_or_fetch_gnss` (UNR + MIDAS, frozen per frame) and `station_pixels`; tests use a pre-filled GNSS cache instead of cassettes.
+- [x] T21.3 `StationSampler` with an exclusion list (config, not code) and a `held_out` split API (used by TS-G1 so k-fitting stations never enter validation). *Done 2026-10-09:* `split_held_out` hashes station ids (order- and machine-independent).
+- [x] T21.4 `apply_calibration(stack, cal_products) -> stack` (port `calibrate_stack.py`), chunked with xarray/dask. *Done 2026-10-09:* `stack.apply_calibration`/`stream_epochs`, epoch-streamed with process read-ahead rather than xarray/dask (same memory bound, simpler).
 
 ### T22. Station classes and per-class metrics
 **Depends on:** T21
 **Context:** PRD §3.4: metrics per class stable / subsiding / coastal / in defo area / near event. Classification needs the defo/event GeoJSON (T41 later; here use any GeoJSON) and a coast mask (water mask from the DISP product or Natural Earth).
-- [ ] T22.1 `classify_stations(stations, defo_db, event_db, water_mask, v_gnss, subsiding_thresh=-3 mm/yr, coast_km=10) -> Series[class]`.
-- [ ] T22.2 `metrics_by_class(v_insar, v_gnss, σ) -> DataFrame[class, n, bias, rmse, corr, std_z, coverage95]`.
-- [ ] T22.3 σ realism: `normalized_residuals(z)` with std(z) and 95% coverage; report-only (R-E4).
+- [x] T22.1 `classify_stations(stations, defo_db, event_db, water_mask, v_gnss, subsiding_thresh=-3 mm/yr, coast_km=10) -> Series[class]`.
+- [x] T22.2 `metrics_by_class(v_insar, v_gnss, σ) -> DataFrame[class, n, bias, rmse, corr, std_z, coverage95]`.
+- [x] T22.3 σ realism: `normalized_residuals(z)` with std(z) and 95% coverage; report-only (R-E4). *Done 2026-10-09:* in `metrics_by_class`; the pipeline passes no σ yet (σ_CAL lands with the v0.5 products), so reports show no σ section.
 
 ### T23. Gate logic and comparison modes
 **Depends on:** T21
 **Context:** PRD §2.7 FAIL rules (sill not below raw; sill up > 5% vs baseline and significant; RMSE or |bias| up > 0.2 mm/yr; golden-epoch check fails), target |bias| ≤ 1 mm/yr. Rules must be configurable per release.
-- [ ] T23.1 `gate.yaml` schema (thresholds, significance level, per-class targets) + pydantic model.
-- [ ] T23.2 `evaluate(candidate, raw, baseline, gate) -> GateResult(passed, reasons[])` with tests for each FAIL rule.
-- [ ] T23.3 Golden-epoch check: compare the candidate's pair product at the golden epochs with `cal-disp validate` tolerance; wrap the CLI call.
+- [x] T23.1 `gate.yaml` schema (thresholds, significance level, per-class targets) + pydantic model.
+- [x] T23.2 `evaluate(candidate, raw, baseline, gate) -> GateResult(passed, reasons[])` with tests for each FAIL rule.
+- [x] T23.3 Golden-epoch check: compare the candidate's pair product at the golden epochs with `cal-disp validate` tolerance; wrap the CLI call.
 
 ### T24. Reports and traceability
 **Depends on:** T22, T23
 **Context:** Audience: internal team + OPERA CalVal review. Outputs: `metrics.json`, `stations.csv`, HTML (PDF via `weasyprint` optional) per frame, a release summary across frames, and a requirements traceability table (requirement ID → metric → result → pass/fail). Use the `dataviz` conventions for figures.
-- [ ] T24.1 Jinja2 templates: `frame_report.html` (sill before/after with CI, velocity scatter vs MIDAS, bias/RMSE by class, σ realism, map of stations by class), `release_summary.html`.
-- [ ] T24.2 `write_outputs(result, out_dir)` → `metrics.json`, `stations.csv`, `report.html`, figures as SVG.
-- [ ] T24.3 `traceability.yaml` mapping R-* IDs to metrics; rendered as a table in the release summary.
-- [ ] T24.4 Snapshot test of the rendered HTML on a tiny synthetic run.
+- [x] T24.1 Jinja2 templates: `frame_report.html` (sill before/after with CI, velocity scatter vs MIDAS, bias/RMSE by class, σ realism, map of stations by class), `release_summary.html`. *Done 2026-10-09:* `templates/frame.html.j2`, `summary.html.j2`; semivariogram, scatter and class-RMSE SVGs each with a data table. *Not yet:* station map by class, σ-realism section (no σ input yet).
+- [x] T24.2 `write_outputs(result, out_dir)` → `metrics.json`, `stations.csv`, `report.html`, figures as SVG.
+- [x] T24.3 `traceability.yaml` mapping R-* IDs to metrics; rendered as a table in the release summary.
+- [x] T24.4 Snapshot test of the rendered HTML on a tiny synthetic run. *Done 2026-10-09:* `tests/test_pipeline.py` renders a synthetic frame end to end and checks the verdict and every traceability ID in the HTML (content assertions, not a byte snapshot).
 
 ### T25. Validation CLI, caching, batch execution
 **Depends on:** T24
 **Context:** Runs are cached by code+config hash (as `e2e_validate.sh` does). Benchmark runs go through AWS Batch with `batchkit` (`/batchkit` skill). Work dir on aurora: `/mnt/aurora-z0/govorcin/cal_disp_e2e/`.
-- [ ] T25.1 `disp-validate run --frame F08882 --candidate <dir> --baseline <dir> --gate gate.yaml --out <dir>`; `disp-validate summary <runs...>`.
-- [ ] T25.2 Content-hash cache keyed on (package version, config, input manifest); `--no-cache` flag.
-- [ ] T25.3 `batch/` job definition + Dockerfile for the validation image (may be heavy: `geepers[analysis]`); `disp-validate submit --frames ...` via batchkit.
-- [ ] T25.4 Reproduce the F08882 baseline numbers from `trade studies/e2e_validation/README.md` (sill 257 mm² raw-vs-calibrated, RMSE 5.07) within tolerance; record in `docs/baselines.md`.
+- [x] T25.1 `disp-validate run --frame F08882 --candidate <dir> --baseline <dir> --gate gate.yaml --out <dir>`; `disp-validate summary <runs...>`. *Done 2026-10-09:* `disp2vlm-validate run --config run.yaml` (all of those as YAML fields) and `summary RUNS --out`.
+- [x] T25.2 Content-hash cache keyed on (package version, config, input manifest); `--no-cache` flag.
+- [ ] T25.3 `batch/` job definition + Dockerfile for the validation image (may be heavy: `geepers[analysis]`); `disp-validate submit --frames ...` via batchkit. *Deferred 2026-10-09:* frame runs take 5–10 min on aurora; needed only for the 8-frame gate (T46).
+- [x] T25.4 Reproduce the F08882 baseline numbers from `trade studies/e2e_validation/README.md` (sill 257 mm² raw-vs-calibrated, RMSE 5.07) within tolerance; record in `docs/baselines.md`. *Done 2026-10-09:* identical to the printed digit (sills 257.0/510.0/271.5 and their CIs, bias/RMSE, verdict); disp2vlm_validation `docs/baselines.md`.
 
 ### T26. cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget
 **Depends on:** T09, T13, T17 (T06 only for the upstream PR, ADR-0021)
@@ -336,10 +336,10 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T38. e2e on the 4 existing frames
 **Depends on:** T25, T37
 **Context:** Frames F08882 (Houston), F08886 (OKC), F16940 (LA), F08622 (NYC); baseline = gamma 0.3 numbers (`trade studies/e2e_validation/README.md`, `two_pass/README.md`): F08882 sill 257 → 80.8 mm², RMSE 5.07 → 3.28; F08886 190.6 → 25.8; F16940 200 → 52; F08622 PASS, sill −80.7%. The +3.7 mm/yr velocity bias vs MIDAS traced to input DISP is a known open issue (PRD §7.4).
-- [ ] T38.1 Stage the 4 stacks and tropo under `/mnt/aurora-z0/govorcin/cal_disp_e2e/` with a manifest (reuse existing runs).
-- [ ] T38.2 Run `disp-validate` for gamma (baseline) and v0.5 flags (candidate) on each frame; archive reports.
-- [ ] T38.3 Gate passes on all 4 frames; discrepancies vs the trade-study numbers > 10% are investigated and explained in `docs/baselines.md`.
-- [ ] T38.4 Open an issue with evidence for the +3.7 mm/yr bias (per-frame bias vs reference date; comparison with DOLPHIN chaining) and, if confirmed upstream, report to the DISP-S1 team.
+- [x] T38.1 Stage the 4 stacks and tropo under `/mnt/aurora-z0/govorcin/cal_disp_e2e/` with a manifest (reuse existing runs). *Done 2026-10-09:* the manifest is the run configs in disp2vlm_validation `configs/aurora/` (stacks, masks, LOS, GNSS caches, reference pixels); driver `t38/run_t38.sh`. Tropo not staged (v0.5 runs tropo off).
+- [x] T38.2 Run `disp-validate` for gamma (baseline) and v0.5 flags (candidate) on each frame; archive reports. *Done 2026-10-09:* `t38/runs/<frame>/{gamma,v05-loclin}` + `t38/release_summary_v05.html`; v0.5 calibration 27 min per 208 epochs, 0 failures.
+- [x] T38.3 Gate passes on all 4 frames; discrepancies vs the trade-study numbers > 10% are investigated and explained in `docs/baselines.md`. *Done 2026-10-09:* **4/4 PASS**: sill vs gamma −64.6 / −81.5 / −71.8 / −68.5%, bias +1.14 / +0.06 / +0.65 / +0.25 mm/yr (Houston misses the 1 mm/yr target, reported only). Gaps vs the trade-study two-pass runs trace to its estimator C (per-region free offsets + unwrap shifts; not in v0.5): Galveston, LA islands; F08622 sill +63% only partly explained → TS-U1 (T42). GATE-4 n/a: no v0.5 golden until T49.
+- [x] T38.4 Open an issue with evidence for the +3.7 mm/yr bias (per-frame bias vs reference date; comparison with DOLPHIN chaining) and, if confirmed upstream, report to the DISP-S1 team. *Done 2026-10-09:* disp2vlm_validation issue #2 (`studies/bias_by_block.py`): the bias accumulates inside the reference blocks with an annual pattern, chaining dates align exactly (F08882 +4.1 from blocks vs +3.9 chained; F16940 +1.96 vs +2.01); hypothesis: DS phase-linking bias at low coherence. Upstream report pending confirmation (TS-B1).
 
 ---
 

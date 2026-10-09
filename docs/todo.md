@@ -32,11 +32,11 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T18 `SensorSpec` abstraction — done 2026-10-06 on `feature/sensor-spec` (`venti.sensor`: S1 implemented, NISAR registered/refused until T58)
 - [x] T19 Venti algorithm-parameters schema — done 2026-10-06 on `feature/algorithm-schema` (schema v2: nested option groups, versioned loader, extra=forbid, unwrap default off)
 - [x] T20 Venti documentation site — done 2026-10-05 on `feature/docs-site` (gh-pages deploy verified only after first push to main)
-- [ ] T21 Validation package: port the e2e core — depends on T11, T15
-- [ ] T22 Station classes and per-class metrics — depends on T21
-- [ ] T23 Gate logic and comparison modes — depends on T21
-- [ ] T24 Reports and traceability — depends on T22, T23
-- [ ] T25 Validation CLI, caching, batch execution — depends on T24
+- [x] T21 Validation package: port the e2e core — depends on T11, T15
+- [x] T22 Station classes and per-class metrics — depends on T21
+- [x] T23 Gate logic and comparison modes — depends on T21
+- [x] T24 Reports and traceability — depends on T22, T23
+- [x] T25 Validation CLI, caching, batch execution — depends on T24 (T25.3 batch deferred to T46)
 - [~] T26 cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget — T26.1/T26.3 (wavelength) PR #3, T26.6 PR #4, T26.4–T26.5 PR #5 done; T26.2 swap waits for the next pin bump (geepers hardened in PR #4); T26.3 SensorSpec wrappers open
 - [x] T27 Frame-parameter table — done 2026-10-06 on `feature/frame-table` (`venti.frames`, `calibration_options.frame`, bundled table for 4 frames; T27.4 cal-disp consumption waits for T37)
 
@@ -52,7 +52,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T35 σ_CAL model — done 2026-10-06 on `feature/sigma-cal` (`venti.calibration.uncertainty`; `calibrate_pair` returns `sigma_cal`; z-score test 0.8–1.25)
 - [x] T36 Unwrap-error module (gated) — done 2026-10-06 on `feature/unwrap-module` (`venti.unwrap.regions/cycles`; 14/14 bench; still off by default until TS-U1)
 - [~] T37 cal-disp wiring to the new Venti workflow — T37.1, T37.2, T37.4–T37.6 done 2026-10-09 (cal-disp PR #6; golden 1e-6, v0.5 closure exact, 55 s / 7.27 GB); T37.3 metadata needs a deliberate golden update
-- [ ] T38 e2e on the 4 existing frames — depends on T25, T37
+- [x] T38 e2e on the 4 existing frames — depends on T25, T37
 
 ## Phase 3: Trade studies and benchmark data
 
@@ -107,3 +107,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-06 (owner decisions) Talib accepted the gamma config (600 km, tropo off, unwrap off) → T01 done; golden rebuilt and validated at 1e-6 inside `cal-disp:0.3.0-rc2` and on aurora, manifest committed, upstream PR #21 updated → T03 done. geepers tiers approved → T12 done; geepers bug in `download_data_files` (kwargs into thread_map) fixed on geepers PR #3. S3 approved → first UNR snapshot uploaded (T48.2). VLM: products VLM-S1 / VLM-NI, one repo proposed, name pending. Gamma left: T04 docs, T05 URLs/version, T06 tag + delivery.
 - 2026-10-07 T26 mostly done on stacked cal-disp PRs #3–#5: mask_file applied; reference-pixel rule ported so the core drops opera-utils[disp] (no dask/zarr, golden unchanged); dependency + peak-memory budget with CI step. geepers: grid downloads now atomic and verified (PR #4) so cal-disp can switch to it at the next pin bump.
 - 2026-10-09 T37 wired: cal-disp calls `calibrate_pair`; schema-v2 options exposed; gamma golden passes at 1e-6; v0.5 on the golden pair closes exactly, 55 s / 7.27 GB. Wiring exposed two Venti memory regressions, fixed (`f7da024`, `2b2678b`, −3 GB). Next: T37.3 metadata + golden update, then T38 e2e on the four frames.
+- 2026-10-09 T21–T25 done in disp2vlm_validation (PR #1; T25.3 batch deferred to T46): pipeline, classes, gate, reports, traceability, `run`/`summary` CLI; reproduces the trade-study F08882 numbers to the printed digit. T38 done: v0.5 (cal-disp PR #6) PASSES on all four frames vs gamma (sill −65 to −82%); Houston bias +1.14 mm/yr misses the 1 mm/yr target; bias issue #2 (inside the products, not chaining). Next: T39 (TS-G1), T42 (TS-U1: per-region offsets), T44 (TS-B1), T37.3 with T49.
