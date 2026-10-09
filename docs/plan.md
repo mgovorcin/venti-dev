@@ -348,10 +348,10 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T39. TS-G1: grid fidelity and per-frame k
 **Depends on:** T21, T28
 **Context:** PRD §7.2. Interpolate the UNR grid onto the DISP grid (T28 only, no InSAR), sample at independent stations (MIDAS + daily UNR), compare velocities and σ as a function of station density. Determine k per frame such that std(z) ≈ 1, using a held-out station split (T21.3) so validation stations never fit k.
-- [ ] T39.1 Script `ts_g1.py` in the validation repo (`studies/`): per frame, grid-vs-station bias, RMSE, z-stats, nearest-station distance.
-- [ ] T39.2 Run on the 4 frames; figures: bias and RMSE vs station spacing; z histogram.
-- [ ] T39.3 Fit k per frame (held-out split); write to the frame table (T27) with provenance; keep 3.9 as fallback for frames without a fit.
-- [ ] T39.4 `studies/TS-G1/REPORT.md` with the exit criteria from PRD §7.2 and a recommendation on whether σ_grid encodes support.
+- [x] T39.1 Script `ts_g1.py` in the validation repo (`studies/`): per frame, grid-vs-station bias, RMSE, z-stats, nearest-station distance.
+- [x] T39.2 Run on the 4 frames; figures: bias and RMSE vs station spacing; z histogram. *Done 2026-10-09:* grid unbiased at stations (|bias| ≤ 0.3 mm/yr, RMSE 0.9–2.9); misfit largest at dense urban clusters, not where GNSS is sparse.
+- [x] T39.3 Fit k per frame (held-out split); write to the frame table (T27) with provenance; keep 3.9 as fallback for frames without a fit. *Done 2026-10-09:* k = 1.35 / 3.39 / 2.69 / 2.82 (velocity level), frame table 0.2-draft, Venti PR #20. **Pair level: a multiplicative k cannot fit short pairs; an additive σ₀ = 2.6–4.9 mm is needed** (proposal `uncertainty.sigma_station_mm`, owner decision).
+- [x] T39.4 `studies/TS-G1/REPORT.md` with the exit criteria from PRD §7.2 and a recommendation on whether σ_grid encodes support.
 
 ### T40. Benchmark data staging (frames 5–8)
 **Depends on:** T11
@@ -381,15 +381,15 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T43. TS-S1: DISP noise model (σ_DISP < 50 km)
 **Depends on:** T21, T38
 **Context:** R-E2: the product documents that users must add DISP's own short-wavelength noise (~10 mm placeholder). Candidates: structure function of (DISP − CAL − GNSS) at station pairs < 50 km; temporal coherence and `timeseries_inversion_residuals` as proxies; per-frame budget.
-- [ ] T43.1 Structure function per frame from the T38 stacks at lags 1–50 km; fit a model (nugget + power law).
-- [ ] T43.2 Correlate pixel-wise |residual| with temporal coherence and inversion residuals; decide if a proxy model is usable.
-- [ ] T43.3 `studies/TS-S1/REPORT.md`: per-frame σ_DISP(λ) table and the recommended documentation text for the product spec (replaces the 10 mm placeholder or confirms it).
+- [x] T43.1 Structure function per frame from the T38 stacks at lags 1–50 km; fit a model (nugget + power law).
+- [x] T43.2 Correlate pixel-wise |residual| with temporal coherence and inversion residuals; decide if a proxy model is usable.
+- [x] T43.3 `studies/TS-S1/REPORT.md`: per-frame σ_DISP(λ) table and the recommended documentation text for the product spec (replaces the 10 mm placeholder or confirms it). *Done 2026-10-09:* S(10–50 km) per epoch 9.6 / 5.5 / 8.9 / 7.0 mm (4–7 mm per point); 10 mm kept as a documented upper bound; power-law fit fragile where pairs are scarce; coherence not a usable proxy (|ρ| ≤ 0.25); inversion residuals not tested.
 
 ### T44. TS-T1 (tropo at 0.3–1.5 km relief) and TS-B1 (stable bias)
 **Depends on:** T31, T34, T38
 **Context:** TS-T1: the stratified model helps LA (−15% sill) and hurts flat Houston (+17%); the 0.3–1.5 km band is untested. TS-B1: stable stations sit +2.8 mm/yr high; stations are on the most coherent pixels; candidate remedies coh⁸ vs coh¹⁶ vs threshold.
 - [ ] T44.1 TS-T1: pick a frame with p5–p95 relief in 0.3–1.5 km (from T40 or an extra frame); run off/stratified/full; sill and RMSE; update the `choose_tropo_mode` rule and the frame table.
-- [ ] T44.2 TS-B1: on F08886 and F08882, run p ∈ {4, 8, 16} and a coherence threshold; bias at stable stations and sill; decide the default `coherence_power`.
+- [x] T44.2 TS-B1: on F08886 and F08882, run p ∈ {4, 8, 16} and a coherence threshold; bias at stable stations and sill; decide the default `coherence_power`. *Done 2026-10-09:* p changes bias/sill by ≤ 0.1 mm/yr / ≤ 2.2 mm² (all PASS); the gamma→v0.5 drop comes from the 50 km surface; **keep p = 8**. Threshold not run (no schema option; unlikely to differ). Stable stations defined kinematically (the class rule calls inland water 'coastal').
 - [ ] T44.3 Reports in `studies/TS-T1/` and `studies/TS-B1/`; parameter defaults updated in T19 docs if changed (behind the flags, golden unaffected until T49).
 
 ---

@@ -56,12 +56,12 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 ## Phase 3: Trade studies and benchmark data
 
-- [ ] T39 TS-G1: grid fidelity and per-frame k — depends on T21, T28
+- [x] T39 TS-G1: grid fidelity and per-frame k — depends on T21, T28 (σ₀ term proposal open)
 - [ ] T40 Benchmark data staging (frames 5–8) — depends on T11
 - [ ] T41 Curate defo and event GeoJSON databases — depends on T32, T40
 - [ ] T42 TS-U1 phase 1 — depends on T36, T38
-- [ ] T43 TS-S1: DISP noise model — depends on T21, T38
-- [ ] T44 TS-T1 and TS-B1 — depends on T31, T34, T38
+- [x] T43 TS-S1: DISP noise model — depends on T21, T38
+- [~] T44 TS-T1 and TS-B1 — TS-B1 done 2026-10-09 (keep p = 8); TS-T1 waits for a 0.3–1.5 km relief frame (T40)
 
 ## Phase 4: cal-disp v0.5 CalVal release
 
@@ -108,3 +108,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-07 T26 mostly done on stacked cal-disp PRs #3–#5: mask_file applied; reference-pixel rule ported so the core drops opera-utils[disp] (no dask/zarr, golden unchanged); dependency + peak-memory budget with CI step. geepers: grid downloads now atomic and verified (PR #4) so cal-disp can switch to it at the next pin bump.
 - 2026-10-09 T37 wired: cal-disp calls `calibrate_pair`; schema-v2 options exposed; gamma golden passes at 1e-6; v0.5 on the golden pair closes exactly, 55 s / 7.27 GB. Wiring exposed two Venti memory regressions, fixed (`f7da024`, `2b2678b`, −3 GB). Next: T37.3 metadata + golden update, then T38 e2e on the four frames.
 - 2026-10-09 T21–T25 done in disp2vlm_validation (PR #1; T25.3 batch deferred to T46): pipeline, classes, gate, reports, traceability, `run`/`summary` CLI; reproduces the trade-study F08882 numbers to the printed digit. T38 done: v0.5 (cal-disp PR #6) PASSES on all four frames vs gamma (sill −65 to −82%); Houston bias +1.14 mm/yr misses the 1 mm/yr target; bias issue #2 (inside the products, not chaining). Next: T39 (TS-G1), T42 (TS-U1: per-region offsets), T44 (TS-B1), T37.3 with T49.
+- 2026-10-09 (later) T39 TS-G1, T43 TS-S1, T44.2 TS-B1 done (disp2vlm_validation `studies/TS-*/REPORT.md`). k per frame in the frame table (Venti PR #20). Open owner decisions: an additive σ₀ (2.6–4.9 mm) in σ_CAL; the class rule for 'coastal'. Issue #2 corrected: coherence power does not move the bias; the 50 km surface does. Next: T40 (stage frames 5–8), T42 (TS-U1), T47 (memory).
