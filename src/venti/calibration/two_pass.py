@@ -433,13 +433,9 @@ def calibrate_pair(
                     )
                     raise ValueError(msg)
                 if np.any(shift_ds != 0):
-                    shift_full = (
-                        np.kron(shift_ds, np.ones((factor, factor)))[
-                            : disp.shape[0], : disp.shape[1]
-                        ]
-                        if factor > 1
-                        else shift_ds
-                    )
+                    # the fit grid is trimmed to a multiple of `factor`: the
+                    # trailing rows/columns take their nearest block
+                    shift_full = _upsample_nan(shift_ds, disp.shape, factor)
                     cal_unwrap_shift = np.where(
                         np.isfinite(work), shift_full, 0.0
                     ).astype(disp.dtype)
@@ -450,13 +446,7 @@ def calibrate_pair(
             shift_ds, decisions = unwrap_hook(work_ds, valid_ds & ~exclude_ds, cycle_m)
             shift_ds = np.asarray(shift_ds, dtype=np.float64)
             if np.any(shift_ds != 0):
-                shift_full = (
-                    np.kron(shift_ds, np.ones((factor, factor)))[
-                        : disp.shape[0], : disp.shape[1]
-                    ]
-                    if factor > 1
-                    else shift_ds
-                )
+                shift_full = _upsample_nan(shift_ds, disp.shape, factor)
                 cal_unwrap_shift = np.where(np.isfinite(work), shift_full, 0.0).astype(
                     disp.dtype
                 )
