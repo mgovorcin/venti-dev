@@ -62,7 +62,12 @@ def test_apply_to_algorithm_parameters_from_the_bundled_table():
     assert cal.frame.plate == "NA"
     assert cal.frame.name == "Los Angeles"
     assert cal.tropo.mode == "stratified"
-    assert cal.uncertainty.k_grid == 3.9
+    assert cal.uncertainty.k_grid == 2.69  # TS-G1 fit
+    # a frame without a fit keeps the default k
+    assert (
+        table.apply(AlgorithmParameters(), 99).calibration_options.uncertainty.k_grid
+        == 3.9
+    )
     # untouched groups keep their defaults; the input is not mutated
     assert cal.surface == CalibrationOptions().surface
     assert AlgorithmParameters().calibration_options.frame.plate == "NA"
@@ -105,7 +110,7 @@ def test_materialized_is_what_cal_disp_reads(tmp_path):
         "08882"
     ]  # exactly what cal-disp's _parse_algorithm_overrides returns
     assert entry["calibration_options"]["frame"]["plate"] == "NA"  # default folded in
-    assert entry["calibration_options"]["uncertainty"]["k_grid"] == 3.9
+    assert entry["calibration_options"]["uncertainty"]["k_grid"] == 1.35  # TS-G1
     assert entry["calibration_options"]["tropo"]["mode"] == "off"
     # and applying that entry alone reproduces the full apply()
     via_entry = FrameParameterTable(version="t", data={"08882": entry}).apply(
