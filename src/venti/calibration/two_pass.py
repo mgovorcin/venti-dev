@@ -186,6 +186,7 @@ def calibrate_pair(
     unwrap_hook: UnwrapHook | None = None,
     n_jobs: int = -1,
     fit_lock: Any | None = None,
+    diagnostic_maps: bool = True,
 ) -> CalibrationResult:
     """Calibrate one pair; return the surface and every component.
 
@@ -231,6 +232,11 @@ def calibrate_pair(
         the GNSS field itself (`venti.unwrap.cycles.estimate_cycles`).
     n_jobs, fit_lock
         Passed to the gamma windowed fit.
+    diagnostic_maps : bool
+        Keep the full-resolution loclin diagnostics (``coverage``,
+        ``sigma_fit``, ``n_eff``) in the result. A product writer that only
+        needs the calibration and ``sigma_cal`` passes False: each map is one
+        full frame (~0.3 GB in float32 on a DISP-S1 frame).
 
     """
     disp = np.asarray(disp)
@@ -479,9 +485,13 @@ def calibrate_pair(
             else surface_ds
         )
         coverage = (
-            upsample_array(coverage_ds.astype(disp.dtype), disp.shape)
-            if factor > 1
-            else coverage_ds
+            None
+            if not diagnostic_maps
+            else (
+                upsample_array(coverage_ds.astype(disp.dtype), disp.shape)
+                if factor > 1
+                else coverage_ds
+            )
         )
         surface = np.asarray(surface, dtype=disp.dtype)
 
@@ -492,7 +502,11 @@ def calibrate_pair(
         )
         sigma_fit_ds, n_eff_ds = fit_sigma(filled_ds, w_ds, sigma_px_final, surface_ds)
         sigma_fit_map = _upsample_nan(sigma_fit_ds, disp.shape, factor, disp.dtype)
-        n_eff = _upsample_nan(n_eff_ds, disp.shape, factor, disp.dtype)
+        n_eff = (
+            _upsample_nan(n_eff_ds, disp.shape, factor, disp.dtype)
+            if diagnostic_maps
+            else None
+        )
         k = resolve_k(options.uncertainty)
         if gnss_los_std is None:
             logger.warning("no gnss_los_std given: sigma_cal carries the fit term only")
@@ -511,13 +525,19 @@ def calibrate_pair(
             inflation=inflation,
         ).astype(disp.dtype, copy=False)
         sigma[~(valid | exclude)] = np.nan
+        fit_term_median = float(np.nanmedian(sigma_fit_map))
+        if not diagnostic_maps:
+            sigma_fit_map = None
     else:  # pragma: no cover - Literal in the schema prevents it
         msg = f"unknown surface method {method!r}"
         raise ValueError(msg)
 
     result = CalibrationResult(
         cal_gnss_surface=surface,
-        cal_reference_offset=np.full(disp.shape, ref_value, dtype=disp.dtype),
+        # one constant: a read-only view, not a full frame
+        cal_reference_offset=np.broadcast_to(
+            np.asarray(ref_value, dtype=disp.dtype), disp.shape
+        ),
         cal_tropo=cal_tropo,
         cal_set=cal_set,
         cal_unwrap_shift=cal_unwrap_shift,
@@ -547,6 +567,6 @@ def calibrate_pair(
             "sigma_cal median %.4g (k = %.2f, fit term median %.4g)",
             float(np.nanmedian(sigma)),
             resolve_k(options.uncertainty),
-            float(np.nanmedian(sigma_fit_map)),
+            fit_term_median,
         )
     return result
