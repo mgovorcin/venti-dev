@@ -138,14 +138,16 @@ def _downsample_bool(mask: np.ndarray, factor: int) -> np.ndarray:
     return downsample_array(mask.astype(np.float32), factor, method="mean") > 0.5
 
 
-def _upsample_nan(arr: np.ndarray, shape: tuple[int, int], factor: int) -> np.ndarray:
+def _upsample_nan(
+    arr: np.ndarray, shape: tuple[int, int], factor: int, dtype=np.float64
+) -> np.ndarray:
     """Upsample a map that may hold NaN (nearest: each pixel takes its block's node).
 
     `downsample_array` trims the frame to a multiple of `factor`, so the last
     rows/columns of the full grid fall beyond the last block; they take the
     nearest node rather than being cut off.
     """
-    a = np.asarray(arr, dtype=np.float64)
+    a = np.asarray(arr, dtype=dtype)  # cast the small map, not the full frame
     if factor <= 1:
         return a
     rows = np.minimum(np.arange(shape[0]) // factor, a.shape[0] - 1)
@@ -477,9 +479,17 @@ def calibrate_pair(
             if fit_ok.any()
             else None
         )
-        surface = upsample_array(surface_ds, disp.shape) if factor > 1 else surface_ds
+        # upsample from the displacement's precision: each full-frame float64
+        # map would cost ~0.6 GB on a DISP-S1 frame
+        surface = (
+            upsample_array(surface_ds.astype(disp.dtype), disp.shape)
+            if factor > 1
+            else surface_ds
+        )
         coverage = (
-            upsample_array(coverage_ds, disp.shape) if factor > 1 else coverage_ds
+            upsample_array(coverage_ds.astype(disp.dtype), disp.shape)
+            if factor > 1
+            else coverage_ds
         )
         surface = np.asarray(surface, dtype=disp.dtype)
 
@@ -489,8 +499,8 @@ def calibrate_pair(
             options.surface.cutoff_wavelength_meters, pixel_ds
         )
         sigma_fit_ds, n_eff_ds = fit_sigma(filled_ds, w_ds, sigma_px_final, surface_ds)
-        sigma_fit_map = _upsample_nan(sigma_fit_ds, disp.shape, factor)
-        n_eff = _upsample_nan(n_eff_ds, disp.shape, factor)
+        sigma_fit_map = _upsample_nan(sigma_fit_ds, disp.shape, factor, disp.dtype)
+        n_eff = _upsample_nan(n_eff_ds, disp.shape, factor, disp.dtype)
         k = resolve_k(options.uncertainty)
         if gnss_los_std is None:
             logger.warning("no gnss_los_std given: sigma_cal carries the fit term only")
@@ -499,7 +509,7 @@ def calibrate_pair(
             inflation = sigma_inflation_inside(
                 exclude,
                 kernel_sigma_px(options.surface.cutoff_wavelength_meters, pixel_m),
-            )
+            ).astype(disp.dtype)
         sigma = sigma_cal(
             None if gnss_los_std is None else np.ma.filled(gnss_los_std, np.nan),
             sigma_fit_map,
@@ -507,8 +517,8 @@ def calibrate_pair(
             sigma_tropo=sigma_tropo,
             sigma_ref=sigma_ref,
             inflation=inflation,
-        )
-        sigma = np.where(valid | exclude, sigma, np.nan).astype(disp.dtype)
+        ).astype(disp.dtype, copy=False)
+        sigma[~(valid | exclude)] = np.nan
     else:  # pragma: no cover - Literal in the schema prevents it
         msg = f"unknown surface method {method!r}"
         raise ValueError(msg)

@@ -300,3 +300,28 @@ def test_sigma_maps_cover_a_frame_that_is_not_a_multiple_of_the_factor():
     # the trailing rows/columns beyond the last full block take the nearest node
     np.testing.assert_array_equal(res.sigma_fit[96], res.sigma_fit[95])
     np.testing.assert_array_equal(res.sigma_fit[:, 100], res.sigma_fit[:, 99])
+
+
+def test_float32_frames_give_float32_maps():
+    """Full-frame maps stay in the displacement's precision (memory, T37)."""
+    rng = np.random.default_rng(4)
+    disp = (0.004 * rng.standard_normal((97, 101))).astype(np.float32)
+    o = _opts()
+    o.downsample_factor = 3
+    res = calibrate_pair(
+        disp,
+        np.zeros_like(disp),
+        np.ones(disp.shape, bool),
+        (10, 10),
+        o,
+        PIXEL_M,
+        CYCLE_M,
+        gnss_los_std=np.full(disp.shape, 0.0003, dtype=np.float32),
+    )
+    for name in ("sigma_cal", "sigma_fit", "n_eff", "coverage", "cal_gnss_surface"):
+        assert getattr(res, name).dtype == np.float32, name
+    # float64 callers keep float64
+    assert sigma_cal(np.full((2, 2), 0.001), None, 1.0).dtype == np.float64
+    assert (
+        sigma_cal(np.full((2, 2), 0.001, np.float32), 0.0005, 2.0).dtype == np.float32
+    )

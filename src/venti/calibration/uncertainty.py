@@ -174,14 +174,17 @@ def sigma_cal(
     if k < 0:
         msg = f"k must be >= 0, got {k}"
         raise ValueError(msg)
-    terms = [
-        k * np.asarray(0.0 if sigma_grid is None else sigma_grid, dtype=np.float64),
-        np.asarray(0.0 if sigma_fit is None else sigma_fit, dtype=np.float64),
-        np.asarray(0.0 if sigma_tropo is None else sigma_tropo, dtype=np.float64),
-        np.asarray(0.0 if sigma_ref is None else sigma_ref, dtype=np.float64),
-    ]
+    raw = [sigma_grid, sigma_fit, sigma_tropo, sigma_ref]
+    array_inputs = [np.asarray(t) for t in raw if t is not None and np.ndim(t) > 0]
+    if inflation is not None:
+        array_inputs.append(np.asarray(inflation))
+    # the precision of the array inputs (float32 maps stay float32: a
+    # full-frame float64 copy per term costs ~0.6 GB); scalars do not upcast
+    dtype = np.result_type(np.float32, *[a.dtype for a in array_inputs])
+    terms = [np.asarray(0.0 if t is None else t, dtype=dtype) for t in raw]
+    terms[0] = terms[0] * dtype.type(k)
     arrays = [t for t in terms if t.ndim > 0] + (
-        [np.asarray(inflation, dtype=np.float64)] if inflation is not None else []
+        [np.asarray(inflation, dtype=dtype)] if inflation is not None else []
     )
     if arrays:
         out_shape = arrays[0].shape
@@ -194,14 +197,14 @@ def sigma_cal(
     else:
         msg = "give at least one array term or `shape`"
         raise ValueError(msg)
-    total = np.zeros(out_shape, dtype=np.float64)
+    total = np.zeros(out_shape, dtype=dtype)
     for t in terms:
-        total = total + t * t
-    sigma = np.sqrt(total)
+        total += t * t
+    sigma = np.sqrt(total, out=total)
     if inflation is not None:
-        infl = np.asarray(inflation, dtype=np.float64)
+        infl = np.asarray(inflation, dtype=dtype)
         if np.nanmin(infl) < 1.0:
             msg = "inflation must be >= 1 everywhere"
             raise ValueError(msg)
-        sigma = sigma * infl
+        sigma *= infl
     return sigma
