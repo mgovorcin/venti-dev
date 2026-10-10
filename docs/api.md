@@ -1,0 +1,36 @@
+# API reference
+
+Entry points the operational products call, then the supporting modules.
+Generated from the docstrings (NumPyDoc) by mkdocstrings.
+
+## Calibration surface
+
+::: venti.surface
+
+## GNSS reference
+
+::: venti.gnss.reference
+
+::: venti.gnss.los
+
+## Spatial processing
+
+::: venti.spatial.gap_filling
+
+::: venti.spatial.interpolation
+
+::: venti.spatial.resample
+
+## Filtering
+
+::: venti.filtering.moving_window
+
+## Unwrap-cycle correction
+
+::: venti.unwrap.unwrap_corrections
+
+## Workflow
+
+::: venti.workflow.config
+
+::: venti.workflow.calibration

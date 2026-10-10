@@ -1,0 +1,82 @@
+site_name: Venti
+site_description: GNSS calibration of OPERA DISP and projection to vertical land motion
+site_url: https://mgovorcin.github.io/venti-dev/
+repo_url: https://github.com/mgovorcin/venti-dev
+repo_name: mgovorcin/venti-dev
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - content.code.copy
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Product requirements (PRD): specs.md
+  - Implementation plan: plan.md
+  - Task tracker: todo.md
+  - Decisions:
+      - decisions/README.md
+  - API reference: api.md
+  - Notebooks:
+      - Calibration workflow: notebooks/calibration_workflow.ipynb
+      - Vertical land motion: notebooks/vertical_land_motion.ipynb
+
+plugins:
+  - search
+  - section-index
+  - mkdocs-jupyter:
+      include_source: true
+      execute: false
+      ignore_h1_titles: true
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: numpy
+            show_source: false
+            show_root_heading: true
+            members_order: source
+            separate_signature: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+
+# Notebooks live outside docs/; mkdocs-jupyter needs them inside docs_dir, so
+# docs/notebooks is a symlink to ../notebooks (created in docs/).
+docs_dir: docs
+strict: true
+# Reachable from decisions/README.md and the notebooks index; not top-level nav.
+not_in_nav: |
+  decisions/0*.md
+  notebooks/models/*.ipynb
