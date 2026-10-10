@@ -12,7 +12,7 @@ import pytest
 from shapely.geometry import Point, shape
 
 from venti.calibration.remove_restore import load_area_db, load_event_db
-from venti.research.events import event_feature, rupture_length_km
+from venti.research.events import eruption_feature, event_feature, rupture_length_km
 
 DATA = resources.files("venti") / "data"
 
@@ -89,3 +89,37 @@ def test_area_db_covers_the_benchmark_areas_and_reaches_stable_ground():
     assert all(a.stable_ring_fraction >= 0.5 for a in drafted)
     kilauea = next(a for a in db.items if a.id == "kilauea")
     assert kilauea.shape().contains(Point(-155.28, 19.41))  # the summit caldera
+
+
+def test_eruption_footprint_follows_the_vents_and_overlaps_its_span():
+    from venti.calibration.remove_restore import EventDB
+
+    vents = [(-155.0, 19.4), (-154.9, 19.45)]
+    f = eruption_feature(
+        "e", "test", datetime(2018, 5, 1), datetime(2018, 9, 1), vents,
+        buffer_km=5.0, source="s",
+    )  # fmt: skip
+    g = shape(f["geometry"])
+    assert all(g.contains(Point(*v)) for v in vents)
+    assert g.contains(Point(-154.95, 19.425 + 0.04))  # ~4.4 km off the trace
+    assert not g.contains(Point(-154.95, 19.425 + 0.06))  # ~6.6 km off
+    collection = {"type": "FeatureCollection", "version": "t", "features": [f]}
+    ev = EventDB.from_geojson(collection).items[0]
+    assert ev.affects(datetime(2018, 1, 1), datetime(2018, 6, 1))  # overlaps the start
+    assert ev.affects(datetime(2018, 8, 1), datetime(2019, 1, 1))  # overlaps the end
+    assert not ev.affects(datetime(2018, 10, 1), datetime(2019, 1, 1))
+    with pytest.raises(ValueError, match="before"):
+        eruption_feature(
+            "e", "t", datetime(2019, 1, 1), datetime(2018, 1, 1), vents,
+            buffer_km=1.0, source="s",
+        )  # fmt: skip
+
+
+def test_event_db_has_kilauea_2018_over_erz4():
+    """The 2018 eruption covers ERZ4, whose 2018-2020 GNSS rate (-1229 mm/yr
+    LOS) is co-eruptive, not secular (T46 Hawaii)."""
+    db = load_event_db(DATA / "event_db_v1.geojson")
+    ev = next(e for e in db.items if e.id == "kilauea_2018_lerz")
+    assert ev.shape().contains(Point(-154.861, 19.517))  # ERZ4
+    assert ev.affects(datetime(2017, 1, 1), datetime(2019, 1, 1))
+    assert not ev.affects(datetime(2019, 1, 1), datetime(2020, 1, 1))
