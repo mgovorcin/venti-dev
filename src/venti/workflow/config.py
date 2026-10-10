@@ -192,8 +192,9 @@ class GnssOptions(BaseModel):
         0.0,
         ge=0,
         description=(
-            "Use grid nodes this far outside the frame, extrapolating LOS for "
-            "nodes outside the swath (R-G2; the trade studies use 50000)"
+            "Use grid nodes this far outside the frame (R-G2; v0.5 uses 50000). "
+            "sample_gnss_enu interpolates E/N/U and projects per pixel, so nodes "
+            "outside the swath need no LOS look"
         ),
     )
     exclude_defo_nodes: bool = Field(
