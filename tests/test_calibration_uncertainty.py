@@ -325,3 +325,35 @@ def test_float32_frames_give_float32_maps():
     assert (
         sigma_cal(np.full((2, 2), 0.001, np.float32), 0.0005, 2.0).dtype == np.float32
     )
+
+
+def test_without_diagnostic_maps_the_product_layers_are_identical():
+    """`diagnostic_maps=False` drops coverage / sigma_fit / n_eff (memory, T47)
+    and changes neither the calibration nor sigma_CAL."""
+    rng = np.random.default_rng(5)
+    disp = (0.004 * rng.standard_normal((97, 101))).astype(np.float32)
+    o = _opts()
+    o.downsample_factor = 6
+    args = (
+        disp,
+        np.zeros_like(disp),
+        np.ones(disp.shape, bool),
+        (10, 10),
+        o,
+        PIXEL_M,
+        CYCLE_M,
+    )
+    kw = {"gnss_los_std": np.full(disp.shape, 0.0003, np.float32)}
+    full = calibrate_pair(*args, **kw)
+    lean = calibrate_pair(*args, **kw, diagnostic_maps=False)
+    assert lean.coverage is None
+    assert lean.sigma_fit is None
+    assert lean.n_eff is None
+    np.testing.assert_array_equal(lean.calibration, full.calibration)
+    np.testing.assert_array_equal(lean.sigma_cal, full.sigma_cal)
+    # the reference offset is one constant, held as a read-only view
+    ref = lean.cal_reference_offset
+    assert ref.shape == disp.shape
+    assert not ref.flags.writeable
+    assert np.all(ref == lean.reference_value)
+    lean.assert_closed()
