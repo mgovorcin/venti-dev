@@ -75,7 +75,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 ## Phase 5: VLM v0.1
 
-- [~] T52 VLM repo skeleton — T52.1 done 2026-10-06: private `mgovorcin/opera_vlm` (VLM-S1 + VLM-NI, scaffold `v0.0.0`, PR #1 invariants); T52.2 runconfig ADR and T52.3 product spec open
+- [~] T52 VLM repo skeleton — T52.1 done 2026-10-06: private `mgovorcin/opera_vlm` (VLM-S1 + VLM-NI, scaffold `v0.0.0`, PR #1 invariants); T52.2 done (opera_vlm PR #7, 2026-10-09); T52.3 product spec open
 - [x] T53 Venti `[decomposition]`: WLS and projection — done 2026-10-06 on `feature/decomposition` (`venti.decomposition`: `decompose_wls`, `project_vertical`, `decompose` with mode flag)
 - [~] T54 Temporal resampling of asc/desc — T54.1–T54.2 done 2026-10-06 on `feature/temporal-resampling` (`venti.temporal`); T54.3 benchmark waits for the T56 frame choice
 - [x] T55 GNSS E/N for VLM with provenance check — depends on T28, T37 (strict once cal-disp writes the record, T37.3)
@@ -112,3 +112,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-09 (later) T42 TS-U1 phase 1 done: no-go for v0.5 (flag stays off). The v0.5 unwrap path had never run: fixed in cal-disp PR #7 and venti-dev PR #21. Galveston's real error is sub-region (T62); LA islands are beyond the 12 km anchor. Gate note: |bias| rule penalises fixing negative outliers on a positively biased frame (owner decision).
 - 2026-10-09 (later) T47: memray-guided cuts, products bit-identical: v0.5 peak 7.27 → 4.0–4.1 GB, gamma 6.0 → 3.6–4.0 GB; budget 7.0 → 4.5 GB; worker_settings cap BLAS threads; 2-core run 1 min 43 s → t3.large fits. Unwrap correction stays off until a trade study confirms it (owner; note in T62).
 - 2026-10-09 (later) Owner decisions applied: (1) σ_CAL = calibration-surface uncertainty; opt-in `uncertainty.sigma_nonsecular_meters` (default 0) + `calibration_std` text (venti-dev #23, cal-disp #9); (2) coastal = within 10 km of water bodies ≥ 500 km² (sea); (3) gate bias = median (disp2vlm_validation decision 0001, PR #4). T38 re-run: 4/4 PASS, |median bias| ≤ 1 on all four. New finding: chained v0.5 velocities spread more than gamma (NMAD 1.3 → 2.7, issue #3; relevant to VLM T56).
+- 2026-10-09 (late) Owner: VLM per pair official + optional velocity product (opera_vlm PR #7). GNSS grid buffer was not applied in cal-disp (old path, padding 0): fixed for v0.5 via sample_gnss_enu (cal-disp PR #10, buffer 50 km); UNR 0–360 longitude bug made R-G5 a no-op (venti-dev PR #26). Defo/event DB v1 drafts + tool (PR #25). T40 downloads running.
