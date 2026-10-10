@@ -227,6 +227,41 @@ class TestHook:
         disp[~land] = np.nan
         return disp, gnss, land, island, pixel_m
 
+    def test_hook_sees_disp_minus_cal1_with_the_gnss_signal(self):
+        """Regression: the hook gets DISP - CAL1, not DISP - GNSS - CAL1.
+
+        `estimate_cycles` subtracts the GNSS field itself for the veto; given
+        a residual with GNSS already removed it subtracted it twice. With
+        DISP equal to the GNSS field the pass-1 tie is ~0, so the hook must
+        see the GNSS field (before the fix it saw ~0).
+        """
+        ny, nx = 90, 120
+        yy, xx = np.mgrid[0:ny, 0:nx].astype(float)
+        gnss = 0.02 * xx / nx - 0.01 * yy / ny
+        disp = gnss.copy()
+        land = np.ones((ny, nx), bool)
+        seen = {}
+
+        def spy(residual, valid, cycle_m):
+            seen["residual"], seen["valid"] = residual, valid
+            return np.zeros_like(residual), None
+
+        opts = CalibrationOptions(
+            unwrap_error_correction=True,
+            surface={
+                "method": "loclin",
+                "cutoff_wavelength_meters": 12_000.0,
+                "two_pass": True,
+            },
+        )
+        calibrate_pair(disp, gnss, land, (0, 0), opts, 180.0, CYCLE, unwrap_hook=spy)
+        r = seen["residual"][seen["valid"]]
+        expected = gnss - gnss[0, 0]  # the reference pixel is removed
+        np.testing.assert_allclose(
+            seen["residual"][seen["valid"]], expected[seen["valid"]], atol=2e-4
+        )
+        assert np.ptp(r) > 0.02  # the GNSS signal is there
+
     def test_hook_removes_the_island_cycle(self):
         disp, gnss, land, island, pixel_m = self._scene()
         labels = segment_regions(land)
@@ -290,6 +325,72 @@ class TestHook:
             calibrate_pair(
                 disp, gnss, land, (20, 100), opts, pixel_m, CYCLE, unwrap_hook=bad
             )
+
+    def test_hook_for_pair_builds_the_fit_grid_itself(self):
+        """`unwrap_hook_for_pair` from full-resolution layers, factor 3."""
+        from venti.unwrap import unwrap_hook_for_pair
+
+        disp, gnss, land, _island, pixel_m = self._scene()
+        opts = CalibrationOptions(
+            unwrap_error_correction=True,
+            surface={
+                "method": "loclin",
+                "cutoff_wavelength_meters": 12_000.0,
+                "two_pass": True,
+            },
+            unwrap={"min_coherent_area_km2": 0.3, "min_edge_area_km2": 0.1},
+        )
+        opts.downsample_factor = 3
+        hook = unwrap_hook_for_pair(
+            land,
+            np.isfinite(disp),
+            gnss,
+            land & np.isfinite(disp),
+            opts,
+            pixel_m,
+            pair="p",
+        )
+        res = calibrate_pair(
+            disp, gnss, land, (20, 100), opts, pixel_m, CYCLE, unwrap_hook=hook
+        )
+        assert [r.cycles for r in res.unwrap_decisions.shifted] == [-1]
+        assert res.unwrap_decisions.pair == "p"
+        assert np.median(res.cal_unwrap_shift[115:140, 140:170]) == pytest.approx(
+            CYCLE, rel=1e-5
+        )
+        assert np.all(res.cal_unwrap_shift[:100] == 0)
+        res.assert_closed()
+
+    def test_shift_on_a_frame_not_divisible_by_the_factor(self):
+        """Regression: a non-zero shift on a frame whose size is not a multiple
+        of the downsample factor raised a broadcast error (every shifted epoch
+        of the F08882 e2e failed: 7733 x 9464 vs a 7728 x 9462 shift)."""
+        from venti.unwrap import unwrap_hook_for_pair
+
+        disp, gnss, land, _island, pixel_m = self._scene()
+        # 148 x 176: blocks of 3 cover 147 x 174, the island reaches column 174
+        disp, gnss, land = disp[:-2, :-4], gnss[:-2, :-4], land[:-2, :-4]
+        opts = CalibrationOptions(
+            unwrap_error_correction=True,
+            surface={
+                "method": "loclin",
+                "cutoff_wavelength_meters": 12_000.0,
+                "two_pass": True,
+            },
+            unwrap={"min_coherent_area_km2": 0.3, "min_edge_area_km2": 0.1},
+        )
+        opts.downsample_factor = 3
+        hook = unwrap_hook_for_pair(
+            land, np.isfinite(disp), gnss, land & np.isfinite(disp), opts, pixel_m
+        )
+        res = calibrate_pair(
+            disp, gnss, land, (20, 100), opts, pixel_m, CYCLE, unwrap_hook=hook
+        )
+        assert res.cal_unwrap_shift.shape == disp.shape
+        assert [r.cycles for r in res.unwrap_decisions.shifted] == [-1]
+        # the trailing rows/columns beyond the last block are covered too
+        assert res.cal_unwrap_shift[130, 174] == pytest.approx(CYCLE, rel=1e-5)
+        res.assert_closed()
 
     def test_disabled_means_zero_component_and_no_decisions(self):
         disp, gnss, land, _island, pixel_m = self._scene()

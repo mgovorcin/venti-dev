@@ -225,8 +225,10 @@ def calibrate_pair(
     unwrap_hook : callable, optional
         ``hook(residual, valid, cycle_m) -> (shift, decisions)``; used only
         when ``options.unwrap_error_correction`` is True. With the loclin
-        method and ``surface.two_pass`` it runs on ``DISP - CAL1``; otherwise
-        on the referenced displacement minus the GNSS field.
+        method and ``surface.two_pass`` it runs on ``DISP - CAL1`` (the
+        pass-1 tie removed); otherwise on the referenced displacement. Either
+        way the input still carries the GNSS signal: the estimator subtracts
+        the GNSS field itself (`venti.unwrap.cycles.estimate_cycles`).
     n_jobs, fit_lock
         Passed to the gamma windowed fit.
 
@@ -418,8 +420,10 @@ def calibrate_pair(
             passes = 2
             tie_ds = tie(residual_ds)
             if options.unwrap_error_correction and unwrap_hook is not None:
+                # the estimator measures DISP - CAL1, which still carries the
+                # GNSS signal; it removes the GNSS field itself for the veto
                 shift_ds, decisions = unwrap_hook(
-                    residual_ds - tie_ds, valid_ds & ~exclude_ds, cycle_m
+                    work_ds - tie_ds, valid_ds & ~exclude_ds, cycle_m
                 )
                 shift_ds = np.asarray(shift_ds, dtype=np.float64)
                 if shift_ds.shape != residual_ds.shape:
@@ -429,13 +433,9 @@ def calibrate_pair(
                     )
                     raise ValueError(msg)
                 if np.any(shift_ds != 0):
-                    shift_full = (
-                        np.kron(shift_ds, np.ones((factor, factor)))[
-                            : disp.shape[0], : disp.shape[1]
-                        ]
-                        if factor > 1
-                        else shift_ds
-                    )
+                    # the fit grid is trimmed to a multiple of `factor`: the
+                    # trailing rows/columns take their nearest block
+                    shift_full = _upsample_nan(shift_ds, disp.shape, factor)
                     cal_unwrap_shift = np.where(
                         np.isfinite(work), shift_full, 0.0
                     ).astype(disp.dtype)
@@ -443,18 +443,10 @@ def calibrate_pair(
                     work -= cal_unwrap_shift
                     residual_ds = residual_ds - shift_ds
         elif options.unwrap_error_correction and unwrap_hook is not None:
-            shift_ds, decisions = unwrap_hook(
-                residual_ds, valid_ds & ~exclude_ds, cycle_m
-            )
+            shift_ds, decisions = unwrap_hook(work_ds, valid_ds & ~exclude_ds, cycle_m)
             shift_ds = np.asarray(shift_ds, dtype=np.float64)
             if np.any(shift_ds != 0):
-                shift_full = (
-                    np.kron(shift_ds, np.ones((factor, factor)))[
-                        : disp.shape[0], : disp.shape[1]
-                    ]
-                    if factor > 1
-                    else shift_ds
-                )
+                shift_full = _upsample_nan(shift_ds, disp.shape, factor)
                 cal_unwrap_shift = np.where(np.isfinite(work), shift_full, 0.0).astype(
                     disp.dtype
                 )
