@@ -59,6 +59,12 @@ Value-changing entries say which product layers move and by how much
 
 ### Added
 
+- `venti.sensor` (plan T18, PRD R-X1): `SensorSpec` with the radar wavelength
+  and λ/2 cycle, product and static-layer filename grammars, mask/quality/
+  correction layer names and readers (`read_wavelength` checks the product's
+  `/identification/radar_wavelength` against the nominal value); `S1` is
+  implemented, `NISAR` is registered and refused until cal-disp v2 (T58).
+  `get_sensor(name)`, `sensor_for_file(path)`.
 - SPDX license headers (BSD-3-Clause) on every Python file, enforced by the
   `spdx-header` pre-commit hook (`scripts/spdx_check.py`).
 - Shared engineering kit: pre-commit (check-toml, nbstripout keeping outputs),
