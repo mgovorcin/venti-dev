@@ -127,7 +127,10 @@ class TestCombination:
         base = AlgorithmParameters()
         base.calibration_options.uncertainty.k_grid = "frame_table"
         applied = load_frame_table().apply(base, 8882)
-        assert resolve_k(applied.calibration_options.uncertainty) == 3.9
+        # the TS-G1 fit for F08882 (frame table 0.2+); 3.9 stays the default
+        assert resolve_k(applied.calibration_options.uncertainty) == 1.35
+        unfitted = load_frame_table().apply(base, 99)
+        assert resolve_k(unfitted.calibration_options.uncertainty) == 3.9
 
 
 def _opts(k=1.0, inflate=True):
