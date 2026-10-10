@@ -43,8 +43,8 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Phase 2: Science port into Venti
 
 - [x] T28 `sample_gnss_enu` — done 2026-10-06 on `feature/gnss-sampling` (`venti.gnss.sampling`: buffer, exclusion + re-interpolation, E/N/U fields, provenance; per-pixel LOS projection replaces LOS extrapolation)
-- [ ] T29 Gap filling and continuous surface support — depends on T19
-- [ ] T30 Local-linear surface with physical cutoff — depends on T29
+- [x] T29 Gap filling and continuous surface support — done 2026-10-06 on `feature/calibration-surface` (`venti.calibration.gaps`)
+- [~] T30 Local-linear surface with physical cutoff — core done 2026-10-06 (`venti.calibration.loclin`, half-response test); method switch (T30.3) lands with T33, golden-pair benchmark (T30.4) after wiring
 - [ ] T31 Robust coherence weights — depends on T30
 - [ ] T32 Remove-restore: defo/event areas — depends on T29
 - [ ] T33 Two-pass orchestration and component bookkeeping — depends on T30, T31, T32
