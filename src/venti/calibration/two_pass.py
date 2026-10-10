@@ -222,7 +222,9 @@ def calibrate_pair(
         Uncertainty of the tropospheric correction, same units as `disp`
         (R-E1 term; 0 until a model exists).
     sigma_ref : float
-        Uncertainty of the reference offset (R-E1 term), default 0.
+        Uncertainty of the reference offset (R-E1 term), default 0. The
+        option ``uncertainty.sigma_nonsecular_meters`` (in the units of
+        `disp`, metres for DISP-S1) joins it in quadrature.
     unwrap_hook : callable, optional
         ``hook(residual, valid, cycle_m) -> (shift, decisions)``; used only
         when ``options.unwrap_error_correction`` is True. With the loclin
@@ -521,7 +523,10 @@ def calibrate_pair(
             sigma_fit_map,
             k,
             sigma_tropo=sigma_tropo,
-            sigma_ref=sigma_ref,
+            # the optional non-secular station term joins sigma_ref in quadrature
+            sigma_ref=float(
+                np.hypot(sigma_ref, options.uncertainty.sigma_nonsecular_meters)
+            ),
             inflation=inflation,
         ).astype(disp.dtype, copy=False)
         sigma[~(valid | exclude)] = np.nan
