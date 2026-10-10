@@ -227,3 +227,27 @@ def test_no_nodes_in_bounds_raises(snapshot):
     far = (np.array([900_000.0, 901_000.0]), np.array([4_900_000.0, 4_899_000.0]))
     with pytest.raises(ValueError, match="No UNR grid nodes"):
         sample_gnss_enu(make_cfg(snapshot), far)
+
+
+def test_exclusion_with_unr_0_360_longitudes(snapshot, grid):
+    """Regression: UNR lookups store 0-360 longitudes; the exclusion compared
+    them with -180..180 polygons and never matched (R-G5 was a no-op)."""
+    shapely = pytest.importorskip("shapely")
+    lookup, _station_dir, xy = snapshot
+    ids, lon, lat = np.loadtxt(lookup, unpack=True)
+    np.savetxt(
+        lookup, np.c_[ids, np.mod(lon, 360.0), lat], fmt=["%06d", "%.8f", "%.8f"]
+    )
+    to_ll = Transformer.from_crs(f"EPSG:{UTM}", "EPSG:4326", always_xy=True)
+    lo0, la0 = to_ll.transform(X0 + 10_000, Y0 + 10_000)
+    lo1, la1 = to_ll.transform(X0 + 25_000, Y0 + 25_000)
+    area = shapely.box(lo0 - 1e-3, la0 - 1e-3, lo1 + 1e-3, la1 + 1e-3)
+    lon_all, lat_all = to_ll.transform(xy[:, 0], xy[:, 1])
+    n_inside = int(shapely.contains_xy(area, lon_all, lat_all).sum())
+    out = sample_gnss_enu(
+        make_cfg(snapshot, buffer_meters=30_000, exclude_defo_nodes=True),
+        grid,
+        exclude=area,
+    )
+    assert out.provenance.n_excluded == n_inside > 0
+    assert out.nodes["lon"].between(-180, 180).all()
