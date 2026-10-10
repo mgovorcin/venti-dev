@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025-2026 opera-adt
+# SPDX-License-Identifier: BSD-3-Clause
+# Part of Venti, https://github.com/opera-adt/Venti (BSD-3-Clause, see LICENSE).
 """Estimate a GNSS calibration surface from arrays.
 
 The numerical core of Venti's calibration, independent of files and

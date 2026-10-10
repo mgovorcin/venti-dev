@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025-2026 opera-adt
+# SPDX-License-Identifier: BSD-3-Clause
+# Part of Venti, https://github.com/opera-adt/Venti (BSD-3-Clause, see LICENSE).
 """Main CLI entry point for Venti.
 
 This module provides the command-line interface for the Venti calibration workflow.

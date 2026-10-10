@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025-2026 opera-adt
+# SPDX-License-Identifier: BSD-3-Clause
+# Part of Venti, https://github.com/opera-adt/Venti (BSD-3-Clause, see LICENSE).
 """Data staging workflow for a single OPERA DISP-S1 frame.
 
 Prepares data needed for a single DISP-S1 product:

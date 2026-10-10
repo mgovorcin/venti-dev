@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025-2026 opera-adt
+# SPDX-License-Identifier: BSD-3-Clause
+# Part of Venti, https://github.com/opera-adt/Venti (BSD-3-Clause, see LICENSE).
 """Basic smoke tests that don't depend on other venti modules.
 
 Behaviour of the unwrap corrector is tested in test_unwrap_corrections.py.

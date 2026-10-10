@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025-2026 opera-adt
+# SPDX-License-Identifier: BSD-3-Clause
+# Part of Venti, https://github.com/opera-adt/Venti (BSD-3-Clause, see LICENSE).
 """Product classes for creating Venti NetCDF output products.
 
 This module provides classes for creating standardized NetCDF products:

@@ -105,10 +105,12 @@ platforms = ["osx-arm64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
 venti = { path = ".", editable = true }
-dem-stitcher = "*"
 
 [tool.pixi.dependencies]
 python = ">=3.11"
+# Without a floor the solver can pick the 2020 `sqlite 3.32.3` tarball, which
+# clobbers libsqlite and breaks `import sqlite3` (missing sqlite3_deserialize).
+sqlite = ">=3.45"
 pip = ">=21.3"
 git = "*"
 numpy = "*"
@@ -142,9 +144,15 @@ s3fs = "*"
 asf_search = "*"
 
 [tool.pixi.tasks]
+# Shared task names (00_tools/standards/pixi-tasks.toml): test, lint, docs, golden, e2e
 check = "pre-commit run -a"
+lint = "pre-commit run -a"
 test = "pytest"
-docs = "mkdocs serve"
+docs = "mkdocs build --strict"
+docs-serve = "mkdocs serve"
+# Venti has no golden dataset of its own; cal-disp's golden covers it.
+golden = "echo 'no golden dataset in this repo; run pixi run validate in cal-disp'"
+e2e = "echo 'no e2e validation in this repo; see the validation package'"
 clean = "rm -rf build/ dist/ *.egg-info/ .pytest_cache/ .coverage .ruff_cache/ src/venti/_version.py && find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true"
 
 
@@ -185,14 +193,15 @@ mkdocs-section-index = "*"
 [tool.pixi.feature.analysis.dependencies]
 numba = "*"
 
-[tool.pixi.feature.analysis.pypi-dependencies]
-geepers = { git = "https://github.com/opera-adt/geepers.git" }
-
 
 [tool.pixi.environments]
 test = ["test"]
 docs = ["docs"]
 analysis = ["analysis"]
+# Shared environment names: `dev` for development, `ops` = exactly the default
+# dependency set (what an operational image installs), solved on its own.
+dev = ["test", "docs"]
+ops = { features = [], solve-group = "ops" }
 
 
 [tool.setuptools_scm]

@@ -60,3 +60,76 @@ f = open(filename)
 - Provide tutorial notebooks covering common workflows.
 - Include examples in docstrings.
 - Add high-level guides for key functionality.
+
+---
+
+# Working in this repo
+
+Sections below follow `00_tools/standards/CLAUDE.md.template`. The PRD is
+`docs/specs.md`; the task plan is `docs/plan.md`; status is `docs/todo.md`.
+
+## What this repo is
+
+Venti is the sensor-agnostic InSAR–GNSS fusion library: GNSS grid → LOS
+sampling, the calibration surface, unwrap-cycle correction, tropo modes,
+remove-restore, and (later) LOS decomposition / projection to vertical. The
+operational products (`cal-disp`, VLM) call it; Venti itself owns no product
+format, runconfig or delivery packaging.
+
+## Architecture (current `main`)
+
+`gnss/` reference grid and LOS projection · `spatial/` gap filling,
+interpolation, resampling · `filtering/` moving-window plane · `surface.py`
+the calibration surface entry point used by `cal-disp` · `unwrap/` region
+cycle correction · `models/` ITRF PMM and GIA rates · `io/` rasters · `workflow/`
+stack-level drivers · `__main__.py` the `venti` tyro CLI. The target layout
+(core + `[calibration]`, `[decomposition]`, `[models]`, `[research]` extras) is
+in `docs/plan.md` T17.
+
+## Invariants (do not break without a decision record in `docs/decisions/`)
+
+- Sensor parameters (wavelength, readers) come from a `SensorSpec`; never
+  hard-code Sentinel-1 values in algorithm code. One LOS displacement cycle is
+  **λ/2**, not λ.
+- `calibration == Σ cal_* components` to 1e-6 (once components exist, T33).
+- Science changes land behind an `algorithm_parameters` flag whose default
+  reproduces the previous result; `cal-disp`'s golden must stay green until a
+  deliberate regeneration.
+- No heavy dependencies (dask, zarr, matplotlib, jupyter) in the core
+  dependency set; they belong to extras.
+
+## Commands
+
+```bash
+export RATTLER_CACHE_DIR=/u/aurora-r0/govorcin/.cache/rattler UV_CACHE_DIR=/u/aurora-r0/govorcin/.cache/uv
+export TMPDIR=/u/aurora-r0/govorcin/tmp
+pixi install -e dev
+pixi run -e dev test      # pytest (doctests included)
+pixi run -e dev lint      # pre-commit run -a (ruff, black, mypy, nbstripout, SPDX)
+JUPYTER_PREFER_ENV_PATH=1 pixi run -e docs docs   # mkdocs build --strict; the env var stops stale
+                                                 # ~/.local nbconvert templates from shadowing the env's
+```
+
+Full-frame runs on aurora need `NUMPY_MADVISE_HUGEPAGE=0`.
+
+## Golden / value-change policy
+
+Venti has no golden of its own; `cal-disp` does. A Venti change that can alter
+`cal-disp` output is tested there (`pixi run validate --golden-dir test_golden`
+in `00_tools/src/cal-disp`) before the Venti PR is opened. See the
+`workflow-regression` skill.
+
+## Tests
+
+Every change ships unit tests in the same commit. Numeric functions also get a
+synthetic-truth test (known plane / bowl / cycle jump recovered within
+tolerance), and anything that shapes a run gets a regression test pinning its
+output. See the `unit-tests` skill and `CONTRIBUTING.md`.
+
+## Conventions
+
+- Branches: never commit on `main`; `feature/<topic>` for one concern; PRs to
+  `mgovorcin/venti-dev` `main`, reviewed by the owner; upstream PRs to
+  `opera-adt/Venti` only at milestones.
+- SPDX header (`BSD-3-Clause`) on every `.py` file; `scripts/spdx_check.py`
+  enforces it via pre-commit.
