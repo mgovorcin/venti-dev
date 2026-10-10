@@ -17,6 +17,10 @@ Generated from the docstrings (NumPyDoc) by mkdocstrings.
 
 ::: venti.calibration.loclin
 
+::: venti.calibration.weights
+
+::: venti.calibration.remove_restore
+
 ## Calibration surface (gamma)
 
 ::: venti.surface

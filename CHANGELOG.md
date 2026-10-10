@@ -69,6 +69,17 @@ Value-changing entries say which product layers move and by how much
     half-response wavelength (`kernel_sigma_px`, response exactly 1/2 at the
     cutoff); low-coverage regions (sea, outside the swath) blend into a
     smoothed fallback so the surface is continuous and never 0.
+  - `weights.fit_weights(field, base, sigma_px, coherence, coherence_power,
+    robust)` (plan T31, R-S4): ``base x coherence^p x robust``; the robust
+    factor down-weights pixels that disagree with their local low-pass level
+    (Huber, or a 0/1 gate at 4 scaled MADs); a 10 cm blunder moves the 50 km
+    surface by < 0.1 mm. With the gamma defaults it is the identity.
+  - `remove_restore` (plan T32, A5/R-S5): `AreaDB`/`EventDB` from versioned
+    GeoJSON (`defo_area_db_json`, `event_db_json`), events applied only to
+    pairs that span `t0` (or overlap `[t0, t1]`), `remove_restore_mask` on the
+    DISP grid, `sigma_inflation_inside` (sigma grows with distance into an
+    area), `RemoveRestore.for_pair` with the versions and active event ids for
+    the provenance. A 20 cm bowl inside an area leaves the surface flat there.
 - `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
   the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
   bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files
