@@ -108,6 +108,7 @@ Changelog = "https://github.com/opera-adt/Venti/releases"
 # Entry points for the command line interface
 [project.scripts]
 venti = "venti.__main__:main"
+venti-defo-areas = "venti.research.defo_areas:main"
 
 
 [tool.pixi.project]
