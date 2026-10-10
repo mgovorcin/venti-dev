@@ -436,7 +436,7 @@ core:      UNR grid/stations  [disp] [tropo]       core: io, geometry, GNSS→LO
 | D12 | Sensor-agnostic Venti; S1 first; NISAR = cal-disp v2 with TS-N1. |
 | D13 | Gamma frozen; v0.5 = CalVal release adopting the trade-study algorithm behind flags. |
 | D14 | 8-frame CalVal benchmark. |
-| D15 | VLM: per-pair; asc+desc WLS with N from GNSS, projection otherwise; moving-window temporal resampling; E/N from DISP-CAL or the grid, with a provenance check. |
+| D15 | VLM: per-pair; asc+desc WLS with N from GNSS, projection otherwise; moving-window temporal resampling; E/N from DISP-CAL or the grid, with a provenance check. **Owner, 2026-10-09:** the official product stays per pair; an option produces a velocity-domain product as well (calibrate the chained velocity once: the chained per-pair calibration spreads station residuals, NMAD 1.5 → 2.9 mm/yr on F08882, velocity-domain 2.2; disp2vlm_validation issue #3). |
 | D16 | One run per granule; ≤ 72 h latency; small-EC2 goal; frozen grid snapshot. |
 | D17 | k per frame; σ_DISP from TS-S1; σ realism reported, not gated. |
 | D18 | Engineering standards; Claude Code in the workflow; all development on the fork. |

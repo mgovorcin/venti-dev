@@ -482,6 +482,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 - [x] T55.3 Velocities scaled to the target epoch pair (`v·Δt`). *Done 2026-10-09:* `pair_displacement`.
 
 ### T56. VLM workflow and product writer
+**Owner decision 2026-10-09:** per-pair VLM is the official product; add an option (`output.velocity_product`) that also writes a velocity-domain product (one calibration of the chained velocity; issue #3).
 **Depends on:** T53, T54, T55
 - [ ] T56.1 Pick the first asc/desc overlap (e.g. LA F16940 with its ascending counterpart) and stage calibrated stacks (reuse T38/T46 products).
 - [ ] T56.2 `vlm run runconfig.yaml`: load → resample → GNSS → decompose/project → write NetCDF per target epoch pair with the T52.3 layers; browse image.
