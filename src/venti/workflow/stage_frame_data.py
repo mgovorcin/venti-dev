@@ -26,7 +26,6 @@ Output directory structure::
 from __future__ import annotations
 
 import logging
-import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -43,9 +42,6 @@ from venti.gnss.unr import (
 logger = logging.getLogger(__name__)
 
 # Staging CLI scripts live outside the package; locate them relative to the repo root.
-_STAGING_DIR = (
-    Path(__file__).resolve().parent.parent.parent.parent / "scripts" / "staging"
-)
 
 
 def _find_disp_file(disp_dir: Path, frame_id: int) -> Path:
@@ -314,12 +310,14 @@ def stage_frame(
         )
 
     """
-    sys.path.insert(0, str(_STAGING_DIR))
-    from dem_cli import generate_frame_dem
-    from disp_cli import download_frame_products
-    from los_cli import generate_incidence_angle_raster, generate_los_enu_raster
-    from tropo_cli import process_tropo_from_file
-    from utils import parse_date
+    from venti.staging.dem_cli import generate_frame_dem
+    from venti.staging.disp_cli import download_frame_products
+    from venti.staging.los_cli import (
+        generate_incidence_angle_raster,
+        generate_los_enu_raster,
+    )
+    from venti.staging.tropo_cli import process_tropo_from_file
+    from venti.staging.utils import parse_date
 
     sec_date = parse_date(date)
     assert sec_date is not None
@@ -490,12 +488,14 @@ def stage_window(
         )
 
     """
-    sys.path.insert(0, str(_STAGING_DIR))
-    from dem_cli import generate_frame_dem
-    from disp_cli import download_frame_products
-    from los_cli import generate_incidence_angle_raster, generate_los_enu_raster
-    from tropo_cli import process_tropo_from_stack
-    from utils import parse_date
+    from venti.staging.dem_cli import generate_frame_dem
+    from venti.staging.disp_cli import download_frame_products
+    from venti.staging.los_cli import (
+        generate_incidence_angle_raster,
+        generate_los_enu_raster,
+    )
+    from venti.staging.tropo_cli import process_tropo_from_stack
+    from venti.staging.utils import parse_date
 
     start_dt = parse_date(start)
     end_dt = parse_date(end)

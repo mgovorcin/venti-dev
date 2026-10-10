@@ -28,7 +28,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T14 `geepers[grid]`: GPS Imaging + Euler, with exclusion areas — done 2026-10-06 on geepers `feature/extras-split` (reinterpolate_nodes, plate tables, plate_velocity_enu)
 - [x] T15 `geepers[analysis]` and `[all]` — done 2026-10-06 on geepers `feature/extras-split` (CI matrix per tier, README install matrix, CHANGELOG)
 - [x] T16 Venti bug fixes and packaging repair — done 2026-10-05 on `feature/venti-bugfixes` (T16.7 research-branch copy still open, see plan)
-- [ ] T17 Venti package layout: lean core + extras — depends on T14, T16
+- [x] T17 Venti package layout: lean core + extras — done 2026-10-06 on `feature/lean-core` (tiers by dependency, ADR-0020; `venti.staging`; plate motion from geepers; `gnss/unr.py` deferred to T28)
 - [ ] T18 `SensorSpec` abstraction — depends on T17
 - [ ] T19 Venti algorithm-parameters schema — depends on T17
 - [x] T20 Venti documentation site — done 2026-10-05 on `feature/docs-site` (gh-pages deploy verified only after first push to main)
@@ -100,3 +100,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-05 (cont.) geepers `feature/standards` committed (env, kit, 21 type fixes; 348 tests, lint green); `feature/extras-split` holds the T12 audit. Venti branches rebased into one linear stack (prd-docs → standards → docs-site → venti-bugfixes). Gamma image `cal-disp:0.3.0-rc` built and validated in-image at 1e-6 (cal-disp `feature/docker-build-record`). Open decisions: T12.3 partition sign-off; validation/VLM repo names (T11/T52); T01 with Talib.
 - 2026-10-06 All branches pushed; PRs open on the forks (venti-dev #1–#4, geepers #1–#2, cal-disp #1). T13 done: geepers core imports without geopandas/pandera, deps split core/[grid]/[analysis]/[plot]/[all], `core-only` CI job. Fork Actions are off until enabled in each fork's Actions tab. Next: T14 (incl. T14.3a ITRF2020 plate table), T15.
 - 2026-10-06 T14 and T15 done on geepers `feature/extras-split` (PR #2): ITRF2020/2014 plate tables + `plate_velocity_enu`, `reinterpolate_nodes`, CI matrix per tier, README/CHANGELOG. 376 tests. Phase 1 remaining: T09 (blocked on T06), T11 (repo name), T17–T19, T21–T27. Next: T17 (Venti layout) now that T14 and T16 are done.
+- 2026-10-06 T17 done on `feature/lean-core` (PR #5): tiers by dependency (ADR-0020), `venti.staging`, plate motion from geepers, `ops`/`core-test` envs; suite 291 passed in 19 s. Next: T18 `SensorSpec`, T19 algorithm-parameters schema, T27 frame table.

@@ -24,12 +24,13 @@ import numpy as np
 import opera_utils
 import rasterio
 import tyro
+from geepers.euler import plate_velocity_enu
 from pyproj import Transformer
 from rasterio.transform import Affine, from_bounds
 from rasterio.warp import Resampling, reproject
 from tyro import conf
 
-from venti.models import load_gia, load_itrf, plate_motion
+from venti.models import load_gia
 
 # Constants
 DEFAULT_CELL_SIZE = 30
@@ -213,9 +214,9 @@ def get_frame_pmm(
     Returns
     -------
     pmm_east_velocity : ndarray
-        2D array of east-west velocity components (m/year).
+        2D array of east-west velocity components (mm/year).
     pmm_north_velocity : ndarray
-        2D array of north-south velocity components (m/year).
+        2D array of north-south velocity components (mm/year).
     pmm_attributes : dict
         Dictionary containing grid metadata and model information.
 
@@ -227,10 +228,6 @@ def get_frame_pmm(
     """
     # Validate ITRF date input
     _validate_itrf_year(date)
-
-    # Load ITRF plate motion model parameters
-    logger.info(f"Loading ITRF{date} plate motion data for plate '{plate}'")
-    plate_motion_model = load_itrf.get_plate_data(plate, date=date)
 
     # Generate regular grid for plate motion modeling
     logger.debug(f"Creating grid with {grid_posting/1000:.1f} km spacing")
@@ -244,26 +241,13 @@ def get_frame_pmm(
         *frame_gdf.total_bounds, width=grid_width, height=grid_height
     )
 
-    # Model horizontal plate velocities using Euler pole parameters
-    logger.info("Computing plate motion velocities from Euler pole parameters")
-    modeled_velocities = plate_motion.model_plate_velocities(
-        grid_longitudes.ravel(),
-        grid_latitudes.ravel(),
-        plate_motion_model["omega_x"],
-        plate_motion_model["omega_y"],
-        plate_motion_model["omega_z"],
+    # Rigid-plate velocities (mm/yr) from the published ITRF pole (geepers)
+    logger.info(f"Computing ITRF{date}-PMM plate velocities for plate '{plate}'")
+    ve, vn, _ = plate_velocity_enu(
+        grid_longitudes.ravel(), grid_latitudes.ravel(), plate, model=f"ITRF{date}-PMM"
     )
-
-    if isinstance(modeled_velocities, tuple):
-        modeled_velocities = modeled_velocities[0]
-
-    # Reshape velocity components back to 2D grid
-    pmm_east_velocity = modeled_velocities[:, 0].reshape(  # type: ignore[call-overload]
-        (grid_height, grid_width)
-    )  # East-West component
-    pmm_north_velocity = modeled_velocities[:, 1].reshape(  # type: ignore[call-overload]
-        (grid_height, grid_width)
-    )  # North-South component
+    pmm_east_velocity = ve.reshape((grid_height, grid_width))  # East-West component
+    pmm_north_velocity = vn.reshape((grid_height, grid_width))  # North-South component
 
     # Compile grid and model metadata
     pmm_attributes = {
@@ -275,7 +259,7 @@ def get_frame_pmm(
         "plate": plate,
         "model": f"ITRF{date}",
         "grid_posting_m": grid_posting,
-        "units": "m/year",
+        "units": "mm/year",
     }
 
     logger.info(f"Generated {grid_width}x{grid_height} velocity grid for {plate} plate")

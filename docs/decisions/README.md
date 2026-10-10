@@ -24,3 +24,4 @@ Architecture decision records backfilled from the PRD decision log
 | [ADR-0017](0017-uncertainty-per-frame-k-sigma-disp.md) | Uncertainty: per-frame k, sigma_DISP from TS-S1, sigma realism reported not gated | accepted |
 | [ADR-0018](0018-engineering-standards-claude-code-in-the.md) | Engineering standards, Claude Code in the loop, development on forks | accepted |
 | [ADR-0019](0019-the-prd-lives-in-docs-specs.md) | The PRD lives in docs/specs.md | accepted |
+| [ADR-0020](0020-keep-the-package-layout-tiers-by.md) | Keep the package layout; define the lean core by dependency tiers | accepted |
