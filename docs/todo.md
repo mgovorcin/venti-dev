@@ -38,7 +38,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] T24 Reports and traceability — depends on T22, T23
 - [ ] T25 Validation CLI, caching, batch execution — depends on T24
 - [ ] T26 cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget — depends on T09, T13, T17
-- [ ] T27 Frame-parameter table — depends on T19
+- [x] T27 Frame-parameter table — done 2026-10-06 on `feature/frame-table` (`venti.frames`, `calibration_options.frame`, bundled table for 4 frames; T27.4 cal-disp consumption waits for T37)
 
 ## Phase 2: Science port into Venti
 

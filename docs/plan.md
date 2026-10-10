@@ -241,10 +241,10 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T27. Frame-parameter table
 **Depends on:** T19
 **Context:** PRD §4.3: versioned table frame → plate (NA/PA/CA), tropo mode, k (σ inflation), benchmark category. Runconfig is frozen, so the table is delivered through the existing `static_ancillary_group.algorithm_parameters_overrides_json` field (per-frame overrides), which keeps the interface byte-compatible.
-- [ ] T27.1 Define `frame_parameters.json` schema (`{"version": "...", "default": {...}, "frames": {"08882": {"plate": "NA", "tropo_mode": "off", "k_grid": 3.9}}}`) and a pydantic model in Venti core.
-- [ ] T27.2 Loader with precedence: algorithm_parameters defaults < frame table < explicit overrides; tests.
-- [ ] T27.3 Populate initial entries for F08882, F08886, F16940, F08622 from the trade studies (k = 3.9 placeholder for all; tropo: Houston off, OKC off, LA stratified, NYC off).
-- [ ] T27.4 cal-disp reads the table via `algorithm_parameters_overrides_json`; metadata records `frame_parameters_version`.
+- [x] T27.1 Define `frame_parameters.json` schema (`{"version": "...", "default": {...}, "frames": {"08882": {"plate": "NA", "tropo_mode": "off", "k_grid": 3.9}}}`) and a pydantic model in Venti core. *Done 2026-10-06:* `venti/frames.py` `FrameParameterTable` (`version`, `description`, `default`, `data["08882"]`) — the shape of cal-disp's overrides JSON; `calibration_options.frame` (`plate` validated against geepers' tables, `name`, `benchmark_category`).
+- [x] T27.2 Loader with precedence: algorithm_parameters defaults < frame table < explicit overrides; tests. *Done 2026-10-06:* `overrides_for`/`apply` with precedence schema defaults < `default` < frame < explicit; shorthand keys target `calibration_options`; tests.
+- [x] T27.3 Populate initial entries for F08882, F08886, F16940, F08622 from the trade studies (k = 3.9 placeholder for all; tropo: Houston off, OKC off, LA stratified, NYC off). *Done 2026-10-06:* `src/venti/data/frame_parameters.json` v0.1-draft — F08882 off, F08886 off, F16940 stratified, F08622 off; `k_grid` 3.9 in `default`; plate NA.
+- [~] T27.4 cal-disp reads the table via `algorithm_parameters_overrides_json`; metadata records `frame_parameters_version`. *Prepared:* `FrameParameterTable.write(..., materialize=True)` emits exactly what cal-disp's `_parse_algorithm_overrides` reads (`data[frame]`). *Blocked until T37:* cal-disp's own `CalibrationOptions` (`extra=forbid`) does not yet know the `tropo`/`uncertainty`/`frame` groups, so it would reject the entries; it adopts Venti's schema in T37 and records `frame_parameters_version` then.
 
 ---
 

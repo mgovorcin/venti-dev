@@ -241,6 +241,42 @@ class UncertaintyOptions(BaseModel):
     model_config = {"validate_assignment": True, "extra": "forbid"}
 
 
+class FrameOptions(BaseModel):
+    """Frame-level facts that are not algorithm tuning (PRD §4.3, D3).
+
+    Filled from the frame-parameter table (`venti.frames`); recorded in the
+    product metadata.
+    """
+
+    plate: str = Field(
+        "NA",
+        description=(
+            "Tectonic plate of the plate_motion layer: a UNR two-letter code "
+            "(NA, PA, CA, ...) or an ITRF PMM name (NOAM, PCFC, CARB, ...)"
+        ),
+    )
+    name: str | None = Field(None, description="Human-readable frame name")
+    benchmark_category: str | None = Field(
+        None, description="CalVal benchmark category of the frame (PRD 2.7), if any"
+    )
+
+    @field_validator("plate")
+    @classmethod
+    def _known_plate(cls, value: str) -> str:
+        from geepers.euler import PLATE_CODES, load_plate_motion_model
+
+        code = value.upper()
+        if code in PLATE_CODES or code in load_plate_motion_model():
+            return code
+        msg = (
+            f"Unknown plate {value!r}; codes: {sorted(PLATE_CODES)}, "
+            f"names: {sorted(load_plate_motion_model())}"
+        )
+        raise ValueError(msg)
+
+    model_config = {"validate_assignment": True, "extra": "forbid"}
+
+
 class UnwrapOptions(BaseModel):
     """Unwrap-error correction details (PRD R-U1).
 
@@ -461,6 +497,12 @@ class CalibrationOptions(BaseModel):
     unwrap: UnwrapOptions = Field(
         default_factory=UnwrapOptions,
         description="Unwrap-error correction details (R-U1)",
+    )
+    frame: FrameOptions = Field(
+        default_factory=FrameOptions,
+        description=(
+            "Frame-level facts from the frame-parameter table (plate, category)"
+        ),
     )
 
     # A typo in a cal-disp algorithm_parameters.yaml must fail loudly, not be

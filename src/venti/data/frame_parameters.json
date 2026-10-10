@@ -1,0 +1,36 @@
+{
+  "version": "0.1-draft",
+  "description": "Per-frame overrides for the DISP-CAL algorithm (Venti plan T27). plate: ITRF2020-PMM plate for the plate_motion layer (PRD D3: NA default, PA Hawaii, CA Puerto Rico; California stays NA). tropo.mode and uncertainty.k_grid: from the trade studies (tropo_check, surface_fitting; k = 3.9 is the F08882 value used as a placeholder until TS-G1 fits it per frame). benchmark_category: PRD section 2.7. Values here are consumed once the T34/T35/T37 code paths land; with schema-v2 defaults they change nothing.",
+  "default": {
+    "calibration_options": {
+      "frame": {"plate": "NA"},
+      "uncertainty": {"k_grid": 3.9}
+    }
+  },
+  "data": {
+    "08882": {
+      "calibration_options": {
+        "frame": {"benchmark_category": "coastal_subsidence_islands", "name": "Houston"},
+        "tropo": {"mode": "off"}
+      }
+    },
+    "08886": {
+      "calibration_options": {
+        "frame": {"benchmark_category": "stable_inland", "name": "Oklahoma City"},
+        "tropo": {"mode": "off"}
+      }
+    },
+    "16940": {
+      "calibration_options": {
+        "frame": {"benchmark_category": "high_relief_islands", "name": "Los Angeles"},
+        "tropo": {"mode": "stratified"}
+      }
+    },
+    "08622": {
+      "calibration_options": {
+        "frame": {"benchmark_category": "northeast_gia", "name": "New York"},
+        "tropo": {"mode": "off"}
+      }
+    }
+  }
+}

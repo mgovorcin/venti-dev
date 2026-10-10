@@ -7,6 +7,10 @@ Generated from the docstrings (NumPyDoc) by mkdocstrings.
 
 ::: venti.sensor
 
+## Frame-parameter table
+
+::: venti.frames
+
 ## Calibration surface
 
 ::: venti.surface
