@@ -19,11 +19,29 @@ from venti.frames import (
 from venti.workflow.config import AlgorithmParameters, CalibrationOptions
 
 
-def test_bundled_table_loads_and_covers_the_first_four_frames():
+def test_bundled_table_covers_the_benchmark_and_vlm_frames():
     table = load_frame_table()
     assert DEFAULT_TABLE.exists()
     assert table.version
-    assert table.frames() == [8622, 8882, 8886, 16940]
+    # T38 frames, T40 benchmark frames 5-8, the Houston descending VLM partner
+    assert table.frames() == [
+        7081,
+        8622,
+        8882,
+        8886,
+        16940,
+        16941,
+        23211,
+        35991,
+        36542,
+        38238,
+    ]
+    # PRD D3: Hawaii on the Pacific plate, Puerto Rico on the Caribbean
+    plates = {
+        f: table.apply(AlgorithmParameters(), f).calibration_options.frame.plate
+        for f in (23211, 35991, 36542)
+    }
+    assert plates == {23211: "PA", 35991: "CA", 36542: "NA"}
     assert table.has_frame(8882)
     assert table.has_frame("08882")
     assert not table.has_frame(1)

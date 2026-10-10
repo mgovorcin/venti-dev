@@ -1,6 +1,6 @@
 {
-  "version": "0.2-draft",
-  "description": "Per-frame overrides for the DISP-CAL algorithm (Venti plan T27). plate: ITRF2020-PMM plate for the plate_motion layer (PRD D3: NA default, PA Hawaii, CA Puerto Rico; California stays NA). tropo.mode: from the trade studies (tropo_check). uncertainty.k_grid: per frame from TS-G1 (2026-10-09, disp2vlm_validation studies/TS-G1/REPORT.md: std fit of grid-vs-MIDAS LOS velocity residuals on a held-out 30% station split, UNR constant grid v0.3 IGS20); default 3.9 (the earlier F08882 placeholder) for frames without a fit. benchmark_category: PRD section 2.7. Values here are consumed once the T34/T35/T37 code paths land; with schema-v2 defaults they change nothing.",
+  "version": "0.3-draft",
+  "description": "Per-frame overrides for the DISP-CAL algorithm (Venti plan T27). plate: ITRF2020-PMM plate for the plate_motion layer (PRD D3: NA default, PA Hawaii, CA Puerto Rico; California stays NA). tropo.mode: from the trade studies (tropo_check). uncertainty.k_grid: per frame from TS-G1 (2026-10-09, disp2vlm_validation studies/TS-G1/REPORT.md: std fit of grid-vs-MIDAS LOS velocity residuals on a held-out 30% station split, UNR constant grid v0.3 IGS20); default 3.9 (the earlier F08882 placeholder) for frames without a fit. benchmark_category: PRD section 2.7 (frames 5-8 chosen 2026-10-09, plan T40.1: OPERA frame DB, DISP-S1 product and UNR station counts); 38238 is the descending partner of 08882 for VLM (T56). Values here are consumed once the T34/T35/T37 code paths land; with schema-v2 defaults they change nothing.",
   "default": {
     "calibration_options": {
       "frame": {
@@ -65,6 +65,56 @@
         },
         "uncertainty": {
           "k_grid": 2.82
+        }
+      }
+    },
+    "36542": {
+      "calibration_options": {
+        "frame": {
+          "benchmark_category": "fast_basin",
+          "name": "Central Valley (Corcoran)"
+        }
+      }
+    },
+    "16941": {
+      "calibration_options": {
+        "frame": {
+          "benchmark_category": "coseismic",
+          "name": "Ridgecrest"
+        }
+      }
+    },
+    "07081": {
+      "calibration_options": {
+        "frame": {
+          "benchmark_category": "sparse_gnss",
+          "name": "Montana"
+        }
+      }
+    },
+    "23211": {
+      "calibration_options": {
+        "frame": {
+          "benchmark_category": "pacific_plate_volcano",
+          "name": "Hawaii (Big Island)",
+          "plate": "PA"
+        }
+      }
+    },
+    "35991": {
+      "calibration_options": {
+        "frame": {
+          "benchmark_category": "caribbean_plate_island",
+          "name": "Puerto Rico",
+          "plate": "CA"
+        }
+      }
+    },
+    "38238": {
+      "calibration_options": {
+        "frame": {
+          "benchmark_category": "vlm_pair_descending",
+          "name": "Houston (descending, pairs F08882)"
         }
       }
     }
