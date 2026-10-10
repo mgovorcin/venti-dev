@@ -56,18 +56,18 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 ## Phase 3: Trade studies and benchmark data
 
-- [ ] T39 TS-G1: grid fidelity and per-frame k — depends on T21, T28
-- [ ] T40 Benchmark data staging (frames 5–8) — depends on T11
-- [ ] T41 Curate defo and event GeoJSON databases — depends on T32, T40
-- [ ] T42 TS-U1 phase 1 — depends on T36, T38
-- [ ] T43 TS-S1: DISP noise model — depends on T21, T38
-- [ ] T44 TS-T1 and TS-B1 — depends on T31, T34, T38
+- [x] T39 TS-G1: grid fidelity and per-frame k — depends on T21, T28 (σ₀ term proposal open)
+- [~] T40 Benchmark data staging (frames 5–8) — frames chosen (T40.1); statics + UNR staged; DISP downloads running (cal_disp_e2e/t40)
+- [~] T41 Curate defo and event GeoJSON databases — tool + Ridgecrest events + Houston area done (PR #25); Central Valley, Kīlauea wait for T40 stacks
+- [x] T42 TS-U1 phase 1 — depends on T36, T38 (no-go for v0.5; 3 bugs fixed on the way)
+- [x] T43 TS-S1: DISP noise model — depends on T21, T38
+- [~] T44 TS-T1 and TS-B1 — TS-B1 done 2026-10-09 (keep p = 8); TS-T1 waits for a 0.3–1.5 km relief frame (T40)
 
 ## Phase 4: cal-disp v0.5 CalVal release
 
 - [ ] T45 Populate the frame table — depends on T27, T39, T44
 - [ ] T46 8-frame gate and edge cases — depends on T38, T40, T41, T45
-- [ ] T47 Memory and runtime toward a small EC2 instance — depends on T37
+- [~] T47 Memory and runtime toward a small EC2 instance — v0.5 7.27 → 4.1 GB, budget 4.5 GB (cal-disp PR #8, venti-dev PR #22); EC2 measurement open
 - [~] T48 Frozen UNR grid snapshot — T48.1, T48.2, T48.4 done 2026-10-06: `unr_grid_0.3_IGS20_20261006` on `s3://opera-adt/opera-ancillary/unr-grid/` (28,492 nodes); T48.3 waits for T37
 - [ ] T49 v0.5 Docker image, golden regeneration, changelog — depends on T46, T47, T48
 - [ ] T50 VnV report and sign-off — depends on T24, T46
@@ -75,10 +75,10 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 ## Phase 5: VLM v0.1
 
-- [~] T52 VLM repo skeleton — T52.1 done 2026-10-06: private `mgovorcin/opera_vlm` (VLM-S1 + VLM-NI, scaffold `v0.0.0`, PR #1 invariants); T52.2 runconfig ADR and T52.3 product spec open
+- [~] T52 VLM repo skeleton — T52.1 done 2026-10-06: private `mgovorcin/opera_vlm` (VLM-S1 + VLM-NI, scaffold `v0.0.0`, PR #1 invariants); T52.2 done (opera_vlm PR #7, 2026-10-09); T52.3 product spec open
 - [x] T53 Venti `[decomposition]`: WLS and projection — done 2026-10-06 on `feature/decomposition` (`venti.decomposition`: `decompose_wls`, `project_vertical`, `decompose` with mode flag)
 - [~] T54 Temporal resampling of asc/desc — T54.1–T54.2 done 2026-10-06 on `feature/temporal-resampling` (`venti.temporal`); T54.3 benchmark waits for the T56 frame choice
-- [ ] T55 GNSS E/N for VLM with provenance check — depends on T28, T37
+- [x] T55 GNSS E/N for VLM with provenance check — depends on T28, T37 (strict once cal-disp writes the record, T37.3)
 - [ ] T56 VLM workflow and product writer — depends on T53, T54, T55
 - [ ] T57 VLM validation and v0.1 release — depends on T24, T56
 
@@ -108,3 +108,8 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-07 T26 mostly done on stacked cal-disp PRs #3–#5: mask_file applied; reference-pixel rule ported so the core drops opera-utils[disp] (no dask/zarr, golden unchanged); dependency + peak-memory budget with CI step. geepers: grid downloads now atomic and verified (PR #4) so cal-disp can switch to it at the next pin bump.
 - 2026-10-09 T37 wired: cal-disp calls `calibrate_pair`; schema-v2 options exposed; gamma golden passes at 1e-6; v0.5 on the golden pair closes exactly, 55 s / 7.27 GB. Wiring exposed two Venti memory regressions, fixed (`f7da024`, `2b2678b`, −3 GB). Next: T37.3 metadata + golden update, then T38 e2e on the four frames.
 - 2026-10-09 T21–T25 done in disp2vlm_validation (PR #1; T25.3 batch deferred to T46): pipeline, classes, gate, reports, traceability, `run`/`summary` CLI; reproduces the trade-study F08882 numbers to the printed digit. T38 done: v0.5 (cal-disp PR #6) PASSES on all four frames vs gamma (sill −65 to −82%); Houston bias +1.14 mm/yr misses the 1 mm/yr target; bias issue #2 (inside the products, not chaining). Next: T39 (TS-G1), T42 (TS-U1: per-region offsets), T44 (TS-B1), T37.3 with T49.
+- 2026-10-09 (later) T39 TS-G1, T43 TS-S1, T44.2 TS-B1 done (disp2vlm_validation `studies/TS-*/REPORT.md`). k per frame in the frame table (Venti PR #20). Open owner decisions: an additive σ₀ (2.6–4.9 mm) in σ_CAL; the class rule for 'coastal'. Issue #2 corrected: coherence power does not move the bias; the 50 km surface does. Next: T40 (stage frames 5–8), T42 (TS-U1), T47 (memory).
+- 2026-10-09 (later) T42 TS-U1 phase 1 done: no-go for v0.5 (flag stays off). The v0.5 unwrap path had never run: fixed in cal-disp PR #7 and venti-dev PR #21. Galveston's real error is sub-region (T62); LA islands are beyond the 12 km anchor. Gate note: |bias| rule penalises fixing negative outliers on a positively biased frame (owner decision).
+- 2026-10-09 (later) T47: memray-guided cuts, products bit-identical: v0.5 peak 7.27 → 4.0–4.1 GB, gamma 6.0 → 3.6–4.0 GB; budget 7.0 → 4.5 GB; worker_settings cap BLAS threads; 2-core run 1 min 43 s → t3.large fits. Unwrap correction stays off until a trade study confirms it (owner; note in T62).
+- 2026-10-09 (later) Owner decisions applied: (1) σ_CAL = calibration-surface uncertainty; opt-in `uncertainty.sigma_nonsecular_meters` (default 0) + `calibration_std` text (venti-dev #23, cal-disp #9); (2) coastal = within 10 km of water bodies ≥ 500 km² (sea); (3) gate bias = median (disp2vlm_validation decision 0001, PR #4). T38 re-run: 4/4 PASS, |median bias| ≤ 1 on all four. New finding: chained v0.5 velocities spread more than gamma (NMAD 1.3 → 2.7, issue #3; relevant to VLM T56).
+- 2026-10-09 (late) Owner: VLM per pair official + optional velocity product (opera_vlm PR #7). GNSS grid buffer was not applied in cal-disp (old path, padding 0): fixed for v0.5 via sample_gnss_enu (cal-disp PR #10, buffer 50 km); UNR 0–360 longitude bug made R-G5 a no-op (venti-dev PR #26). Defo/event DB v1 drafts + tool (PR #25). T40 downloads running.

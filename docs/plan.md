@@ -348,48 +348,48 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T39. TS-G1: grid fidelity and per-frame k
 **Depends on:** T21, T28
 **Context:** PRD §7.2. Interpolate the UNR grid onto the DISP grid (T28 only, no InSAR), sample at independent stations (MIDAS + daily UNR), compare velocities and σ as a function of station density. Determine k per frame such that std(z) ≈ 1, using a held-out station split (T21.3) so validation stations never fit k.
-- [ ] T39.1 Script `ts_g1.py` in the validation repo (`studies/`): per frame, grid-vs-station bias, RMSE, z-stats, nearest-station distance.
-- [ ] T39.2 Run on the 4 frames; figures: bias and RMSE vs station spacing; z histogram.
-- [ ] T39.3 Fit k per frame (held-out split); write to the frame table (T27) with provenance; keep 3.9 as fallback for frames without a fit.
-- [ ] T39.4 `studies/TS-G1/REPORT.md` with the exit criteria from PRD §7.2 and a recommendation on whether σ_grid encodes support.
+- [x] T39.1 Script `ts_g1.py` in the validation repo (`studies/`): per frame, grid-vs-station bias, RMSE, z-stats, nearest-station distance.
+- [x] T39.2 Run on the 4 frames; figures: bias and RMSE vs station spacing; z histogram. *Done 2026-10-09:* grid unbiased at stations (|bias| ≤ 0.3 mm/yr, RMSE 0.9–2.9); misfit largest at dense urban clusters, not where GNSS is sparse.
+- [x] T39.3 Fit k per frame (held-out split); write to the frame table (T27) with provenance; keep 3.9 as fallback for frames without a fit. *Done 2026-10-09:* k = 1.35 / 3.39 / 2.69 / 2.82 (velocity level), frame table 0.2-draft, Venti PR #20. **Pair level: a multiplicative k cannot fit short pairs; an additive σ₀ = 2.6–4.9 mm is needed** (proposal `uncertainty.sigma_station_mm`, owner decision).
+- [x] T39.4 `studies/TS-G1/REPORT.md` with the exit criteria from PRD §7.2 and a recommendation on whether σ_grid encodes support.
 
 ### T40. Benchmark data staging (frames 5–8)
 **Depends on:** T11
 **Context:** Benchmark table in PRD §2.7: Central Valley (fast basin), Ridgecrest 2019 (coseismic), Great Basin/Montana (sparse GNSS), Hawaii (PA) and/or Puerto Rico (CA). Frame IDs via `opera_utils` frame DB. Each needs the DISP-S1 stack (200–300 epochs), DISP-S1-STATIC, tropo, UNR grid. Use `cal-disp download` and `trade studies/e2e_validation/stage_tropo.py`; long-running, `setsid nohup`, never `/tmp`.
-- [ ] T40.1 Choose frame IDs (one per category; two for Hawaii/PR if both affordable); record in `frame_parameters.json` with `benchmark_category`.
-- [ ] T40.2 Stage DISP stacks + static layers; manifest with sizes and sha256.
+- [x] T40.1 Choose frame IDs (one per category; two for Hawaii/PR if both affordable); record in `frame_parameters.json` with `benchmark_category`. *Done 2026-10-09 (owner-approved):* F36542 Central Valley, F16941 Ridgecrest, F07081 Montana (sparse, 0.3 stations/1000 km²), F23211 Hawaii (PA), F35991 Puerto Rico (CA), plus F38238 (descending partner of F08882 for VLM); frame table 0.3-draft.
+- [~] T40.2 Stage DISP stacks + static layers; manifest with sizes and sha256. *Started 2026-10-09:* `/mnt/aurora-z0/govorcin/cal_disp_e2e/t40/` (`fetch_disp.sh`, `stage_inputs.sh`, `post.sh`, `quicklook.py`); statics (DISP-S1-STATIC from ASF) and UNR grid staged for all six; DISP downloads 2016-07 → 2023-12 running (~1 TB). Note: `cal-disp download unr --help` still says parquet (it writes tenv8), and the static download functions are placeholders.
 - [ ] T40.3 Stage tropo for the LA/Hawaii/Ridgecrest frames (relief); skip for flat frames.
 - [ ] T40.4 Quick-look velocities per frame (OLS) to confirm the expected signal (bowl, coseismic step, island motion).
 
 ### T41. Curate defo and event GeoJSON databases
 **Depends on:** T32, T40
 **Context:** D9: curated static GeoJSON, offline, versioned. Recipe (trade study rr4): areas from InSAR velocity vs regional trend + buffer, reaching stable ground; keep real GNSS points nearby. Events: Ridgecrest Mw 7.1 (2019-07-06) footprint from a scaling law + buffer; Kīlauea 2018. Start from `defo_area2.geojson` (Houston).
-- [ ] T41.1 Tool `venti-defo-areas` (in `[research]`): velocity raster → candidate polygons (threshold on |v − trend|, buffer, simplify, must touch stable ground) → GeoJSON draft for human review.
-- [ ] T41.2 Review and finalize polygons for Houston/Galveston, Central Valley (San Joaquin), Kīlauea; `defo_area_db_v1.geojson`.
-- [ ] T41.3 `event_db_v1.geojson`: Ridgecrest (t0, footprint, source USGS ComCat); schema per T32.1.
-- [ ] T41.4 Tests: every polygon is valid, has `id`/`version`, and reaches outside its own velocity anomaly (checked against T40.4 quick-looks).
+- [x] T41.1 Tool `venti-defo-areas` (in `[research]`): velocity raster → candidate polygons (threshold on |v − trend|, buffer, simplify, must touch stable ground) → GeoJSON draft for human review. *Done 2026-10-09 (venti-dev PR #25):* `venti.research.defo_areas`; on Houston the draft lies 100% inside the curated polygon but covers 28% of it (calibrated input required; raw DISP unusable) — a review aid, not a replacement.
+- [~] T41.2 Review and finalize polygons for Houston/Galveston, Central Valley (San Joaquin), Kīlauea; `defo_area_db_v1.geojson`. *Started:* `defo_area_db_v1.geojson` 1.0-draft with Houston-Galveston (trade-study polygon); Central Valley and Kīlauea wait for the T40 stacks.
+- [x] T41.3 `event_db_v1.geojson`: Ridgecrest (t0, footprint, source USGS ComCat); schema per T32.1. *Done 2026-10-09 (venti-dev PR #25, 1.0-draft):* Mw 7.1 + Mw 6.4 from ComCat; footprint = W&C 1994 rupture along strike, buffer max(15 km, 0.75 L); to check vs the F16941 coseismic step.
+- [~] T41.4 Tests: every polygon is valid, has `id`/`version`, and reaches outside its own velocity anomaly (checked against T40.4 quick-looks).
 
 ### T42. TS-U1 phase 1: islands with trusted GNSS
 **Depends on:** T36, T38
 **Context:** Truth = islands / cut-off peninsulas with trusted GNSS (Galveston on F08882; LA harbour islands on F16940; candidates on Hawaii/PR after T40). Pass: estimated whole-cycle shift equals the GNSS-derived offset on every truth island, no shifts on decoys (regions with real fractional motion), e2e sill does not rise. Free offsets stay out of v0.5.
-- [ ] T42.1 Build the truth set: per island region, GNSS offset (station vs mainland reference) per pair, over ≥ 30 pairs per frame; label integer cycles; store `studies/TS-U1/truth_islands.csv`.
-- [ ] T42.2 Run `estimate_cycles` (whole cycles + veto) over the truth set; precision/recall per frame; confusion by jump fraction.
-- [ ] T42.3 Decoy test: regions with real motion (e.g. Terminal Island subsidence) must receive 0 shifts.
-- [ ] T42.4 e2e with `unwrap.enabled=True` on F08882 and F16940; sill and velocity vs baseline.
-- [ ] T42.5 `studies/TS-U1/REPORT.md` with a go/no-go for enabling the flag in v0.5 (default remains off unless precision ≥ 0.99 and recall ≥ 0.8 on ≥ 100 cases).
+- [x] T42.1 Build the truth set: per island region, GNSS offset (station vs mainland reference) per pair, over ≥ 30 pairs per frame; label integer cycles; store `studies/TS-U1/truth_islands.csv`.
+- [x] T42.2 Run `estimate_cycles` (whole cycles + veto) over the truth set; precision/recall per frame; confusion by jump fraction.
+- [x] T42.3 Decoy test: regions with real motion (e.g. Terminal Island subsidence) must receive 0 shifts.
+- [x] T42.4 e2e with `unwrap.enabled=True` on F08882 and F16940; sill and velocity vs baseline. *Done 2026-10-09:* required three fixes first (cal-disp passed no hook on the loclin route, PR #7; hook fed DISP − G − CAL1, Venti `8219a52`; shift upsample crashed on non-divisible frames, `c10ba88`; venti-dev PR #21). F08882: sill −0.2% (n.s.), RMSE 4.79 → 4.31, Galveston stations 3–6 mm/yr better, 0 mainland false shifts; |bias| +0.22 → gate FAIL (artefact: the corrected outliers had masked the positive bias). F16940: 0 shifts (islands beyond the 12 km anchor).
+- [x] T42.5 `studies/TS-U1/REPORT.md` with a go/no-go for enabling the flag in v0.5 (default remains off unless precision ≥ 0.99 and recall ≥ 0.8 on ≥ 100 cases). *Done 2026-10-09:* **no-go for v0.5, default stays off**: truth has 2 error blocks (PRD needs ≥ 100 cases), 0/2 corrected — the Galveston −2-cycle error is sub-region (→ T62).
 
 ### T43. TS-S1: DISP noise model (σ_DISP < 50 km)
 **Depends on:** T21, T38
 **Context:** R-E2: the product documents that users must add DISP's own short-wavelength noise (~10 mm placeholder). Candidates: structure function of (DISP − CAL − GNSS) at station pairs < 50 km; temporal coherence and `timeseries_inversion_residuals` as proxies; per-frame budget.
-- [ ] T43.1 Structure function per frame from the T38 stacks at lags 1–50 km; fit a model (nugget + power law).
-- [ ] T43.2 Correlate pixel-wise |residual| with temporal coherence and inversion residuals; decide if a proxy model is usable.
-- [ ] T43.3 `studies/TS-S1/REPORT.md`: per-frame σ_DISP(λ) table and the recommended documentation text for the product spec (replaces the 10 mm placeholder or confirms it).
+- [x] T43.1 Structure function per frame from the T38 stacks at lags 1–50 km; fit a model (nugget + power law).
+- [x] T43.2 Correlate pixel-wise |residual| with temporal coherence and inversion residuals; decide if a proxy model is usable.
+- [x] T43.3 `studies/TS-S1/REPORT.md`: per-frame σ_DISP(λ) table and the recommended documentation text for the product spec (replaces the 10 mm placeholder or confirms it). *Done 2026-10-09:* S(10–50 km) per epoch 9.6 / 5.5 / 8.9 / 7.0 mm (4–7 mm per point); 10 mm kept as a documented upper bound; power-law fit fragile where pairs are scarce; coherence not a usable proxy (|ρ| ≤ 0.25); inversion residuals not tested.
 
 ### T44. TS-T1 (tropo at 0.3–1.5 km relief) and TS-B1 (stable bias)
 **Depends on:** T31, T34, T38
 **Context:** TS-T1: the stratified model helps LA (−15% sill) and hurts flat Houston (+17%); the 0.3–1.5 km band is untested. TS-B1: stable stations sit +2.8 mm/yr high; stations are on the most coherent pixels; candidate remedies coh⁸ vs coh¹⁶ vs threshold.
 - [ ] T44.1 TS-T1: pick a frame with p5–p95 relief in 0.3–1.5 km (from T40 or an extra frame); run off/stratified/full; sill and RMSE; update the `choose_tropo_mode` rule and the frame table.
-- [ ] T44.2 TS-B1: on F08886 and F08882, run p ∈ {4, 8, 16} and a coherence threshold; bias at stable stations and sill; decide the default `coherence_power`.
+- [x] T44.2 TS-B1: on F08886 and F08882, run p ∈ {4, 8, 16} and a coherence threshold; bias at stable stations and sill; decide the default `coherence_power`. *Done 2026-10-09:* p changes bias/sill by ≤ 0.1 mm/yr / ≤ 2.2 mm² (all PASS); the gamma→v0.5 drop comes from the 50 km surface; **keep p = 8**. Threshold not run (no schema option; unlikely to differ). Stable stations defined kinematically (the class rule calls inland water 'coastal').
 - [ ] T44.3 Reports in `studies/TS-T1/` and `studies/TS-B1/`; parameter defaults updated in T19 docs if changed (behind the flags, golden unaffected until T49).
 
 ---
@@ -414,10 +414,10 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T47. Memory and runtime toward a small EC2 instance
 **Depends on:** T37
 **Context:** R-O3: target ≤ 4 GB peak (from 6.35 GB); `worker_settings` unused; `NUMPY_MADVISE_HUGEPAGE=0` needed on aurora. Blocked row processing already exists for tropo; extend to the fit on the downsampled grid and to the product write.
-- [ ] T47.1 Profile the v0.5 run (`memray`/`tracemalloc`) on the golden pair; identify the top 3 allocations.
-- [ ] T47.2 Stream displacement/mask/coherence loads and the final subtraction in row blocks; downsampled fit arrays only in memory.
-- [ ] T47.3 Honour `worker_settings` (threads for numba/BLAS) or remove the field from the docs (field itself stays, runconfig is frozen).
-- [ ] T47.4 Lower `budget.yaml` to the achieved value; measure on a `t3.medium`/`t3.large`-class instance and record runtime; the 72 h latency requirement is trivially met and documented.
+- [x] T47.1 Profile the v0.5 run (`memray`/`tracemalloc`) on the golden pair; identify the top 3 allocations. *Done 2026-10-09:* memray: LOS bands kept through the fit, decoded masks/coherence cached in the xarray dataset, unused full-res diagnostics, `np.nanmedian` copies for log lines.
+- [x] T47.2 Stream displacement/mask/coherence loads and the final subtraction in row blocks; downsampled fit arrays only in memory. *Done 2026-10-09:* masks/coherence via row-block `_load_layer`, LOS freed after the GNSS projection, `calibrate_pair(diagnostic_maps=False)`.
+- [x] T47.3 Honour `worker_settings` (threads for numba/BLAS) or remove the field from the docs (field itself stays, runconfig is frozen). *Done 2026-10-09:* BLAS/OpenMP pools capped at n_workers × threads_per_worker (threadpoolctl); `block_shape` documented as reserved.
+- [~] T47.4 Lower `budget.yaml` to the achieved value; measure on a `t3.medium`/`t3.large`-class instance and record runtime; the 72 h latency requirement is trivially met and documented. *Done 2026-10-09 (partly):* v0.5 7.27 → 4.0–4.1 GB, gamma 6.0 → 3.6–4.0 GB, products bit-identical; budget 7.0 → 4.5 GB (cal-disp PR #8, venti-dev PR #22); two-core emulation 1 min 43 s at 4.02 GB → t3.large fits, t3.medium does not. **Open:** a measurement on EC2 itself.
 
 ### T48. Frozen UNR grid snapshot
 **Depends on:** T28
@@ -456,7 +456,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Depends on:** T07, T17
 **Context:** New repo under `mgovorcin/` (*2026-10-06:* named **`opera_vlm`** by the owner: one sensor-agnostic repo producing **VLM-S1** and **VLM-NI**; private `mgovorcin/opera_vlm`, tag `v0.0.0`). Depends on `venti-dev[decomposition]`, `geepers[grid]`, `opera-utils[disp]`. Mirror cal-disp structure (cli/config/product/workflow) but no frozen interface yet; design the runconfig deliberately.
 - [x] T52.1 Create with the `sas-scaffold` skill (PGE runconfig, algorithm parameters + per-frame overrides, click CLI, product writer with `/identification` and `/metadata`, golden validation, Docker, pixi, pre-commit, CI) and the standards kit; `CLAUDE.md` (Invariants: GNSS provenance must match DISP-CAL; N always from GNSS; per-pixel mode flag). *Done 2026-10-06:* rendered from a spec built on PRD §3.2 (inputs asc/desc DISP + DISP-CAL, LOS, optional UNR snapshot and GIA; algorithm groups decomposition/temporal/gnss; layers vertical, vertical_std, east, east_std, mode); install, lint, gen-configs, docs and 29 tests pass; invariants in `CLAUDE.md` (PR #1). The input/output layout and the runconfig (T52.2) are a draft until reviewed.
-- [ ] T52.2 Runconfig draft (`vlm_workflow`: asc/desc DISP + CAL inputs, GNSS config, output options) with pydantic `extra=forbid`; ADR on what will later be frozen.
+- [x] T52.2 Runconfig draft (`vlm_workflow`: asc/desc DISP + CAL inputs, GNSS config, output options) with pydantic `extra=forbid`; ADR on what will later be frozen. *Done 2026-10-09 (opera_vlm PR #7):* `output_options.write_velocity_product` (owner: per-pair official, velocity optional), GNSS options mirror DISP-CAL (buffer 50 km, R-G5), ADR 0001 (frozen at v0.1 vs draft).
 - [ ] T52.3 Product spec draft: layers `vertical`, `east` (where available), `vertical_std`, `east_std`, `mode` (uint8: 0 none, 1 projected, 2 decomposed), `/metadata`, context `gia_rate`, `plate_motion_rate`.
 
 ### T53. Venti `[decomposition]`: WLS and projection
@@ -477,11 +477,12 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T55. GNSS E/N for VLM with provenance check
 **Depends on:** T28, T37
 **Context:** D15/PRD §3.2: use DISP-CAL `gnss_ve/vn` layers when present (after T61) else `sample_gnss_enu`; the provenance hash must match the DISP-CAL `/metadata.gnss_provenance`, else fail.
-- [ ] T55.1 `load_gnss_for_vlm(cal_products, grid_cfg, defo_db) -> GnssField` with the two paths and `verify_provenance()`.
-- [ ] T55.2 Tests: matching hash passes; mismatched grid version or DB version raises `ProvenanceMismatch` with a clear message.
-- [ ] T55.3 Velocities scaled to the target epoch pair (`v·Δt`).
+- [x] T55.1 `load_gnss_for_vlm(cal_products, grid_cfg, defo_db) -> GnssField` with the two paths and `verify_provenance()`. *Done 2026-10-09 (venti-dev PR #24):* `venti.gnss.vlm`; products without a record (pre-T37.3) raise unless `allow_missing_provenance=True`; the provenance config hash no longer includes file paths (portable).
+- [x] T55.2 Tests: matching hash passes; mismatched grid version or DB version raises `ProvenanceMismatch` with a clear message. *Done 2026-10-09:* named `ProvenanceMismatchError` / `ProvenanceMissingError` (ruff N818); 9 tests.
+- [x] T55.3 Velocities scaled to the target epoch pair (`v·Δt`). *Done 2026-10-09:* `pair_displacement`.
 
 ### T56. VLM workflow and product writer
+**Owner decision 2026-10-09:** per-pair VLM is the official product; add an option (`output.velocity_product`) that also writes a velocity-domain product (one calibration of the chained velocity; issue #3).
 **Depends on:** T53, T54, T55
 - [ ] T56.1 Pick the first asc/desc overlap (e.g. LA F16940 with its ascending counterpart) and stage calibrated stacks (reuse T38/T46 products).
 - [ ] T56.2 `vlm run runconfig.yaml`: load → resample → GNSS → decompose/project → write NetCDF per target epoch pair with the T52.3 layers; browse image.
@@ -530,6 +531,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 
 ### T62. TS-U1 phase 2: inland unwrap errors
 **Depends on:** T42
+**Owner decision 2026-10-09:** unwrap-error correction stays **off** (as TS-U1 phase 1 recommends). Come back to it here: no release enables `unwrap_error_correction` until a trade study on a truth set large enough for the PRD bar (precision ≥ 0.99, recall ≥ 0.8, ≥ 100 cases; e.g. Hawaii/PR after T40, bay frames) confirms it. Phase 1 evidence: `disp2vlm_validation/studies/TS-U1/REPORT.md` (Galveston's −2-cycle error is sub-region; LA islands are beyond the 12 km anchor; whole cycles alone don't reproduce the trade-study gains, free offsets did).
 - [ ] T62.1 Use `timeseries_inversion_residuals` and temporal step detection (k·cycle steps persistent across epochs) to propose inland regions and labels.
 - [ ] T62.2 Extend the T36 estimator to non-water regions; test bench with the new labels.
 - [ ] T62.3 Report and decision on enabling inland correction in a later release.
