@@ -66,7 +66,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Phase 4: cal-disp v0.5 CalVal release
 
 - [ ] T45 Populate the frame table — depends on T27, T39, T44
-- [ ] T46 8-frame gate and edge cases — depends on T38, T40, T41, T45
+- [~] T46 8-frame gate and edge cases — running 2026-10-09 (cal_disp_e2e/t46): v0.5 + 50 km GNSS buffer re-run on the 4 T38 frames; new frames gamma + v0.5 as their stacks land (`t46/progress*.log`)
 - [~] T47 Memory and runtime toward a small EC2 instance — v0.5 7.27 → 4.1 GB, budget 4.5 GB (cal-disp PR #8, venti-dev PR #22); EC2 measurement open
 - [~] T48 Frozen UNR grid snapshot — T48.1, T48.2, T48.4 done 2026-10-06: `unr_grid_0.3_IGS20_20261006` on `s3://opera-adt/opera-ancillary/unr-grid/` (28,492 nodes); T48.3 waits for T37
 - [ ] T49 v0.5 Docker image, golden regeneration, changelog — depends on T46, T47, T48
