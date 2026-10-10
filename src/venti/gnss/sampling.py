@@ -355,9 +355,16 @@ def sample_gnss_enu(
         # a gridded sigma is still a sigma: never negative
         fields[pair[1]] = np.maximum(fields[pair[1]], 0.0)
 
+    # portable: the file paths differ between machines, the lookup's content
+    # is covered by lookup_sha256 (VLM compares this hash with DISP-CAL's, T55)
+    portable = {
+        k: v
+        for k, v in cfg.as_dict().items()
+        if k not in ("grid_lookup", "station_dir")
+    }
     config_sha = hashlib.sha256(
         json.dumps(
-            {**cfg.as_dict(), "defo_db_version": defo_db_version}, sort_keys=True
+            {**portable, "defo_db_version": defo_db_version}, sort_keys=True
         ).encode()
     ).hexdigest()
     provenance = Provenance(
