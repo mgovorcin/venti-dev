@@ -80,6 +80,14 @@ Value-changing entries say which product layers move and by how much
     DISP grid, `sigma_inflation_inside` (sigma grows with distance into an
     area), `RemoveRestore.for_pair` with the versions and active event ids for
     the provenance. A 20 cm bowl inside an area leaves the surface flat there.
+  - `two_pass.calibrate_pair(disp, gnss_los, mask, ref_point, options, pixel_m,
+    cycle_m, ...)` (plan T33, R-S1/D6): the orchestrator. `surface.method =
+    windowed_plane` reproduces the gamma estimator exactly (and keeps the
+    unwrap shift as a component gamma lost); `loclin` runs gap fill → weights →
+    local-linear kernel with optional two passes (robust frame-wide tie,
+    unwrap hook on DISP − CAL₁, shifts applied, final surface). The result's
+    `calibration` is exactly `cal_gnss_surface + cal_reference_offset +
+    cal_tropo + cal_set + cal_unwrap_shift` (`assert_closed`).
 - `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
   the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
   bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files

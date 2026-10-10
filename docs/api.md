@@ -21,6 +21,8 @@ Generated from the docstrings (NumPyDoc) by mkdocstrings.
 
 ::: venti.calibration.remove_restore
 
+::: venti.calibration.two_pass
+
 ## Calibration surface (gamma)
 
 ::: venti.surface
