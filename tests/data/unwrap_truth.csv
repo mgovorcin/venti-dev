@@ -1,0 +1,15 @@
+pair,region,expect,evidence
+20220111_20220722,15,-3,golden strip: +3 x lambda/2 above mainland in delivery and golden; inversion residual ~0 (clean whole cycle)
+20220111_20220722,16,-3,sliver next to the strip; same +3 offset at 1/3/12 km (2.90/2.89/2.87)
+20220111_20220722,29,0,island 29: 12 km band 1.30 but 1 km 0.17 (gradient)
+20230717_20240113,15,noshift,strip at +1.56: half-cycle offset with 100% inversion-residual pixels (L1)
+20230717_20240113,16,0,sliver: 12 km 1.19 only by referencing the rejected strip; 1/3 km -0.16/-0.20
+20230717_20240125,15,noshift,strip at +1.53: half-cycle offset (L1)
+20230717_20240125,16,0,sliver: phase1 shifted -1 against the rejected strip; 1/3 km -0.31/-0.25
+20240125_20240218,15,0,strip before the one-date error
+20240125_20240301,15,-1,strip one-date +1 cycle error (0 on 02-18 and 03-13)
+20240125_20240313,15,0,strip after the one-date error
+20240125_20240313,29,0,island 29 trend -0.65/-0.61/-0.86/-1.13 over 24-60 days (motion/tropo); 1 km -0.41
+20240125_20240325,15,0,strip after the one-date error
+20240125_20240325,29,0,island 29 trend; 1 km -0.34
+20240125_20240325,20,0,region 20: 12 km 0.66 but 1 km 0.17 (gradient)

@@ -18,7 +18,8 @@ venti/
   spatial/          gap filling (GDAL), interpolation, resampling, SpatialProcessor
   filtering/        moving-window plane fit, Gaussian and low-pass filters
   solver/           design matrices, lscov, plane fitting
-  unwrap/           region cycle correction (watershed); cycle = lambda/2
+  unwrap/           gamma corrector (unwrap_corrections) + v0.5 water-mask regions and
+                    whole-cycle estimator (regions, cycles; gated, T36); cycle = lambda/2
   io/               rasters and NetCDF; CalProduct / VlmProduct writers
   models/           GIA rate rasters (ICE-6G_D, Caron 2018); plate motion re-exported from geepers
   workflow/         pydantic config (runconfig, algorithm parameters), stack-level calibration

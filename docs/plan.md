@@ -317,11 +317,11 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T36. Unwrap-error module (gated, default off)
 **Depends on:** T18, T33
 **Context:** R-U1 and TS-U1. Port `two_pass/estimator_c.py` (`estimate(R, G, coh, ws, res, half)`), `unwrap_step.py`, `unwrap_prototype/harness.py`, `score.py`, `truth.csv`. Method: water-mask watershed regions (Brisbane recipe, ~33 regions on F08882); estimate on DISP − CAL₁; jump vs anchored neighbour across water; only accepted/0-cycle regions anchor; GNSS-direction veto; whole cycles of `sensor.cycle_m`; free offsets (≥ 0.3 cycle) **not** enabled for v0.5. Output per-pixel shifts and a decisions CSV. `unwrap.enabled=False` by default.
-- [ ] T36.1 `segment_regions(water_mask, valid_mask) -> labels` (skimage watershed) with a test on a synthetic archipelago.
-- [ ] T36.2 `estimate_cycles(residual, labels, gnss_los, coh, cycle_m, veto=True) -> Decisions` (region id, jump, cycles, accepted, anchor id, reason).
-- [ ] T36.3 `apply_shifts(disp, labels, decisions, cycle_m) -> (disp_shifted, cal_unwrap_shift)`.
-- [ ] T36.4 Test bench: port `harness.py` + `truth.csv` as a pytest with the 14 labelled cases; the estimator must score 14/14 (regression floor, not proof).
-- [ ] T36.5 Wire into the T33 hook; `enabled=False` → component is all zeros and decisions CSV is empty.
+- [x] T36.1 `segment_regions(water_mask, valid_mask) -> labels` (skimage watershed) with a test on a synthetic archipelago. *Done 2026-10-06:* `venti.unwrap.regions.segment_regions` (+ `largest_region`, `downsample_labels` for the fit grid); necks stay joined as in the prototype, slivers and < 20 px pieces are dropped.
+- [x] T36.2 `estimate_cycles(residual, labels, gnss_los, coh, cycle_m, veto=True) -> Decisions` (region id, jump, cycles, accepted, anchor id, reason). *Done 2026-10-06:* `venti.unwrap.cycles.estimate_cycles(..., pixel_m, options)`; thresholds are `UnwrapOptions` fields in metres/km² so they follow the grid; `RegionDecision`/`Decisions` with CSV + summary.
+- [x] T36.3 `apply_shifts(disp, labels, decisions, cycle_m) -> (disp_shifted, cal_unwrap_shift)`. *Done 2026-10-06:* `disp - cal_unwrap_shift == disp_shifted` (tested).
+- [x] T36.4 Test bench: port `harness.py` + `truth.csv` as a pytest with the 14 labelled cases; the estimator must score 14/14 (regression floor, not proof). *Done 2026-10-06:* `tests/test_unwrap_bench.py` + `tests/data/unwrap_truth.csv`; runs on the prototype caches (`VENTI_UNWRAP_BENCH_DIR=.../unwrap_prototype/runs/pairs`, 87 s); 14/14, 0 unverified, with and without the residual gate.
+- [x] T36.5 Wire into the T33 hook; `enabled=False` → component is all zeros and decisions CSV is empty. *Done 2026-10-06:* `make_unwrap_hook(labels, gnss_los, coherent, options, pixel_m)`; tested through `calibrate_pair` at factor 1 and 3; off → zeros and `unwrap_decisions is None`; `Decisions.empty().to_csv` writes a header only.
 
 ### T37. cal-disp wiring to the new Venti workflow
 **Depends on:** T26, T33, T34, T35

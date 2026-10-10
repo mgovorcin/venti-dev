@@ -314,6 +314,37 @@ class UnwrapOptions(BaseModel):
         True, description="A shift must agree in sign with the GNSS residual direction"
     )
     min_region_area: int = Field(20, gt=0, description="Minimum region size in pixels")
+    anchor_distance_meters: float = Field(
+        12_000.0,
+        gt=0,
+        description=(
+            "A region is measured against anchored coherent land within this "
+            "distance of it (edge medians on both sides)"
+        ),
+    )
+    cycle_tolerance: float = Field(
+        0.15,
+        gt=0,
+        lt=0.5,
+        description="|jump - round(jump)| must be below this (cycles) to shift",
+    )
+    min_coherent_area_km2: float = Field(
+        0.9,
+        gt=0,
+        description="Regions with less coherent area than this are not measured",
+    )
+    min_edge_area_km2: float = Field(
+        0.18,
+        gt=0,
+        description="Minimum coherent area on each side of the water for a jump",
+    )
+    residual_gate_cycles: float | None = Field(
+        None,
+        description=(
+            "If set, only regions whose median timeseries_inversion_residuals "
+            "exceed this (cycles) may be shifted; necessary, not sufficient"
+        ),
+    )
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 

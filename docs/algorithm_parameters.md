@@ -51,6 +51,11 @@ reproduces the gamma 0.3 result, so a version-1 file loads unchanged.
 | `calibration_options.unwrap.free_offsets` | `false` | — | R-U1 (never for v0.5) | 2 |
 | `calibration_options.unwrap.gnss_veto` | `true` | — | R-U1 | 2 |
 | `calibration_options.unwrap.min_region_area` | 20 | px | R-U1 | 2 |
+| `calibration_options.unwrap.anchor_distance_meters` | 12000 | m | R-U1; edge medians within this distance on both sides of the water | 2 |
+| `calibration_options.unwrap.cycle_tolerance` | 0.15 | cycles | R-U1; `|jump − round(jump)|` must be below it | 2 |
+| `calibration_options.unwrap.min_coherent_area_km2` | 0.9 | km² | R-U1 (1000 px at 30 m) | 2 |
+| `calibration_options.unwrap.min_edge_area_km2` | 0.18 | km² | R-U1 (200 px at 30 m) | 2 |
+| `calibration_options.unwrap.residual_gate_cycles` | `null` | cycles | R-U1; optional `timeseries_inversion_residuals` gate (necessary, not sufficient) | 2 |
 | `calibration_options.frame.plate` | `NA` | — | D3 / R-G6 (`PA` Hawaii, `CA` Puerto Rico; from the frame table) | 2 |
 | `calibration_options.frame.name` | `null` | — | — | 2 |
 | `calibration_options.frame.benchmark_category` | `null` | — | PRD §2.7 | 2 |
