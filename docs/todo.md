@@ -49,7 +49,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T32 Remove-restore: defo/event areas — done 2026-10-06 on `feature/calibration-weights-rr` (`venti.calibration.remove_restore`)
 - [x] T33 Two-pass orchestration and component bookkeeping — done 2026-10-06 on `feature/calibration-two-pass` (`venti.calibration.two_pass.calibrate_pair`, `CalibrationResult`; gamma path reproduces `estimate_calibration_surface` to 1e-7)
 - [x] T34 Tropo modes — done 2026-10-06 on `feature/tropo-modes` (`venti.calibration.tropo`: cal-disp numerics bit-identical, stratified fit, relief rule, `apply_tropo` → `cal_tropo`; cal-disp CI import deferred to T37)
-- [ ] T35 σ_CAL model — depends on T27, T33
+- [x] T35 σ_CAL model — done 2026-10-06 on `feature/sigma-cal` (`venti.calibration.uncertainty`; `calibrate_pair` returns `sigma_cal`; z-score test 0.8–1.25)
 - [ ] T36 Unwrap-error module (gated) — depends on T18, T33
 - [ ] T37 cal-disp wiring to the new Venti workflow — depends on T26, T33, T34, T35
 - [ ] T38 e2e on the 4 existing frames — depends on T25, T37

@@ -310,9 +310,9 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T35. σ_CAL model
 **Depends on:** T27, T33
 **Context:** R-E1: σ_CAL² = (k·σ_grid)² + σ_fit² + σ_tropo² + σ_ref²; k per frame from the table (3.9 placeholder); σ_fit from the weighted local fit (kernel-weighted residual variance / effective n); grows inside defo areas (T32.3); unwrap shifts σ = 0. Replace the gamma RBF-interpolated station σ (`calibration_std` meaning upgrade).
-- [ ] T35.1 `fit_sigma` from `loclin_surface` (return effective dof and residual variance per node).
-- [ ] T35.2 `sigma_cal(components, k, inflation_map) -> σ` + unit documentation (mm).
-- [ ] T35.3 Test: on synthetic data with known noise, std(z) of (surface − truth)/σ_CAL ∈ [0.8, 1.25].
+- [x] T35.1 `fit_sigma` from `loclin_surface` (return effective dof and residual variance per node). *Done 2026-10-06:* `venti.calibration.uncertainty.fit_sigma(field, weights, sigma_px, surface) -> (sigma_fit, n_eff)` computed from the loclin inputs/outputs (the `loclin_surface` signature is unchanged); `effective_n` gives ``4 pi sigma_px**2`` for unit weights.
+- [x] T35.2 `sigma_cal(components, k, inflation_map) -> σ` + unit documentation (mm). *Done 2026-10-06:* `sigma_cal(sigma_grid, sigma_fit, k, sigma_tropo=, sigma_ref=, inflation=)`; units follow the inputs (metres inside `calibrate_pair`; cal-disp converts for `calibration_std` in T37); `CalibrationResult.sigma_cal/sigma_fit/n_eff`.
+- [x] T35.3 Test: on synthetic data with known noise, std(z) of (surface − truth)/σ_CAL ∈ [0.8, 1.25]. *Done 2026-10-06:* `tests/test_calibration_uncertainty.py::TestCalibrated::test_z_scores_are_calibrated` (40 realisations, white DISP noise + k-inflated grid error).
 
 ### T36. Unwrap-error module (gated, default off)
 **Depends on:** T18, T33

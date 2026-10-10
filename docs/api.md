@@ -25,6 +25,8 @@ Generated from the docstrings (NumPyDoc) by mkdocstrings.
 
 ::: venti.calibration.tropo
 
+::: venti.calibration.uncertainty
+
 ## Calibration surface (gamma)
 
 ::: venti.surface

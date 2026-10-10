@@ -40,6 +40,8 @@ from ..spatial.resample import downsample_array, upsample_array
 from ..workflow.config import CalibrationOptions
 from .gaps import base_weights, fill_gaps
 from .loclin import kernel_sigma_px, loclin_surface
+from .remove_restore import sigma_inflation_inside
+from .uncertainty import fit_sigma, resolve_k, sigma_cal
 from .weights import fit_weights
 
 logger = logging.getLogger(__name__)
@@ -79,6 +81,8 @@ class CalibrationResult:
     reference_point: tuple[int, int]
     reference_value: float
     sigma_cal: np.ndarray | None = None
+    sigma_fit: np.ndarray | None = None
+    n_eff: np.ndarray | None = None
     coverage: np.ndarray | None = None
     fit_residual_std: float | None = None
     unwrap_decisions: Any = None
@@ -131,9 +135,31 @@ def _downsample_bool(mask: np.ndarray, factor: int) -> np.ndarray:
     return downsample_array(mask.astype(np.float32), factor, method="mean") > 0.5
 
 
+def _upsample_nan(arr: np.ndarray, shape: tuple[int, int], factor: int) -> np.ndarray:
+    """Upsample a map that may hold NaN (nearest: each pixel takes its block's node).
+
+    `downsample_array` trims the frame to a multiple of `factor`, so the last
+    rows/columns of the full grid fall beyond the last block; they take the
+    nearest node rather than being cut off.
+    """
+    a = np.asarray(arr, dtype=np.float64)
+    if factor <= 1:
+        return a
+    rows = np.minimum(np.arange(shape[0]) // factor, a.shape[0] - 1)
+    cols = np.minimum(np.arange(shape[1]) // factor, a.shape[1] - 1)
+    return a[rows][:, cols]
+
+
 def _frame_cutoff_m(shape: tuple[int, int], pixel_m: float) -> float:
     """Cutoff for the pass-1 tie: four frame widths, i.e. a near-planar fit."""
     return 4.0 * max(shape) * pixel_m
+
+
+# The pass-1 tie is a near-planar fit, so it is computed on a grid of at most
+# this many pixels across and interpolated back: the Gaussian moments of a
+# 4-frame-wide kernel on a 1300 x 1600 fit grid cost minutes, on 130 x 160
+# they cost nothing, and the two agree to well below a millimetre.
+TIE_MAX_PX = 256
 
 
 def calibrate_pair(
@@ -150,6 +176,8 @@ def calibrate_pair(
     tropo: np.ndarray | None = None,
     set_correction: np.ndarray | None = None,
     exclude_mask: np.ndarray | None = None,
+    sigma_tropo: np.ndarray | float | None = None,
+    sigma_ref: float = 0.0,
     unwrap_hook: UnwrapHook | None = None,
     n_jobs: int = -1,
     fit_lock: Any | None = None,
@@ -176,13 +204,19 @@ def calibrate_pair(
         One unwrapping cycle in the units of `disp` (lambda/2 of LOS
         displacement; `SensorSpec.cycle_m` when `disp` is in meters).
     gnss_los_std, coherence : np.ndarray, optional
-        GNSS LOS sigma (gamma fit weights) and temporal coherence (loclin
-        weights, ``weights.coherence_power``).
+        GNSS LOS sigma (the ``sigma_grid`` term of sigma_CAL, inflated by
+        ``uncertainty.k_grid``; gamma fit weights) and temporal coherence
+        (loclin weights, ``weights.coherence_power``).
     tropo, set_correction : np.ndarray, optional
         Corrections to remove before the fit; restored as ``cal_tropo`` and
         ``cal_set``.
     exclude_mask : np.ndarray, optional
         Remove-restore mask (True = excluded from the fit).
+    sigma_tropo : np.ndarray or float, optional
+        Uncertainty of the tropospheric correction, same units as `disp`
+        (R-E1 term; 0 until a model exists).
+    sigma_ref : float
+        Uncertainty of the reference offset (R-E1 term), default 0.
     unwrap_hook : callable, optional
         ``hook(residual, valid, cycle_m) -> (shift, decisions)``; used only
         when ``options.unwrap_error_correction`` is True. With the loclin
@@ -202,6 +236,7 @@ def calibrate_pair(
         tropo=tropo,
         set_correction=set_correction,
         exclude_mask=exclude_mask,
+        sigma_tropo=sigma_tropo if np.ndim(sigma_tropo) > 0 else None,
     )
     zeros = np.zeros(disp.shape, dtype=disp.dtype)
     applied = {
@@ -265,7 +300,9 @@ def calibrate_pair(
             valid,
             ref_point,
             window_px,
-            gnss_los_std=gnss_los_std,
+            gnss_los_std=(
+                gnss_los_std if options.weight_fit_by_gnss_uncertainty else None
+            ),
             event_mask=event_mask,
             options=gamma_opts,
             wavelength_m=2.0 * cycle_m,
@@ -279,6 +316,7 @@ def calibrate_pair(
         coverage = None
         passes = 1
         fit_std = None
+        sigma = sigma_fit_map = n_eff = None  # gamma: cal-disp keeps its RBF sigma
     elif method == "loclin":
         # ---- v0.5 path ---------------------------------------------------------
         factor = max(1, int(options.downsample_factor))
@@ -299,9 +337,21 @@ def calibrate_pair(
         gnss_ds = down(np.where(np.isfinite(gnss), gnss, 0.0))
 
         def fit(
-            residual_ds: np.ndarray, cutoff_m: float, robust: bool
-        ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-            fit_valid = valid_ds & ~exclude_ds & np.isfinite(residual_ds)
+            residual_ds: np.ndarray,
+            cutoff_m: float,
+            robust: bool,
+            *,
+            grids: (
+                tuple[np.ndarray, np.ndarray, np.ndarray | None, float] | None
+            ) = None,
+        ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+            f_valid, f_exclude, f_coh, f_pixel = grids or (
+                valid_ds,
+                exclude_ds,
+                coh_ds,
+                pixel_ds,
+            )
+            fit_valid = f_valid & ~f_exclude & np.isfinite(residual_ds)
             if not fit_valid.any():
                 msg = "no valid pixel left for the fit after masking and exclusion"
                 raise ValueError(msg)
@@ -311,26 +361,43 @@ def calibrate_pair(
             w = base_weights(
                 fit_valid, filled_mask, options.weights.filled_pixel_weight
             )
-            sigma_px = kernel_sigma_px(cutoff_m, pixel_ds)
+            sigma_px = kernel_sigma_px(cutoff_m, f_pixel)
             w = fit_weights(
                 filled,
                 w,
                 sigma_px,
-                coherence=coh_ds,
+                coherence=f_coh,
                 coherence_power=options.weights.coherence_power,
                 robust=robust,
             )
-            surface_ds, cov = loclin_surface(filled, w, pixel_ds, cutoff_m)
-            return surface_ds, cov, w
+            surface_ds, cov = loclin_surface(filled, w, f_pixel, cutoff_m)
+            return surface_ds, cov, w, filled
+
+        def tie(residual_ds: np.ndarray) -> np.ndarray:
+            """Pass-1 robust tie; coarse grid when the fit grid is large."""
+            tie_factor = max(1, int(np.ceil(max(residual_ds.shape) / TIE_MAX_PX)))
+            cutoff = _frame_cutoff_m(residual_ds.shape, pixel_ds)
+            if tie_factor == 1:
+                return fit(residual_ds, cutoff, robust=True)[0]
+            fit_valid = valid_ds & ~exclude_ds & np.isfinite(residual_ds)
+            coarse = downsample_array(
+                np.where(fit_valid, residual_ds, np.nan), tie_factor, method="mean"
+            )
+            grids = (
+                np.isfinite(coarse),
+                np.zeros(coarse.shape, dtype=bool),
+                downsample_array(coh_ds, tie_factor) if coh_ds is not None else None,
+                pixel_ds * tie_factor,
+            )
+            tie_coarse = fit(coarse, cutoff, robust=True, grids=grids)[0]
+            return upsample_array(tie_coarse, residual_ds.shape)
 
         work_ds = down(np.where(valid, work, 0.0))
         residual_ds = work_ds - gnss_ds
         passes = 1
         if options.surface.two_pass:
             passes = 2
-            tie_ds, _, _ = fit(
-                residual_ds, _frame_cutoff_m(residual_ds.shape, pixel_ds), robust=True
-            )
+            tie_ds = tie(residual_ds)
             if options.unwrap_error_correction and unwrap_hook is not None:
                 shift_ds, decisions = unwrap_hook(
                     residual_ds - tie_ds, valid_ds & ~exclude_ds, cycle_m
@@ -376,7 +443,7 @@ def calibrate_pair(
                 work = work - cal_unwrap_shift
                 residual_ds = residual_ds - shift_ds
 
-        surface_ds, coverage_ds, w_ds = fit(
+        surface_ds, coverage_ds, w_ds, filled_ds = fit(
             residual_ds,
             options.surface.cutoff_wavelength_meters,
             options.weights.robust,
@@ -398,6 +465,33 @@ def calibrate_pair(
             upsample_array(coverage_ds, disp.shape) if factor > 1 else coverage_ds
         )
         surface = np.asarray(surface, dtype=disp.dtype)
+
+        # sigma_CAL (R-E1): fit term on the fit grid, grid term at full
+        # resolution, inflation inside the interpolated areas
+        sigma_px_final = kernel_sigma_px(
+            options.surface.cutoff_wavelength_meters, pixel_ds
+        )
+        sigma_fit_ds, n_eff_ds = fit_sigma(filled_ds, w_ds, sigma_px_final, surface_ds)
+        sigma_fit_map = _upsample_nan(sigma_fit_ds, disp.shape, factor)
+        n_eff = _upsample_nan(n_eff_ds, disp.shape, factor)
+        k = resolve_k(options.uncertainty)
+        if gnss_los_std is None:
+            logger.warning("no gnss_los_std given: sigma_cal carries the fit term only")
+        inflation = None
+        if options.uncertainty.inflate_inside_areas and exclude.any():
+            inflation = sigma_inflation_inside(
+                exclude,
+                kernel_sigma_px(options.surface.cutoff_wavelength_meters, pixel_m),
+            )
+        sigma = sigma_cal(
+            None if gnss_los_std is None else np.ma.filled(gnss_los_std, np.nan),
+            sigma_fit_map,
+            k,
+            sigma_tropo=sigma_tropo,
+            sigma_ref=sigma_ref,
+            inflation=inflation,
+        )
+        sigma = np.where(valid | exclude, sigma, np.nan).astype(disp.dtype)
     else:  # pragma: no cover - Literal in the schema prevents it
         msg = f"unknown surface method {method!r}"
         raise ValueError(msg)
@@ -412,6 +506,9 @@ def calibrate_pair(
         method=method,
         reference_point=(int(ref_point[0]), int(ref_point[1])),
         reference_value=ref_value,
+        sigma_cal=sigma,
+        sigma_fit=sigma_fit_map,
+        n_eff=n_eff,
         coverage=coverage,
         fit_residual_std=fit_std,
         unwrap_decisions=decisions,
@@ -427,4 +524,11 @@ def calibrate_pair(
         {k: v for k, v in applied.items() if v},
         f"{fit_std:.4g}" if fit_std is not None else "n/a",
     )
+    if sigma is not None:
+        logger.info(
+            "sigma_cal median %.4g (k = %.2f, fit term median %.4g)",
+            float(np.nanmedian(sigma)),
+            resolve_k(options.uncertainty),
+            float(np.nanmedian(sigma_fit_map)),
+        )
     return result
