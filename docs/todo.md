@@ -68,7 +68,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] T45 Populate the frame table — depends on T27, T39, T44
 - [ ] T46 8-frame gate and edge cases — depends on T38, T40, T41, T45
 - [ ] T47 Memory and runtime toward a small EC2 instance — depends on T37
-- [ ] T48 Frozen UNR grid snapshot — depends on T28
+- [~] T48 Frozen UNR grid snapshot — T48.1 + T48.4 done 2026-10-06 on `feature/unr-snapshot` (`venti.gnss.snapshot`, `scripts/snapshot_unr_grid.py`, `docs/operations.md`); T48.2 blocked on the S3 bucket decision, T48.3 waits for T37
 - [ ] T49 v0.5 Docker image, golden regeneration, changelog — depends on T46, T47, T48
 - [ ] T50 VnV report and sign-off — depends on T24, T46
 - [ ] T51 Release cal-disp v0.5 — depends on T49, T50

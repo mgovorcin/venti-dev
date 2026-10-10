@@ -422,10 +422,10 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T48. Frozen UNR grid snapshot
 **Depends on:** T28
 **Context:** R-G4: a versioned snapshot per release, mirrored to controlled storage (S3 bucket TBD, PRD §7.5 Q6), hash recorded in metadata; roll-forward deliberate (proposal every 6 months) and gated by e2e.
-- [ ] T48.1 `scripts/snapshot_unr_grid.py` (validation or cal-disp repo): download v0.3 constant (and variable) for IGS20 via geepers, write `unr_grid_<version>_<date>/` + `MANIFEST.sha256` + `snapshot.json` (UNR version, date, node count, data span).
-- [ ] T48.2 Upload to S3; document the bucket layout and IAM in `docs/operations.md`.
-- [ ] T48.3 cal-disp `download unr` can read from the snapshot path (`unr_timeseries_dir`), and metadata records `gnss_snapshot_id` + hash (through T28.4 provenance).
-- [ ] T48.4 Roll-forward procedure documented: new snapshot → T46 gate → new frame-table k if needed → minor version.
+- [x] T48.1 `scripts/snapshot_unr_grid.py` (validation or cal-disp repo): download v0.3 constant (and variable) for IGS20 via geepers, write `unr_grid_<version>_<date>/` + `MANIFEST.sha256` + `snapshot.json` (UNR version, date, node count, data span). *Done 2026-10-06 in Venti* (`venti.gnss.snapshot` + `scripts/snapshot_unr_grid.py`): Venti owns the sampler that reads the layout, so the writer lives next to it; `--bounds`, `--grid-types`, `--verify`; tests with injected fetch/download fakes.
+- [ ] T48.2 Upload to S3; document the bucket layout and IAM in `docs/operations.md`. *Proposed 2026-10-06:* `s3://opera-adt/opera-ancillary/unr-grid/<snapshot_id>/` + a `CURRENT` pointer, next to the existing shared ancillary data (`docs/operations.md`, Storage). Waiting for the owner's OK; nothing uploaded.
+- [ ] T48.3 cal-disp `download unr` can read from the snapshot path (`unr_timeseries_dir`), and metadata records `gnss_snapshot_id` + hash (through T28.4 provenance). *Waits for the cal-disp wiring (T37, behind T26/T09).*
+- [x] T48.4 Roll-forward procedure documented: new snapshot → T46 gate → new frame-table k if needed → minor version. *Done 2026-10-06:* `docs/operations.md` (moves to cal-disp docs with T48.3).
 
 ### T49. v0.5 Docker image, golden regeneration, changelog
 **Depends on:** T46, T47, T48

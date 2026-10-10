@@ -129,6 +129,14 @@ Value-changing entries say which product layers move and by how much
   `residual_gate_cycles`. The 14-case F08882 bench (`tests/test_unwrap_bench.py`,
   needs `VENTI_UNWRAP_BENCH_DIR`) scores 14/14 with and without the gate.
   Still gated: `unwrap_error_correction` stays False until TS-U1.
+- `venti.gnss.snapshot` + `scripts/snapshot_unr_grid.py` (plan T48.1, R-G4):
+  frozen UNR grid snapshots `unr_grid_<version>_<date>/` with
+  `snapshot.json`, `MANIFEST.sha256`, the lookup byte for byte and
+  `nodes/<id>_<frame>_<grid_type>.tenv8` (the layout `GnssGridConfig`
+  reads); retrieval through geepers with per-node retry and a failure list;
+  `verify_snapshot`, `load_snapshot`, `grid_config_from_snapshot` (carries
+  the snapshot id into the GNSS provenance). `docs/operations.md` documents
+  the layout, storage (bucket TBD) and the roll-forward procedure (T48.4).
 - `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
   the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
   bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files
