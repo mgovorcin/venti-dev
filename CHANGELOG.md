@@ -151,6 +151,17 @@ Value-changing entries say which product layers move and by how much
   tested. `workflow.decomposition.decompose_to_enu` now calls it (north
   fixed at 0, warning on ill-conditioned geometry) instead of returning
   zeros. The `[decomposition]` extra stays empty (numpy only).
+- `venti.temporal.resample_timeseries(ts, dates, target_dates, window_days,
+  method)` (plan T54, D15): per pixel, a robust linear fit to the epochs
+  within the window evaluated at each target epoch (``huber_linear``
+  default, ``theil_sen``, ``linear``), with the standard error of the line
+  at the target from the window residuals; one-sided windows at the series
+  ends, NaN beyond the span unless `max_extrapolation_days`; chunked over
+  space. `resample_dataarray` wraps it for xarray (dask-parallel when the
+  input is chunked). Tests cover denoising and sigma calibration, seasonal
+  bias vs window length, the series ends, missing epochs, a blundered epoch
+  and the xarray wrapper. The frame benchmark (T54.3) waits for the T56
+  frame choice.
 - `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
   the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
   bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files

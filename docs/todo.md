@@ -77,7 +77,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 - [ ] T52 VLM repo skeleton — depends on T07, T17
 - [x] T53 Venti `[decomposition]`: WLS and projection — done 2026-10-06 on `feature/decomposition` (`venti.decomposition`: `decompose_wls`, `project_vertical`, `decompose` with mode flag)
-- [ ] T54 Temporal resampling of asc/desc — depends on T17
+- [~] T54 Temporal resampling of asc/desc — T54.1–T54.2 done 2026-10-06 on `feature/temporal-resampling` (`venti.temporal`); T54.3 benchmark waits for the T56 frame choice
 - [ ] T55 GNSS E/N for VLM with provenance check — depends on T28, T37
 - [ ] T56 VLM workflow and product writer — depends on T53, T54, T55
 - [ ] T57 VLM validation and v0.1 release — depends on T24, T56
@@ -101,3 +101,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-06 All branches pushed; PRs open on the forks (venti-dev #1–#4, geepers #1–#2, cal-disp #1). T13 done: geepers core imports without geopandas/pandera, deps split core/[grid]/[analysis]/[plot]/[all], `core-only` CI job. Fork Actions are off until enabled in each fork's Actions tab. Next: T14 (incl. T14.3a ITRF2020 plate table), T15.
 - 2026-10-06 T14 and T15 done on geepers `feature/extras-split` (PR #2): ITRF2020/2014 plate tables + `plate_velocity_enu`, `reinterpolate_nodes`, CI matrix per tier, README/CHANGELOG. 376 tests. Phase 1 remaining: T09 (blocked on T06), T11 (repo name), T17–T19, T21–T27. Next: T17 (Venti layout) now that T14 and T16 are done.
 - 2026-10-06 T17 done on `feature/lean-core` (PR #5): tiers by dependency (ADR-0020), `venti.staging`, plate motion from geepers, `ops`/`core-test` envs; suite 291 passed in 19 s. Next: T18 `SensorSpec`, T19 algorithm-parameters schema, T27 frame table.
+- 2026-10-06 Phase 2 science port finished on the Venti side: T34 tropo modes (PR #13), T35 σ_CAL (PR #14), T36 unwrap module, gated, 14/14 bench (PR #15); then the unblocked later-phase work: T48.1/T48.4 UNR snapshot + operations doc (PR #16), T53 decomposition (PR #17), T54.1–T54.2 temporal resampling (PR #18). Suite 456 passed, 7 skipped (parity/golden/bench tests need `PYTHONPATH`, `CAL_DISP_GOLDEN_DIR`, `VENTI_UNWRAP_BENCH_DIR`). Everything left open needs a decision or an upstream step: T12.3 sign-off; T11/T52 repo names; T01 → T03–T06 → T09 → T26 → T37 (cal-disp wiring, which also closes T27.4, T30.4, T31.3, T34 CI import, T48.3); T48.2 S3 bucket; T58 beta DISP-NISAR data; fork Actions still to be enabled.

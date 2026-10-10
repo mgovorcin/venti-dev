@@ -470,9 +470,9 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T54. Temporal resampling of asc/desc
 **Depends on:** T17
 **Context:** D15: moving-window denoising + temporal interpolation to sample asc and desc on common epochs. Keep it simple for v0.1: per-pixel moving-window robust (Theil–Sen or Huber) linear fit of the calibrated time series, evaluated at the target epochs; σ from the window residuals.
-- [ ] T54.1 `resample_timeseries(ts, dates, target_dates, window_days, method="huber_linear") -> (values, σ)` chunked over space (dask/xarray).
-- [ ] T54.2 Tests: noisy linear + seasonal synthetic; interpolation error vs window length; edge handling at the series ends.
-- [ ] T54.3 Benchmark on one asc/desc pair of frames (choose in T56) for runtime/memory.
+- [x] T54.1 `resample_timeseries(ts, dates, target_dates, window_days, method="huber_linear") -> (values, σ)` chunked over space (dask/xarray). *Done 2026-10-06:* `venti.temporal.resample_timeseries` (numpy, `chunk_pixels`) + `resample_dataarray` (`xarray.apply_ufunc`, dask-parallel when chunked; dask stays a research dependency).
+- [x] T54.2 Tests: noisy linear + seasonal synthetic; interpolation error vs window length; edge handling at the series ends. *Done 2026-10-06:* `tests/test_temporal_resample.py` (also sigma calibration, missing epochs, Theil–Sen vs a blundered epoch, chunking identity, the xarray wrapper).
+- [ ] T54.3 Benchmark on one asc/desc pair of frames (choose in T56) for runtime/memory. *Waits for the T56 frame choice and staged stacks.*
 
 ### T55. GNSS E/N for VLM with provenance check
 **Depends on:** T28, T37
