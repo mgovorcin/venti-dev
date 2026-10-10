@@ -57,6 +57,8 @@ Generated from the docstrings (NumPyDoc) by mkdocstrings.
 
 ## Unwrap-cycle correction
 
+::: venti.decomposition.wls
+
 ::: venti.unwrap.regions
 
 ::: venti.unwrap.cycles

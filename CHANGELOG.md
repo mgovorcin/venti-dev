@@ -137,6 +137,20 @@ Value-changing entries say which product layers move and by how much
   `verify_snapshot`, `load_snapshot`, `grid_config_from_snapshot` (carries
   the snapshot id into the GNSS provenance). `docs/operations.md` documents
   the layout, storage (bucket TBD) and the roll-forward procedure (T48.4).
+- `venti.decomposition` (plan T53, PRD section 3.2, R-E3): `decompose_wls(los,
+  sigma, enu, north)` solves [E, U] per pixel from two or more looks with
+  north fixed from GNSS, weights ``1 / (sigma_k^2 + n_k^2 sigma_N^2)``,
+  closed-form 2x2 normal equations with sigma propagation and the
+  condition number; `project_vertical(los, sigma, enu, east, north)` for one
+  geometry with sigma propagation; `decompose(...)` dispatches per pixel
+  (WLS where >= 2 looks and ``cond <= cond_max``, else an inverse-variance
+  mean of the per-look projections) and returns `DecompositionResult` with
+  the mode flag (none / wls / projection), `cond` and `n_looks`. The
+  single-geometry validity assumption (long-wavelength horizontal motion
+  only; unmodelled east leaks as ``e/u``) is documented in the module and
+  tested. `workflow.decomposition.decompose_to_enu` now calls it (north
+  fixed at 0, warning on ill-conditioned geometry) instead of returning
+  zeros. The `[decomposition]` extra stays empty (numpy only).
 - `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
   the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
   bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files
