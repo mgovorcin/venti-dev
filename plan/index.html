@@ -1,0 +1,3056 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="GNSS calibration of OPERA DISP and projection to vertical land motion">
+      
+      
+      
+        <link rel="canonical" href="https://mgovorcin.github.io/venti-dev/plan/">
+      
+      
+        <link rel="prev" href="../specs/">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Implementation plan - Venti</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#implementation-plan-venti-disp-cal-vlm-validation-package" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Venti" class="md-header__button md-logo" aria-label="Venti" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Venti
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Implementation plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mgovorcin/venti-dev" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mgovorcin/venti-dev
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Venti" class="md-nav__button md-logo" aria-label="Venti" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Venti
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mgovorcin/venti-dev" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mgovorcin/venti-dev
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Product requirements (PRD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation plan
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-this-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to read this plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-0-gamma-03-release-m0-week-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0: Gamma 0.3 release (M0, week 1)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 0: Gamma 0.3 release (M0, week 1)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t01-confirm-the-gamma-configuration-with-talib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T01. Confirm the gamma configuration with Talib
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t02-secure-a-docker-build-host-and-build-the-gamma-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T02. Secure a Docker build host and build the gamma image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t03-rebuild-the-golden-inside-docker-and-validate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T03. Rebuild the golden inside Docker and validate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t04-fix-the-delivery-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T04. Fix the delivery documents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t05-confirm-product-urls-and-version-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T05. Confirm product URLs and version string
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t06-release-gamma-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T06. Release gamma 0.3
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-foundations-m1-weeks-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Foundations (M1, weeks 1–2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 1: Foundations (M1, weeks 1–2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t07-shared-engineering-standards-kit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T07. Shared engineering-standards kit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t08-apply-standards-to-venti-venti-dev" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T08. Apply standards to Venti (venti-dev)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t09-apply-standards-to-cal-disp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T09. Apply standards to cal-disp
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t10-apply-standards-to-geepers-fork" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T10. Apply standards to geepers fork
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t11-create-the-validation-package-repo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T11. Create the validation package repo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t12-geepers-dependency-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T12. geepers dependency audit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t13-geepers-lean-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T13. geepers lean core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t14-geepersgrid-gps-imaging-euler-with-exclusion-areas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T14. geepers[grid]: GPS Imaging + Euler, with exclusion areas
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t15-geepersanalysis-and-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T15. geepers[analysis] and [all]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t16-venti-bug-fixes-and-packaging-repair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T16. Venti bug fixes and packaging repair
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t17-venti-package-layout-lean-core-extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T17. Venti package layout: lean core + extras
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t18-sensorspec-abstraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T18. SensorSpec abstraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t19-venti-algorithm-parameters-schema-additive-versioned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T19. Venti algorithm-parameters schema (additive, versioned)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t20-venti-documentation-site" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T20. Venti documentation site
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t21-validation-package-port-the-e2e-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T21. Validation package: port the e2e core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t22-station-classes-and-per-class-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T22. Station classes and per-class metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t23-gate-logic-and-comparison-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T23. Gate logic and comparison modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t24-reports-and-traceability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T24. Reports and traceability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t25-validation-cli-caching-batch-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T25. Validation CLI, caching, batch execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t26-cal-disp-foundations-pin-ventigeepers-drop-duplicates-dependency-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T26. cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t27-frame-parameter-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T27. Frame-parameter table
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-science-port-into-venti-m2-weeks-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Science port into Venti (M2, weeks 2–3)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 2: Science port into Venti (M2, weeks 2–3)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t28-sample_gnss_enu-the-single-gnss-sampling-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T28. sample_gnss_enu: the single GNSS sampling path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t29-gap-filling-and-continuous-surface-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T29. Gap filling and continuous surface support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t30-local-linear-surface-with-physical-cutoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T30. Local-linear surface with physical cutoff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t31-robust-coherence-weights-no-global-quantile-mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T31. Robust coherence weights, no global quantile mask
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t32-remove-restore-defoevent-areas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T32. Remove-restore: defo/event areas
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t33-two-pass-orchestration-and-component-bookkeeping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T33. Two-pass orchestration and component bookkeeping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t34-tropo-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T34. Tropo modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t35-_cal-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T35. σ_CAL model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t36-unwrap-error-module-gated-default-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T36. Unwrap-error module (gated, default off)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t37-cal-disp-wiring-to-the-new-venti-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T37. cal-disp wiring to the new Venti workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t38-e2e-on-the-4-existing-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T38. e2e on the 4 existing frames
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-trade-studies-and-benchmark-data-m3-weeks-26-parallel-to-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Trade studies and benchmark data (M3, weeks 2–6, parallel to phase 2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 3: Trade studies and benchmark data (M3, weeks 2–6, parallel to phase 2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t39-ts-g1-grid-fidelity-and-per-frame-k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T39. TS-G1: grid fidelity and per-frame k
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t40-benchmark-data-staging-frames-58" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T40. Benchmark data staging (frames 5–8)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t41-curate-defo-and-event-geojson-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T41. Curate defo and event GeoJSON databases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t42-ts-u1-phase-1-islands-with-trusted-gnss" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T42. TS-U1 phase 1: islands with trusted GNSS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t43-ts-s1-disp-noise-model-_disp-50-km" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T43. TS-S1: DISP noise model (σ_DISP &lt; 50 km)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t44-ts-t1-tropo-at-0315-km-relief-and-ts-b1-stable-bias" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T44. TS-T1 (tropo at 0.3–1.5 km relief) and TS-B1 (stable bias)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4-cal-disp-v05-calval-release-m4-weeks-68" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: cal-disp v0.5 CalVal release (M4, ~weeks 6–8)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 4: cal-disp v0.5 CalVal release (M4, ~weeks 6–8)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t45-populate-the-frame-table-for-the-8-benchmark-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T45. Populate the frame table for the 8 benchmark frames
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t46-8-frame-gate-and-edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T46. 8-frame gate and edge cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t47-memory-and-runtime-toward-a-small-ec2-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T47. Memory and runtime toward a small EC2 instance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t48-frozen-unr-grid-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T48. Frozen UNR grid snapshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t49-v05-docker-image-golden-regeneration-changelog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T49. v0.5 Docker image, golden regeneration, changelog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t50-vnv-report-and-sign-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T50. VnV report and sign-off
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t51-release-cal-disp-v05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T51. Release cal-disp v0.5
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-5-vlm-v01-m5-34-weeks-after-m4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: VLM v0.1 (M5, ~3–4 weeks after M4)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 5: VLM v0.1 (M5, ~3–4 weeks after M4)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t52-vlm-repo-skeleton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T52. VLM repo skeleton
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t53-venti-decomposition-wls-and-projection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T53. Venti [decomposition]: WLS and projection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t54-temporal-resampling-of-ascdesc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T54. Temporal resampling of asc/desc
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t55-gnss-en-for-vlm-with-provenance-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T55. GNSS E/N for VLM with provenance check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t56-vlm-workflow-and-product-writer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T56. VLM workflow and product writer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t57-vlm-validation-and-v01-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T57. VLM validation and v0.1 release
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-disp-nisar-m6-when-beta-data-arrives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: DISP-NISAR (M6, when beta data arrives)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 6: DISP-NISAR (M6, when beta data arrives)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t58-nisar-sensorspec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T58. NISAR SensorSpec
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t59-ts-n1-ionosphere" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T59. TS-N1: ionosphere
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t60-nisar-benchmark-and-cal-disp-v2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T60. NISAR benchmark and cal-disp v2
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#later-cross-cutting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Later / cross-cutting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Later / cross-cutting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t61-output-packaging-component-and-gnss-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T61. Output packaging: component and GNSS layers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t62-ts-u1-phase-2-inland-unwrap-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T62. TS-U1 phase 2: inland unwrap errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#critical-path-to-v05-calval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critical path (to v0.5 CalVal)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#suggested-weekly-focus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suggested weekly focus
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithm_parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Algorithm parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations (UNR snapshot)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Task tracker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notebooks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Notebooks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/calibration_workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Calibration workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/vertical_land_motion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vertical land motion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-this-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to read this plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-0-gamma-03-release-m0-week-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0: Gamma 0.3 release (M0, week 1)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 0: Gamma 0.3 release (M0, week 1)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t01-confirm-the-gamma-configuration-with-talib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T01. Confirm the gamma configuration with Talib
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t02-secure-a-docker-build-host-and-build-the-gamma-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T02. Secure a Docker build host and build the gamma image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t03-rebuild-the-golden-inside-docker-and-validate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T03. Rebuild the golden inside Docker and validate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t04-fix-the-delivery-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T04. Fix the delivery documents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t05-confirm-product-urls-and-version-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T05. Confirm product URLs and version string
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t06-release-gamma-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T06. Release gamma 0.3
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-foundations-m1-weeks-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Foundations (M1, weeks 1–2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 1: Foundations (M1, weeks 1–2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t07-shared-engineering-standards-kit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T07. Shared engineering-standards kit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t08-apply-standards-to-venti-venti-dev" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T08. Apply standards to Venti (venti-dev)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t09-apply-standards-to-cal-disp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T09. Apply standards to cal-disp
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t10-apply-standards-to-geepers-fork" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T10. Apply standards to geepers fork
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t11-create-the-validation-package-repo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T11. Create the validation package repo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t12-geepers-dependency-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T12. geepers dependency audit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t13-geepers-lean-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T13. geepers lean core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t14-geepersgrid-gps-imaging-euler-with-exclusion-areas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T14. geepers[grid]: GPS Imaging + Euler, with exclusion areas
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t15-geepersanalysis-and-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T15. geepers[analysis] and [all]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t16-venti-bug-fixes-and-packaging-repair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T16. Venti bug fixes and packaging repair
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t17-venti-package-layout-lean-core-extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T17. Venti package layout: lean core + extras
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t18-sensorspec-abstraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T18. SensorSpec abstraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t19-venti-algorithm-parameters-schema-additive-versioned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T19. Venti algorithm-parameters schema (additive, versioned)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t20-venti-documentation-site" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T20. Venti documentation site
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t21-validation-package-port-the-e2e-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T21. Validation package: port the e2e core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t22-station-classes-and-per-class-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T22. Station classes and per-class metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t23-gate-logic-and-comparison-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T23. Gate logic and comparison modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t24-reports-and-traceability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T24. Reports and traceability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t25-validation-cli-caching-batch-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T25. Validation CLI, caching, batch execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t26-cal-disp-foundations-pin-ventigeepers-drop-duplicates-dependency-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T26. cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t27-frame-parameter-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T27. Frame-parameter table
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-science-port-into-venti-m2-weeks-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Science port into Venti (M2, weeks 2–3)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 2: Science port into Venti (M2, weeks 2–3)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t28-sample_gnss_enu-the-single-gnss-sampling-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T28. sample_gnss_enu: the single GNSS sampling path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t29-gap-filling-and-continuous-surface-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T29. Gap filling and continuous surface support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t30-local-linear-surface-with-physical-cutoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T30. Local-linear surface with physical cutoff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t31-robust-coherence-weights-no-global-quantile-mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T31. Robust coherence weights, no global quantile mask
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t32-remove-restore-defoevent-areas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T32. Remove-restore: defo/event areas
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t33-two-pass-orchestration-and-component-bookkeeping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T33. Two-pass orchestration and component bookkeeping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t34-tropo-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T34. Tropo modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t35-_cal-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T35. σ_CAL model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t36-unwrap-error-module-gated-default-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T36. Unwrap-error module (gated, default off)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t37-cal-disp-wiring-to-the-new-venti-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T37. cal-disp wiring to the new Venti workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t38-e2e-on-the-4-existing-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T38. e2e on the 4 existing frames
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-trade-studies-and-benchmark-data-m3-weeks-26-parallel-to-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Trade studies and benchmark data (M3, weeks 2–6, parallel to phase 2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 3: Trade studies and benchmark data (M3, weeks 2–6, parallel to phase 2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t39-ts-g1-grid-fidelity-and-per-frame-k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T39. TS-G1: grid fidelity and per-frame k
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t40-benchmark-data-staging-frames-58" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T40. Benchmark data staging (frames 5–8)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t41-curate-defo-and-event-geojson-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T41. Curate defo and event GeoJSON databases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t42-ts-u1-phase-1-islands-with-trusted-gnss" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T42. TS-U1 phase 1: islands with trusted GNSS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t43-ts-s1-disp-noise-model-_disp-50-km" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T43. TS-S1: DISP noise model (σ_DISP &lt; 50 km)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t44-ts-t1-tropo-at-0315-km-relief-and-ts-b1-stable-bias" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T44. TS-T1 (tropo at 0.3–1.5 km relief) and TS-B1 (stable bias)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4-cal-disp-v05-calval-release-m4-weeks-68" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: cal-disp v0.5 CalVal release (M4, ~weeks 6–8)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 4: cal-disp v0.5 CalVal release (M4, ~weeks 6–8)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t45-populate-the-frame-table-for-the-8-benchmark-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T45. Populate the frame table for the 8 benchmark frames
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t46-8-frame-gate-and-edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T46. 8-frame gate and edge cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t47-memory-and-runtime-toward-a-small-ec2-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T47. Memory and runtime toward a small EC2 instance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t48-frozen-unr-grid-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T48. Frozen UNR grid snapshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t49-v05-docker-image-golden-regeneration-changelog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T49. v0.5 Docker image, golden regeneration, changelog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t50-vnv-report-and-sign-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T50. VnV report and sign-off
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t51-release-cal-disp-v05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T51. Release cal-disp v0.5
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-5-vlm-v01-m5-34-weeks-after-m4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: VLM v0.1 (M5, ~3–4 weeks after M4)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 5: VLM v0.1 (M5, ~3–4 weeks after M4)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t52-vlm-repo-skeleton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T52. VLM repo skeleton
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t53-venti-decomposition-wls-and-projection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T53. Venti [decomposition]: WLS and projection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t54-temporal-resampling-of-ascdesc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T54. Temporal resampling of asc/desc
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t55-gnss-en-for-vlm-with-provenance-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T55. GNSS E/N for VLM with provenance check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t56-vlm-workflow-and-product-writer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T56. VLM workflow and product writer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t57-vlm-validation-and-v01-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T57. VLM validation and v0.1 release
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-disp-nisar-m6-when-beta-data-arrives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: DISP-NISAR (M6, when beta data arrives)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 6: DISP-NISAR (M6, when beta data arrives)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t58-nisar-sensorspec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T58. NISAR SensorSpec
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t59-ts-n1-ionosphere" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T59. TS-N1: ionosphere
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t60-nisar-benchmark-and-cal-disp-v2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T60. NISAR benchmark and cal-disp v2
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#later-cross-cutting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Later / cross-cutting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Later / cross-cutting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t61-output-packaging-component-and-gnss-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T61. Output packaging: component and GNSS layers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t62-ts-u1-phase-2-inland-unwrap-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T62. TS-U1 phase 2: inland unwrap errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#critical-path-to-v05-calval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critical path (to v0.5 CalVal)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#suggested-weekly-focus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suggested weekly focus
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="implementation-plan-venti-disp-cal-vlm-validation-package">Implementation plan: Venti, DISP-CAL, VLM, validation package<a class="headerlink" href="#implementation-plan-venti-disp-cal-vlm-validation-package" title="Permanent link">&para;</a></h1>
+<p>Companion to <a href="../specs/">specs.md</a> (PRD v0.1, 2026-10-05). Requirement IDs (R-G1, R-S2, …), trade-study IDs (TS-G1, …) and milestones (M0–M6) refer to the PRD.</p>
+<h2 id="how-to-read-this-plan">How to read this plan<a class="headerlink" href="#how-to-read-this-plan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Phases</strong> follow the PRD milestones. Phases 0 and 1 run in parallel; phase 3 runs in parallel with phase 2.</li>
+<li><strong>Tasks</strong> are numbered <code>T01</code>–<code>T62</code>. Each lists <code>Depends on:</code> task IDs. A task may start when all its dependencies are done, unless a subtask says otherwise.</li>
+<li><strong>Subtasks</strong> are checklist items. One subtask is roughly one PR or one commit under the <code>git-commit-pr</code> skill: a single concern, with tests in the same change (<code>unit-tests</code> skill).</li>
+<li><strong>Definition of done</strong> for every task, unless the task says otherwise:</li>
+<li>tests for the new behaviour pass in <code>pixi run -e dev test</code>;</li>
+<li>pre-commit passes;</li>
+<li>the golden test is green, or was regenerated on purpose with the diff explained (<code>workflow-regression</code> skill);</li>
+<li>the PR was reviewed by the owner and merged into the fork's <code>main</code> (or the release branch named in the task).</li>
+<li><strong>Repos:</strong> <code>venti-dev</code> (Venti), <code>cal-disp</code>, <code>geepers</code>, <code>&lt;validation&gt;</code> (name TBD, T11), <code>&lt;vlm&gt;</code> (name TBD, T52). All work happens on <code>mgovorcin/*</code>. Upstream PRs happen only in T06 and T51.</li>
+<li>No orphan tasks: T01, T02 and T07 are the only tasks with no dependencies, and every task is a dependency of at least one other task or is a release task (T06, T51, T57, T60, T61, T62).</li>
+</ul>
+<hr />
+<h2 id="phase-0-gamma-03-release-m0-week-1">Phase 0: Gamma 0.3 release (M0, week 1)<a class="headerlink" href="#phase-0-gamma-03-release-m0-week-1" title="Permanent link">&para;</a></h2>
+<p>Branch: <code>cal-disp</code> <code>gamma-release</code> (HEAD <code>7085ec9</code>). Local clone: <code>00_tools/src/cal-disp</code>. The algorithm is frozen; only packaging, documentation and reproducibility work.</p>
+<h3 id="t01-confirm-the-gamma-configuration-with-talib">T01. Confirm the gamma configuration with Talib<a class="headerlink" href="#t01-confirm-the-gamma-configuration-with-talib" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> none
+<strong>Context:</strong> The delivered gamma 0.3 (600 km window, tropo on, unwrap on) was never validated end to end; our <code>gamma-release</code> has unwrap <strong>off</strong> and differs from the delivered <code>calibration</code> by a median of −6.7 cm. Talib's own validation used 30 km and tropo off. The release can't be tagged until one configuration is agreed. Open questions are in <code>gamma_release/delivery_docs_review.md</code>.
+- [x] T01.1 Write a one-page decision memo: the three configurations (delivered, Talib's validated, ours), the GNSS-grid bias of each (−9.3 cm vs +0.5 cm), and the recommendation (600 km, tropo on, unwrap off). <em>Done 2026-10-06:</em> cal-disp <code>docs/decisions/0001-gamma-config.md</code> (fork PR #2). The station evidence changed the recommendation to <strong>600 km, tropo off, unwrap off</strong> (36.9 → 21.4 mm RMSE at 83 real stations on the golden pair).
+- [x] T01.2 Send the memo and the four questions from <code>delivery_docs_review.md</code> to Talib; record the answers in <code>cal-disp/docs/decisions/0001-gamma-config.md</code>. <em>Done 2026-10-06:</em> Talib accepted all proposals; answers in cal-disp <code>docs/decisions/0001-gamma-config.md</code> (Q3 version string not covered: <code>v1.0</code> kept, to confirm with T05).
+- [x] T01.3 Freeze <code>test_golden/configs/algorithm_parameters.yaml</code> to the agreed values; revert the <code>output2</code> paths noted in <code>GAMMA_RELEASE_HANDOFF.md</code>. <em>Done 2026-10-06:</em> <code>apply_tropo_correction: false</code> in <code>scripts/build_golden_output.sh</code> (<code>ac9616f</code>); the <code>output2</code> paths are gone with the rebuilt golden configs.</p>
+<h3 id="t02-secure-a-docker-build-host-and-build-the-gamma-image">T02. Secure a Docker build host and build the gamma image<a class="headerlink" href="#t02-secure-a-docker-build-host-and-build-the-gamma-image" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> none
+<strong>Context:</strong> No Docker daemon was available on aurora, so <code>docker/Dockerfile</code> + <code>conda-lock.txt</code> on <code>gamma-release</code> have never been built. The golden must be produced inside the image because tropo reprojection depends on the GDAL version. Use the <code>docker-build</code> skill (BuildKit, pinned, non-root).
+- [x] T02.1 Pick the build host (a laptop with Docker, an EC2 builder, or a rootless <code>podman</code> on aurora); document it in <code>docker/README.md</code>. <em>Result:</em> aurora itself has a working Docker daemon (<code>/var/lib/docker</code> 64 GB, 25 GB free); <code>docker/build-docker-image.sh</code> already passes <code>--network=host</code>, which this host needs.
+- [x] T02.2 Build <code>cal-disp:0.3.0-rc</code> from the checkout with <code>docker/build-docker-image.sh</code>; fix any lock or Dockerfile breakage in small PRs. <em>Result 2026-10-05:</em> built first time from <code>gamma-release</code> <code>7085ec9</code> without changes, 1.5 GB; log <code>tmp/caldisp_docker_build.log</code>.
+- [x] T02.3 Record the image digest and the resolved package list; compare with <code>OPERA_TROPO_CalVal_Installed_Packages.csv</code>-style listing and commit it as <code>docker/installed_packages_0.3.0.csv</code>. <em>Done 2026-10-05:</em> <code>docker/BUILD_RECORD.md</code> + <code>docker/installed_packages_0.3.0rc.csv</code> on cal-disp <code>feature/docker-build-record</code> (<code>a3e4fd7</code>).</p>
+<h3 id="t03-rebuild-the-golden-inside-docker-and-validate">T03. Rebuild the golden inside Docker and validate<a class="headerlink" href="#t03-rebuild-the-golden-inside-docker-and-validate" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T01, T02
+<strong>Context:</strong> <code>scripts/build_golden_output.sh</code> builds the reference product; <code>scripts/run_validation.sh --golden-dir test_golden</code> reruns the workflow and compares at tolerance 1e-6 (<code>cal-disp validate</code> checks values, attrs, CRS, dtype and identification). Both must run inside the image, mounting <code>test_golden/</code> (4.9 GB: <code>configs</code>, <code>input_data</code>, <code>golden_output</code>).
+- [x] T03.1 Run <code>build_golden_output.sh</code> inside the image with the T01 config; store the product in <code>test_golden/golden_output</code> (exactly one <code>OPERA_L4_DISP-CAL-S1_*.nc</code>). <em>Done 2026-10-06</em> in <code>cal-disp:0.3.0-rc2</code> (from <code>ac9616f</code>), 76 s.
+- [x] T03.2 Run <code>run_validation.sh</code> inside the image; it must print <code>✓ Validation passed</code>. Save the log as <code>test_golden/validation_0.3.0.log</code>. <em>Done:</em> passed at 1e-6, peak 5.65 GB (<code>test_golden/validation_0.3.0.log</code>).
+- [x] T03.3 Run <code>run_validation.sh</code> on aurora with the pixi <code>dev</code> env against the Docker-built golden; record whether it passes at 1e-6 (expected: possibly not, because of GDAL). Document the result in <code>docs/development.md</code>. <em>Dry run 2026-10-05 (before T01):</em> the reverse direction already holds — <code>run_validation.sh</code> inside <code>cal-disp:0.3.0-rc</code> (GDAL 3.13.3, Python 3.13.15, rasterio 1.5.1) reproduces the aurora-built golden at 1e-6, peak 6.31 GB (log <code>tmp/caldisp_docker_validate.log</code>). So for the gamma configuration the GDAL-version dependence of the tropo reprojection does not change the product at that tolerance. <em>Done:</em> passed at 1e-6 on aurora, pixi <code>dev</code> with Venti <code>2a7e61f</code>, GDAL 3.13.3.
+- [x] T03.4 Write <code>test_golden/MANIFEST.sha256</code> for inputs and golden output and commit it (data itself stays out of git). <em>Done:</em> <code>docs/golden/MANIFEST_0.3.0.sha256</code> + <code>docs/golden/README.md</code> (<code>8bafac7</code>, pushed to upstream PR #21).</p>
+<h3 id="t04-fix-the-delivery-documents">T04. Fix the delivery documents<a class="headerlink" href="#t04-fix-the-delivery-documents" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T01
+<strong>Context:</strong> <code>gamma_release/DOCUMENT_FIXES.md</code> holds an H/M/L table per document. Product Spec overstates the product (unwrap, iono, event DB), calls it HDF5, and disagrees with the product on version, pixel convention, <code>time</code>, <code>track_number</code>, <code>auxiliary/spatial_ref</code>, int32 vs int64 and <code>software*</code> attrs. SAS guide says 18 GB (now 6.4 GB), has an r2/r3 URL mismatch and a wrong validate command. Sources are in <code>/u/aurora-r0/cabrera/opera_vlm/deliveries/gamma_delivery/documents/</code>; text copies in <code>gamma_release/docs_text/</code>.
+- [ ] T04.1 Apply the H items of <code>DOCUMENT_FIXES.md</code> to the Product Spec; add a section that states the algorithm parameters.
+- [ ] T04.2 Apply the H items to the SAS Design / User Guide (memory, URLs, validate command).
+- [ ] T04.3 Apply the H items to the Delivery Summary (version, tar/zip name).
+- [ ] T04.4 Walk through M and L items; fix or mark "deferred to v0.5" with a reason.
+- [ ] T04.5 Cross-check the spec against the T03 product with <code>cal-disp validate --group all</code> style attribute listing; no spec/product mismatch remains.</p>
+<h3 id="t05-confirm-product-urls-and-version-string">T05. Confirm product URLs and version string<a class="headerlink" href="#t05-confirm-product-urls-and-version-string" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T01
+<strong>Context:</strong> <code>product_data_access</code>, <code>static_layers_data_access</code>, <code>source_data_access</code> were <code>example.com</code> placeholders upstream; <code>gamma-release</code> fills them from input metadata. <code>reference_document</code> and the product version (v0.1 vs v1.0) are unresolved (<code>TODO.md</code>).
+- [ ] T05.1 Get the final URLs and the version string from Talib / the OPERA PGE team.
+- [ ] T05.2 Set them in <code>src/cal_disp/product/output/_identification.py</code> and <code>_metadata.py</code>; update the tests that check them.
+- [ ] T05.3 Confirm the filename pattern <code>OPERA_L4_CAL-DISP-S1_IW_F#####_VV_&lt;ref&gt;_&lt;sec&gt;_v&lt;ver&gt;_&lt;prod&gt;.nc</code> matches the spec after T04.</p>
+<h3 id="t06-release-gamma-03">T06. Release gamma 0.3<a class="headerlink" href="#t06-release-gamma-03" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T03, T04, T05
+<strong>Context:</strong> Upstream <code>opera-adt/cal-disp</code> <code>main</code> is at <code>88c0c46</code>; <code>gamma-release</code> is 52 commits past it. Delivery packaging uses <code>addArtFile.sh</code> (untracked in <code>CAL/cal-disp</code>; move it into <code>scripts/</code>).
+- [ ] T06.1 Rebase or merge <code>gamma-release</code> onto upstream <code>main</code>; resolve conflicts; all 478 tests pass.
+- [ ] T06.2 Open the upstream PR with a changelog (memory fix, unwrap off, metadata, validate depth, lock reproducibility) and the T03 validation log.
+- [ ] T06.3 Tag <code>v0.3.0</code> on the fork and upstream after merge; <code>pep440-version.sh</code> reports it.
+- [ ] T06.4 Build the delivery package (<code>addArtFile.sh</code>): image tar, docs from T04, <code>installed_packages</code>, validation log; hand over.
+- [ ] T06.5 Update <code>GAMMA_RELEASE_HANDOFF.md</code> status to "released" and move remaining items to <code>TODO.md</code>.</p>
+<hr />
+<h2 id="phase-1-foundations-m1-weeks-12">Phase 1: Foundations (M1, weeks 1–2)<a class="headerlink" href="#phase-1-foundations-m1-weeks-12" title="Permanent link">&para;</a></h2>
+<h3 id="t07-shared-engineering-standards-kit">T07. Shared engineering-standards kit<a class="headerlink" href="#t07-shared-engineering-standards-kit" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> none
+<strong>Context:</strong> PRD §6 and §11. The kit is applied to every repo (T08–T11, T52). Source material: <code>00_tools/.claude/skills/</code> (<code>git-commit-pr</code>, <code>unit-tests</code>, <code>workflow-regression</code>, <code>docker-build</code>, <code>install.sh</code>), geepers' SPDX/NOTICE convention, and cal-disp's existing <code>.pre-commit-config.yaml</code>.
+- [x] T07.1 Create <code>00_tools/standards/</code> with: <code>.pre-commit-config.yaml</code> (ruff lint+format, mypy, nbstripout, check-yaml/toml, end-of-file-fixer, SPDX header check script), <code>pixi</code> task block template (<code>test</code>, <code>lint</code>, <code>docs</code>, <code>golden</code>, <code>e2e</code>; envs <code>default</code>, <code>dev</code>, <code>ops</code>), <code>.github/ISSUE_TEMPLATE/{feature,bug,science,release}.yml</code>, <code>.github/pull_request_template.md</code>, <code>CLAUDE.md</code> template with sections <em>Architecture</em>, <em>Invariants</em>, <em>Commands</em>, <em>Golden policy</em>.
+- [x] T07.2 Write <code>scripts/spdx_check.py</code> (fails on <code>.py</code> files missing the Apache-2.0 + repo citation header) with tests.
+- [x] T07.3 Write <code>apply_standards.sh &lt;repo&gt;</code> that copies the kit without overwriting repo-specific content, and installs the skills via <code>install.sh</code>.
+- [x] T07.4 Document the branch/PR policy (small single-concern PRs, conventional commits, no direct pushes to <code>main</code>, Claude PRs reviewed by owner) in <code>00_tools/standards/CONTRIBUTING.md</code>.</p>
+<h3 id="t08-apply-standards-to-venti-venti-dev">T08. Apply standards to Venti (<code>venti-dev</code>)<a class="headerlink" href="#t08-apply-standards-to-venti-venti-dev" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T07
+<strong>Context:</strong> Clone at <code>00_tools/src/Venti</code> (<code>origin</code> = <code>mgovorcin/venti-dev</code>, <code>upstream</code> = <code>opera-adt/Venti</code>). Venti has <code>.readthedocs.yaml</code> and a pixi docs task but no <code>docs/</code> or <code>mkdocs.yml</code>; <code>environment.yml</code> was emptied on the <code>models</code> branch. <code>docs/specs.md</code> and <code>docs/plan.md</code> are untracked.
+- [x] T08.1 On branch <code>feature/prd-docs</code> (the tree rule in <code>00_tools/CLAUDE.md</code>: never commit on <code>main</code>), commit <code>docs/specs.md</code> and <code>docs/plan.md</code> (<code>docs: add PRD and implementation plan</code>); push to <code>origin</code> and open the PR on the fork.
+- [x] T08.2 Run <code>apply_standards.sh</code>; commit pre-commit config, templates, <code>CLAUDE.md</code> (Invariants: sensor-agnostic core, <code>calibration == Σ components</code>, no heavy deps in core).
+- [x] T08.3 Add <code>pixi.toml</code>/<code>[tool.pixi]</code> with <code>default</code>, <code>dev</code>, <code>ops</code> envs; commit <code>pixi.lock</code>; <code>pixi run -e dev test</code> passes on the existing 132 tests.
+- [x] T08.4 Enable pre-commit.ci and a GitHub Actions <code>test</code> workflow on the fork. (Actions: enabled on <code>mgovorcin/venti-dev</code>, <code>test.yaml</code> + <code>pre-commit.yaml</code> + <code>docs.yaml</code> run on PRs. pre-commit.ci: must be switched on at https://pre-commit.ci by the repo owner — not scriptable.)</p>
+<h3 id="t09-apply-standards-to-cal-disp">T09. Apply standards to cal-disp<a class="headerlink" href="#t09-apply-standards-to-cal-disp" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T07 (development); T06 for the upstream PR only (ADR-0021)
+<strong>Context:</strong> Do this after the gamma release so the release diff stays clean. <em>ADR-0021 (2026-10-06):</em> developed now on fork branches stacked on <code>gamma-release</code>; upstream only after the gamma tag. cal-disp already has pre-commit.ci, mkdocs and pixi; align them with the kit rather than replacing them. Two pytest configs existed (structural review); keep one.
+- [ ] T09.1 Run <code>apply_standards.sh</code>; reconcile with the existing pre-commit config; one pytest config.
+- [ ] T09.2 Add <code>ops</code> pixi env mirroring the Docker image; <code>conda-lock</code> generated from it; document in <code>docker/README.md</code>.
+- [ ] T09.3 <code>CLAUDE.md</code> with Invariants: CLI and runconfig frozen (PRD §2.2), additive <code>algorithm_parameters.yaml</code>, golden policy.
+- [ ] T09.4 Add CI smoke test: <code>cal-disp config</code> + <code>cal-disp run</code> on a 64×64 synthetic input (fixture from <code>tests/</code>), no network.</p>
+<h3 id="t10-apply-standards-to-geepers-fork">T10. Apply standards to geepers fork<a class="headerlink" href="#t10-apply-standards-to-geepers-fork" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T07
+<strong>Context:</strong> <code>00_tools/src/geepers</code> (<code>origin</code> = fork, <code>upstream</code> = <code>opera-adt/geepers</code>, on <code>main</code>, clean). geepers already has SPDX headers and ruff; mainly add templates, <code>CLAUDE.md</code>, pixi.
+- [x] T10.1 Run <code>apply_standards.sh</code>; commit.
+- [x] T10.2 Add pixi envs; <code>pixi run -e dev test</code> passes (uses <code>pytest-recording</code> cassettes, no live network). <em>Result 2026-10-05:</em> <code>dev</code>/<code>ops</code> envs added; full suite 348 passed / 4 skipped (the one failure, the kit checker lacking a header, is fixed); pre-commit green after an <code>affine</code> 3 warning filter, mypy 2.3.1 targeting 3.12 and 21 genuine type fixes (<code>fix(types)</code> commit). Note: the suite is network-bound (~15–19 min here), not cassette-only as assumed.
+- [x] T10.3 Create branch <code>feat/extras-split</code> for T12–T15. <em>Created as <code>feature/extras-split</code> (naming convention) on top of <code>feature/standards</code>; holds the T12 audit.</em></p>
+<h3 id="t11-create-the-validation-package-repo">T11. Create the validation package repo<a class="headerlink" href="#t11-create-the-validation-package-repo" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T07
+<strong>Context:</strong> New repo under <code>mgovorcin/</code>, name TBD (PRD §7.5 Q4; proposal <code>disp-validate</code>). <em>Done 2026-10-06:</em> named <strong><code>disp2vlm_validation</code></strong> by the owner; private <code>mgovorcin/disp2vlm_validation</code> (<code>v0.0.0</code>), lean tool skeleton (not the SAS scaffold), CLI <code>disp2vlm-validate gate</code>, gate and benchmark frames as data, licensing template (draft, so private). It will depend on <code>geepers[analysis]</code> and must never be in the operational image.
+- [x] T11.1 Create the repo from the kit (the <code>sas-scaffold</code> skill in <code>00_tools</code> provides the CLI/pixi/pre-commit/CI skeleton; skip its PGE runconfig and product-writer parts, this is a tool, not a SAS): <code>src/&lt;pkg&gt;/</code>, <code>tests/</code>, <code>docs/</code>, pixi, CI, <code>CLAUDE.md</code> (Invariants: uses only independent GNSS — UNR daily stations and MIDAS — never the calibration grid).
+- [x] T11.2 Add the dependency list: <code>geepers[analysis]</code>, <code>xarray</code>, <code>rioxarray</code>, <code>scipy</code>, <code>pandas</code>, <code>jinja2</code>, <code>matplotlib</code>; pin <code>venti-dev</code> only as an optional extra.
+- [x] T11.3 Write <code>docs/scope.md</code> from PRD §3.4 and §2.7 (metrics, modes, gate, outputs, audience).</p>
+<h3 id="t12-geepers-dependency-audit">T12. geepers dependency audit<a class="headerlink" href="#t12-geepers-dependency-audit" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T10
+<strong>Context:</strong> geepers core deps are heavy (dask, zarr, pandera, lxml, rasterio, rioxarray, geopandas, pyogrio). The operational image needs only UNR grid/station retrieval (<code>gps_sources/unr_grid.py</code>, <code>gps_sources/unr.py</code>, <code>gps_sources/base.py</code>, <code>schemas.py</code>) and, in <code>[grid]</code>, GPS Imaging (<code>gps_imaging.py</code>) and Euler (<code>euler.py</code>). PRD §4.4: ≤ 4 extras + <code>[all]</code>.
+- [x] T12.1 Generate an import graph (<code>pydeps</code> or a script over <code>ast</code>) of <code>src/geepers</code>; list third-party imports per module; commit as <code>docs/dependency_audit.md</code>.
+- [x] T12.2 Propose the partition: <code>core</code> = {<code>gps_sources/*</code>, <code>schemas</code>, <code>utils</code>, <code>io</code> (reduced)}, <code>[grid]</code> = {<code>gps_imaging</code>, <code>euler</code>, <code>surface</code>?}, <code>[analysis]</code> = everything else. Record which modules need lazy imports or splitting (e.g. <code>schemas.py</code> using pandera).
+- [x] T12.3 Get owner sign-off on the partition (issue on the fork). <em>Requested 2026-10-06</em> as a comment on geepers fork PR #2 (issues are disabled on the fork); waiting for "approved". <em>Approved by the owner 2026-10-06</em> (recorded on geepers PR #2); partition frozen.</p>
+<h3 id="t13-geepers-lean-core">T13. geepers lean core<a class="headerlink" href="#t13-geepers-lean-core" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T12
+<strong>Context:</strong> <code>pandera</code> validation in <code>schemas.py</code> and <code>geopandas</code> in <code>stations()</code> are the main core blockers. Options: make pandera optional (validate only if installed), return a <code>pandas.DataFrame</code> with lon/lat columns from core and a <code>GeoDataFrame</code> only when geopandas is present.
+- [x] T13.1 Move heavy deps out of <code>[project.dependencies]</code> into extras in <code>pyproject.toml</code>; core = <code>pandas</code>, <code>numpy</code>, <code>scipy</code>, <code>pyproj</code>, <code>requests</code>, <code>tqdm</code>.
+- [x] T13.2 Make <code>schemas.py</code> validation optional (no-op without pandera) with tests for both paths.
+- [x] T13.3 Make <code>gps_sources/base.py</code> work without geopandas (bbox filter in pandas; <code>GeoDataFrame</code> upgrade when available).
+- [x] T13.4 Add CI job <code>core-only</code>: install <code>geepers</code> with no extras in a clean env; <code>python -c "from geepers.gps_sources import UnrGridSource, UnrSource"</code> and a cassette-based download test must pass. <em>Done 2026-10-06 on geepers <code>feature/extras-split</code> (4 commits). Also: <code>tests/test_core_imports.py</code> subprocess check; pixi <code>ops</code>/<code>core-test</code> envs; 362 tests pass with extras, 16 in the core-test env. Implemented before the T12.3 sign-off — reversible if the partition changes.</em></p>
+<h3 id="t14-geepersgrid-gps-imaging-euler-with-exclusion-areas">T14. <code>geepers[grid]</code>: GPS Imaging + Euler, with exclusion areas<a class="headerlink" href="#t14-geepersgrid-gps-imaging-euler-with-exclusion-areas" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T13
+<strong>Context:</strong> R-G5: drop UNR grid nodes inside defo/event areas and re-interpolate them from surrounding nodes with GPS Imaging (median spatial filtering). R-G6/<code>plate_motion</code>: Euler pole rotation (ITRF2020-PMM) to ENU velocity per pixel. Venti's <code>models/plate_motion.py</code> and <code>load_itrf.py</code> are deleted in T17 in favour of this.
+- [x] T14.1 Define extra <code>grid = ["shapely&gt;=2"]</code> (+ whatever <code>gps_imaging.py</code> needs); move <code>gps_imaging.py</code>, <code>euler.py</code> imports behind it; add <code>core-only</code> CI check that importing them without the extra gives a clear <code>ImportError</code> message. <em>Result:</em> <code>gps_imaging</code> and <code>euler</code> need only numpy/scipy/pyproj (core), so they stay importable without the extra; shapely is required only by <code>reinterpolate_nodes</code> via <code>_optional.require("shapely")</code>, whose message names <code>geepers[grid]</code> (tested).
+- [x] T14.2 Add <code>gps_imaging.reinterpolate_nodes(grid_df, exclude: GeoSeries | list[Polygon], radius_km, min_neighbors) -&gt; DataFrame</code> that replaces E/N/U velocity and σ at excluded nodes by the GPS-Imaging estimate from non-excluded neighbours; tests with a synthetic plane + bowl. <em>Done 2026-10-06:</em> <code>gps_imaging.reinterpolate_nodes(nodes, exclude, columns=…)</code> (shapely via <code>require</code>, MSF estimate from the nodes outside, sigma = robust scatter, <code>reinterpolated</code> flag); synthetic plane+bowl test recovers the plane to &lt; 1 mm/yr inside the polygon.
+- [x] T14.3 Add <code>euler.plate_velocity_enu(lon, lat, plate: Literal["NA","PA","CA",...], model="ITRF2020-PMM") -&gt; (vE, vN, vU=0)</code> vectorized over arrays; tests against published site velocities (reuse Venti <code>load_itrf.py</code> JSON). <em>Done 2026-10-06:</em> <code>euler.plate_velocity_enu(lon, lat, plate, model="ITRF2020-PMM", height=None) -&gt; (ve, vn, vu=0)</code> mm/yr, codes or PMM names; benchmark-site tests (Houston NA, Hilo PA, San Juan CA) and PA−NA ≈ 45–50 mm/yr across S. California.
+  - [x] T14.3a <strong>TODO (2026-10-06): add the ITRF2020 plate table to geepers <code>[grid]</code>.</strong> geepers has <code>EulerPole</code>/<code>predict_plate_motion</code> but no plate catalogue; port Venti's ITRF2014/2020-PMM rotation vectors (Altamimi et al. 2023; <code>models/load_itrf.py</code> + its JSON) as <code>geepers/data/itrf2020_pmm.json</code> with a loader <code>euler.plate_pole(plate, model="ITRF2020-PMM") -&gt; EulerPole</code>; include NA, PA, CA and the other PMM plates; test the NA pole (~88 W, 5 S, 0.70 deg/Myr) and one site velocity per plate. <em>Done 2026-10-06:</em> <code>geepers/data/itrf2020_pmm.json</code> + <code>itrf2014_pmm.json</code> ported from Venti; <code>euler.load_plate_motion_model</code>, <code>plate_pole</code>, <code>PLATE_CODES</code> (NA→NOAM, PA→PCFC, CA→CARB, …). ITRF2020 NOAM pole = (−86.1°, −8.35°, 0.187 deg/Myr); ITRF2014 = (−88°, −5.2°, 0.194).
+- [x] T14.4 Add a <code>PLATE_BY_FRAME</code> loader hook (reads the frame-parameter table from T27; geepers stays frame-agnostic, just takes a plate string). <em>Done by design:</em> <code>plate_velocity_enu</code> takes a plate string; the frame→plate lookup lives in the Venti frame-parameter table (T27), geepers stays frame-agnostic.</p>
+<h3 id="t15-geepersanalysis-and-all">T15. <code>geepers[analysis]</code> and <code>[all]</code><a class="headerlink" href="#t15-geepersanalysis-and-all" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T13
+<strong>Context:</strong> MIDAS, strain, cross-validation, variability, plotting, zarr/dask workflows go here. Validation package (T21) depends on <code>[analysis]</code>.
+- [x] T15.1 Define <code>analysis</code> (dask, zarr, xarray, rioxarray, rasterio, geopandas, pyogrio, pandera, lxml, matplotlib) and <code>all = ["geepers[grid,analysis,plot]"]</code>. <em>Done in T13's build commit:</em> <code>analysis</code> and <code>all = ["geepers[grid,analysis,plot]"]</code>.
+- [x] T15.2 CI matrix: <code>core</code>, <code>grid</code>, <code>analysis</code>, <code>all</code>; full test suite runs under <code>all</code>, subset markers under the others. <em>Done 2026-10-06:</em> the pytest CI job is a matrix over pixi envs <code>test</code> (full suite) and <code>core-test</code> (core subset: <code>test_core_imports</code>, <code>test_plate_table</code>, <code>gps_sources</code>) × {ubuntu, macos}; the pip route is the separate <code>core-only</code> job. Path-based selection instead of markers — the core subset is small and explicit.
+- [x] T15.3 Update <code>README.md</code> install matrix and <code>CHANGELOG.md</code>; open PR on the fork; (optionally) draft the upstream PR text for later. <em>Done 2026-10-06:</em> README <code>## Installation</code> matrix (core / [grid] / [analysis] / [plot] / [all], pixi envs); <code>CHANGELOG.md</code> created with the Unreleased entry for the split, the seams, the plate tables and <code>reinterpolate_nodes</code>. Upstream PR text: the geepers fork PR #2 body serves as the draft.</p>
+<h3 id="t16-venti-bug-fixes-and-packaging-repair">T16. Venti bug fixes and packaging repair<a class="headerlink" href="#t16-venti-bug-fixes-and-packaging-repair" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T08
+<strong>Context:</strong> Verified on <code>upstream/main</code> <code>2a7e61f</code> (2026-10-05): <code>surface.py:208</code> calls <code>correct_region_offset(input_disp=disp, mask=mask, wavelength=wavelength_m)</code> with the <strong>full radar wavelength</strong> read from the DISP product, but one LOS displacement cycle is λ/2 (2.77 cm for S1) — the corrector shifts by twice the right amount (this is why gamma ships with unwrap off); <code>models/load_itrf.py:110</code> imports <code>.plate_motion.euler_pole</code>, but <code>plate_motion</code> is a module, not a package. Earlier survey items (missing <code>gnss.reference</code>/<code>spatial.processor</code>, wrong positional arguments, missing pyproject deps) came from a stale <code>staging</code> checkout and are already fixed on <code>main</code>; re-verify each before working on it. One PR per bullet.
+- [x] T16.1 Audit <code>pyproject.toml</code> against actual imports in a clean env (<code>pip install -e .</code>; import every module); fix what is missing; check the license path and README install instructions.
+- [x] T16.2 Fix <code>load_itrf.py</code> import (temporary; module is deleted in T17).
+- [x] T16.3 Make the unwrap cycle λ/2: <code>correct_region_offset</code>/<code>UnwrapCorrector</code> take <code>cycle_m</code> (documented as λ/2 for displacement, 2π for phase) and <code>surface.py</code> passes <code>wavelength_m / 2</code>; regression test with a synthetic +1-cycle region.
+- [x] T16.4 Confirm the <code>unwrap_error_correction</code> flag is honoured end to end (default <code>False</code>) with a test.
+- [x] T16.5 Round-trip test of cal-disp's <code>test_golden/configs/algorithm_parameters.yaml</code> through Venti's config loader.
+- [x] T16.6 Run the full test suite and <code>pre-commit run -a</code> on <code>main</code>; fix anything red; record the baseline in <code>docs/development.md</code>.
+- [~] T16.7 Rebase the unmerged <code>models</code>-branch tropo research into <code>research/tropo</code> on the fork (notebooks and <code>tropo_paper/</code> only; drop the 1.3 M-line logs). <em>Done so far:</em> local branch <code>research/tropo</code> = <code>upstream/models</code> (<code>399da80</code>). <em>Open:</em> the uncommitted research in <code>01_OPERA/VLM/Venti/notebooks/corrections/</code> (<code>tropo1.ipynb</code>, <code>tropo_gps1.ipynb</code>, <code>run_tropo_gps.py</code>, <code>tropo_paper/</code>, <code>scripts/_stage_static.py</code>) still has to be copied onto that branch and committed; the 1.3 M-line logs and the UNR zip are left behind.</p>
+<h3 id="t17-venti-package-layout-lean-core-extras">T17. Venti package layout: lean core + extras<a class="headerlink" href="#t17-venti-package-layout-lean-core-extras" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T14, T16
+<strong>Context:</strong> PRD §4.1/§4.4: core = <code>io</code>, geometry, GNSS→LOS, config, <code>SensorSpec</code>; extras <code>[calibration]</code> (numba, scikit-image), <code>[decomposition]</code>, <code>[models]</code> (GIA grids), <code>[research]</code> (matplotlib, jupyter), <code>[all]</code>. Remove <code>models/plate_motion.py</code>, <code>models/load_itrf.py</code> (→ <code>geepers[grid]</code>) and <code>gnss/unr.py</code> (→ geepers core). Keep <code>models/load_gia.py</code> in <code>[models]</code>.
+- [x] T17.1 Write <code>docs/architecture.md</code> with the target tree: <em>Done 2026-10-06 as <code>docs/architecture.md</code> + ADR-0020:</em> the package layout is <strong>kept</strong> (cal-disp imports it by name; the lean-core goal is a dependency property); the tree sketched here is superseded.
+  <div class="highlight"><pre><span></span><code>venti/
+  core/      io, raster, geometry (ENU↔LOS), config base, sensor.py, gnss_sampling.py
+  calibration/   surface, weights, fill, remove_restore, two_pass, uncertainty, tropo, unwrap/
+  decomposition/ wls, projection, temporal
+  models/        gia
+  workflow/      calibration.py, decomposition.py, run.py
+</code></pre></div>
+- [x] T17.2 Move modules per the tree with <code>git mv</code>; update imports; tests green (one PR, <code>refactor:</code> only, no behaviour change). <em>Done 2026-10-06 (reduced scope per ADR-0020):</em> only the staging CLIs move — <code>scripts/staging/*_cli.py</code> + <code>utils.py</code> → <code>venti.staging</code>, thin wrappers remain, the <code>sys.path</code> hack in <code>stage_frame_data</code> is gone. <code>scripts/staging/unr_cli.py</code> (a stale copy of <code>los_cli.py</code>) left untouched.
+- [x] T17.3 Delete <code>models/plate_motion.py</code>, <code>models/load_itrf.py</code>, <code>gnss/unr.py</code>; replace call sites with <code>geepers.euler</code> / <code>geepers.gps_sources.UnrGridSource</code>; <code>scripts/get_model_rates.py</code> uses geepers. <em>Partly done 2026-10-06:</em> <code>models/plate_motion.py</code>, <code>models/load_itrf.py</code> and the ITRF tables deleted; <code>venti.models</code> re-exports <code>geepers.euler</code>; <code>scripts/get_model_rates.py</code> ported (<code>get_frame_pmm</code> via <code>plate_velocity_enu</code>, units label fixed to mm/year). <strong><code>gnss/unr.py</code> stays until T28</strong>: <code>GNSSReference</code> and cal-disp's runconfig depend on its on-disk layout (<code>grid_latlon_lookup.txt</code>, tenv8 files).
+- [x] T17.4 Define extras in <code>pyproject.toml</code>; add CI job <code>core-only</code> (import <code>venti.core</code> with no extras) and <code>calibration-only</code>. <em>Done 2026-10-06:</em> extras <code>calibration</code>, <code>decomposition</code>, <code>models</code> (placeholders), <code>research</code> (staging + stack data access + notebooks), <code>test</code>, <code>all</code>; <code>opera-utils</code> declared without <code>[disp]</code>; pixi envs <code>ops</code> (core only) and <code>core-test</code>; <code>core-only</code> job in <code>test.yaml</code>; <code>tests/test_packaging.py</code> pins the tiers.
+- [x] T17.5 Pin <code>geepers</code> from the fork by tag in <code>pyproject.toml</code>. <em>Done 2026-10-06:</em> <code>geepers[grid] @ git+https://github.com/mgovorcin/geepers.git@677f95d…</code> (commit pin; switch to a tag when the fork tags).</p>
+<h3 id="t18-sensorspec-abstraction">T18. <code>SensorSpec</code> abstraction<a class="headerlink" href="#t18-sensorspec-abstraction" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T17
+<strong>Context:</strong> R-X1. S1: λ = 0.05546576 m, cycle = λ/2 = 2.773 cm, DISP-S1 NetCDF (<code>/displacement</code>, <code>/recommended_mask</code>, <code>/water_mask</code>, <code>/corrections/solid_earth_tide</code>, <code>/timeseries_inversion_residuals</code>), filename <code>OPERA_L3_DISP-S1_IW_F#####_VV_&lt;ref&gt;_&lt;sec&gt;_v*.nc</code>, static LOS ENU + DEM GeoTIFFs. NISAR is implemented in T58; here only the interface and S1.
+- [x] T18.1 <code>venti/core/sensor.py</code>: <code>@dataclass(frozen=True) class SensorSpec: name, wavelength_m, cycle_m (property), parse_filename(path) -&gt; ProductId(frame, ref, sec, version), open_displacement(path) -&gt; xr.DataArray, open_mask(path), open_correction(path, name), available_corrections: tuple[str,...], static_layers: dict[str, Path]</code> + registry <code>get_sensor("S1")</code>. <em>Done 2026-10-06 as <code>venti/sensor.py</code> (layout kept per ADR-0020):</em> frozen <code>SensorSpec</code> (wavelength, <code>cycle_m</code>, product/static filename grammars, layer names, readers), <code>ProductId</code>, <code>StaticLayerId</code>, registry <code>get_sensor</code>/<code>sensor_for_file</code>; <code>NISAR</code> registered with <code>implemented=False</code> and a pointer to T58.
+- [x] T18.2 Implement <code>S1Spec</code> by moving the readers out of cal-disp <code>product/_disp.py</code> and <code>_static.py</code> where they are generic (cal-disp keeps a thin wrapper, T26). <em>Done 2026-10-06 (reduced):</em> the readers are thin (<code>open_displacement</code>, <code>open_mask</code>, <code>available_corrections</code>, <code>open_correction</code> via <code>io.read_netcdf_correction</code>, <code>read_wavelength</code>); cal-disp's <code>DispProduct</code>/<code>StaticLayer</code> keep their richer API and wrap <code>S1</code> in T26.3.
+- [x] T18.3 Tests: filename parsing (incl. the NISAR pattern raising <code>UnsupportedSensor</code> for now), cycle length, correction listing on the golden DISP file (fixture via <code>MANIFEST.sha256</code> check, skipped if data absent). <em>Done 2026-10-06:</em> <code>tests/test_sensor.py</code> — filename parsing incl. a NISAR name raising <code>UnsupportedSensorError</code>, cycle length, wavelength read/fallback/mismatch, masks and corrections on a fabricated DISP file.</p>
+<h3 id="t19-venti-algorithm-parameters-schema-additive-versioned">T19. Venti algorithm-parameters schema (additive, versioned)<a class="headerlink" href="#t19-venti-algorithm-parameters-schema-additive-versioned" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T17
+<strong>Context:</strong> PRD §2.2: new science options live only in <code>algorithm_parameters.yaml</code>, with defaults that reproduce gamma. Existing cal-disp keys: <code>grid_type</code>, <code>reference_frame</code>, <code>unwrap_error_correction</code>, <code>apply_tropo_correction</code>, SET flag, <code>window_size_meters</code>, <code>downsample_factor</code>, MAD thresholds, <code>mask_fit_residual_outliers</code>, <code>weight_fit_by_gnss_uncertainty</code>, gaussian smoothing. New keys (all optional): <code>surface.method: windowed_plane|loclin</code>, <code>surface.cutoff_wavelength_meters: 50000</code>, <code>surface.fill_gaps: bool</code>, <code>weights.coherence_power: 8</code>, <code>weights.quantile_mask: bool</code>, <code>two_pass: bool</code>, <code>tropo.mode: off|stratified|full|auto</code>, <code>gnss.buffer_meters: 50000</code>, <code>gnss.exclude_defo_nodes: bool</code>, <code>uncertainty.k_grid: float|"frame_table"</code>, <code>unwrap.enabled: false</code>, <code>schema_version: 2</code>.
+- [x] T19.1 Add the pydantic model in <code>venti/core/config.py</code> with <code>schema_version</code> and defaults = gamma behaviour; <code>extra="forbid"</code>. <em>Done 2026-10-06 in <code>venti/workflow/config.py</code> (layout kept):</em> <code>SurfaceOptions</code>, <code>WeightOptions</code>, <code>TropoOptions</code>, <code>GnssOptions</code>, <code>UncertaintyOptions</code>, <code>UnwrapOptions</code> nested in <code>CalibrationOptions</code>; downsample keys modelled; <code>schema_version</code> on <code>AlgorithmParameters</code>; <code>extra="forbid"</code>; <code>unwrap_error_correction</code> default → off (R-U1).
+- [x] T19.2 Loader accepts the gamma file unchanged (schema_version 1 → upgraded in memory) with a test on <code>test_golden/configs/algorithm_parameters.yaml</code>. <em>Done 2026-10-06:</em> <code>AlgorithmParameters.from_dict/from_yaml</code> treat a file without <code>schema_version</code> as 1 and upgrade it in memory; tested on <code>tests/data/caldisp_algorithm_parameters_gamma.yaml</code> (values preserved, groups at gamma defaults).
+- [x] T19.3 <code>docs/algorithm_parameters.md</code>: every key, default, unit, which requirement it implements, which release introduced it. <em>Done 2026-10-06:</em> <code>docs/algorithm_parameters.md</code> — every key with default, unit, requirement, since-version and the v0.5 target values.</p>
+<h3 id="t20-venti-documentation-site">T20. Venti documentation site<a class="headerlink" href="#t20-venti-documentation-site" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T08
+<strong>Context:</strong> <code>.readthedocs.yaml</code> exists but no <code>mkdocs.yml</code>. Mirror cal-disp's mkdocs setup (material, mkdocstrings, mkdocs-jupyter).
+- [x] T20.1 Add <code>mkdocs.yml</code>, <code>docs/index.md</code>, nav: Specs, Plan, Architecture, Algorithm parameters, API.
+- [x] T20.2 <code>pixi run docs</code> builds with <code>--strict</code>; CI job publishes to <code>gh-pages</code> on the fork.
+- [x] T20.3 Add <code>docs/decisions/</code> (ADR format) and backfill D1–D19 from the PRD decision log as ADR-0001…0019 (one file each, short).</p>
+<h3 id="t21-validation-package-port-the-e2e-core">T21. Validation package: port the e2e core<a class="headerlink" href="#t21-validation-package-port-the-e2e-core" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T11, T15
+<strong>Context:</strong> <code>trade studies/e2e_validation/validate_stack.py</code> has the DD semivariogram sill (median γ for pairs ≥ 50 km, station-bootstrap CI), <code>VelocityFit</code> (OLS velocity per pixel/station), <code>StationSampler</code>, MIDAS fetch; <code>calibrate_stack.py</code> applies CAL to a stack; <code>stage_tropo.py</code>. Station UH01 is excluded. Turn scripts into a library with no hard-coded paths.
+- [x] T21.1 <code>dd_sill(stack, stations, min_pair_km=50, n_boot=1000) -&gt; SillResult(sill, ci_lo, ci_hi, n_pairs)</code>; tests on a synthetic stack with known variogram. <em>Done 2026-10-09 (disp2vlm_validation PR #1):</em> <code>metrics.double_differences</code> (all variants, paired station bootstrap) → <code>SillResult</code>; synthetic ramp test.
+- [x] T21.2 <code>velocity_fit(stack, dates) -&gt; (v, σ_v)</code> and <code>station_velocities(frame, stations, source="midas") -&gt; DataFrame</code> via <code>geepers[analysis]</code>; LOS projection with the static ENU layer; tests with cassettes. <em>Done 2026-10-09:</em> <code>stack.VelocityFit</code> (streaming OLS, chained blocks; no σ_v yet), <code>gnss.fetch_gnss</code>/<code>load_or_fetch_gnss</code> (UNR + MIDAS, frozen per frame) and <code>station_pixels</code>; tests use a pre-filled GNSS cache instead of cassettes.
+- [x] T21.3 <code>StationSampler</code> with an exclusion list (config, not code) and a <code>held_out</code> split API (used by TS-G1 so k-fitting stations never enter validation). <em>Done 2026-10-09:</em> <code>split_held_out</code> hashes station ids (order- and machine-independent).
+- [x] T21.4 <code>apply_calibration(stack, cal_products) -&gt; stack</code> (port <code>calibrate_stack.py</code>), chunked with xarray/dask. <em>Done 2026-10-09:</em> <code>stack.apply_calibration</code>/<code>stream_epochs</code>, epoch-streamed with process read-ahead rather than xarray/dask (same memory bound, simpler).</p>
+<h3 id="t22-station-classes-and-per-class-metrics">T22. Station classes and per-class metrics<a class="headerlink" href="#t22-station-classes-and-per-class-metrics" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T21
+<strong>Context:</strong> PRD §3.4: metrics per class stable / subsiding / coastal / in defo area / near event. Classification needs the defo/event GeoJSON (T41 later; here use any GeoJSON) and a coast mask (water mask from the DISP product or Natural Earth).
+- [x] T22.1 <code>classify_stations(stations, defo_db, event_db, water_mask, v_gnss, subsiding_thresh=-3 mm/yr, coast_km=10) -&gt; Series[class]</code>.
+- [x] T22.2 <code>metrics_by_class(v_insar, v_gnss, σ) -&gt; DataFrame[class, n, bias, rmse, corr, std_z, coverage95]</code>.
+- [x] T22.3 σ realism: <code>normalized_residuals(z)</code> with std(z) and 95% coverage; report-only (R-E4). <em>Done 2026-10-09:</em> in <code>metrics_by_class</code>; the pipeline passes no σ yet (σ_CAL lands with the v0.5 products), so reports show no σ section.</p>
+<h3 id="t23-gate-logic-and-comparison-modes">T23. Gate logic and comparison modes<a class="headerlink" href="#t23-gate-logic-and-comparison-modes" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T21
+<strong>Context:</strong> PRD §2.7 FAIL rules (sill not below raw; sill up &gt; 5% vs baseline and significant; RMSE or |bias| up &gt; 0.2 mm/yr; golden-epoch check fails), target |bias| ≤ 1 mm/yr. Rules must be configurable per release.
+- [x] T23.1 <code>gate.yaml</code> schema (thresholds, significance level, per-class targets) + pydantic model.
+- [x] T23.2 <code>evaluate(candidate, raw, baseline, gate) -&gt; GateResult(passed, reasons[])</code> with tests for each FAIL rule.
+- [x] T23.3 Golden-epoch check: compare the candidate's pair product at the golden epochs with <code>cal-disp validate</code> tolerance; wrap the CLI call.</p>
+<h3 id="t24-reports-and-traceability">T24. Reports and traceability<a class="headerlink" href="#t24-reports-and-traceability" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T22, T23
+<strong>Context:</strong> Audience: internal team + OPERA CalVal review. Outputs: <code>metrics.json</code>, <code>stations.csv</code>, HTML (PDF via <code>weasyprint</code> optional) per frame, a release summary across frames, and a requirements traceability table (requirement ID → metric → result → pass/fail). Use the <code>dataviz</code> conventions for figures.
+- [x] T24.1 Jinja2 templates: <code>frame_report.html</code> (sill before/after with CI, velocity scatter vs MIDAS, bias/RMSE by class, σ realism, map of stations by class), <code>release_summary.html</code>. <em>Done 2026-10-09:</em> <code>templates/frame.html.j2</code>, <code>summary.html.j2</code>; semivariogram, scatter and class-RMSE SVGs each with a data table. <em>Not yet:</em> station map by class, σ-realism section (no σ input yet).
+- [x] T24.2 <code>write_outputs(result, out_dir)</code> → <code>metrics.json</code>, <code>stations.csv</code>, <code>report.html</code>, figures as SVG.
+- [x] T24.3 <code>traceability.yaml</code> mapping R-<em> IDs to metrics; rendered as a table in the release summary.
+- [x] T24.4 Snapshot test of the rendered HTML on a tiny synthetic run. </em>Done 2026-10-09:* <code>tests/test_pipeline.py</code> renders a synthetic frame end to end and checks the verdict and every traceability ID in the HTML (content assertions, not a byte snapshot).</p>
+<h3 id="t25-validation-cli-caching-batch-execution">T25. Validation CLI, caching, batch execution<a class="headerlink" href="#t25-validation-cli-caching-batch-execution" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T24
+<strong>Context:</strong> Runs are cached by code+config hash (as <code>e2e_validate.sh</code> does). Benchmark runs go through AWS Batch with <code>batchkit</code> (<code>/batchkit</code> skill). Work dir on aurora: <code>/mnt/aurora-z0/govorcin/cal_disp_e2e/</code>.
+- [x] T25.1 <code>disp-validate run --frame F08882 --candidate &lt;dir&gt; --baseline &lt;dir&gt; --gate gate.yaml --out &lt;dir&gt;</code>; <code>disp-validate summary &lt;runs...&gt;</code>. <em>Done 2026-10-09:</em> <code>disp2vlm-validate run --config run.yaml</code> (all of those as YAML fields) and <code>summary RUNS --out</code>.
+- [x] T25.2 Content-hash cache keyed on (package version, config, input manifest); <code>--no-cache</code> flag.
+- [ ] T25.3 <code>batch/</code> job definition + Dockerfile for the validation image (may be heavy: <code>geepers[analysis]</code>); <code>disp-validate submit --frames ...</code> via batchkit. <em>Deferred 2026-10-09:</em> frame runs take 5–10 min on aurora; needed only for the 8-frame gate (T46).
+- [x] T25.4 Reproduce the F08882 baseline numbers from <code>trade studies/e2e_validation/README.md</code> (sill 257 mm² raw-vs-calibrated, RMSE 5.07) within tolerance; record in <code>docs/baselines.md</code>. <em>Done 2026-10-09:</em> identical to the printed digit (sills 257.0/510.0/271.5 and their CIs, bias/RMSE, verdict); disp2vlm_validation <code>docs/baselines.md</code>.</p>
+<h3 id="t26-cal-disp-foundations-pin-ventigeepers-drop-duplicates-dependency-budget">T26. cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget<a class="headerlink" href="#t26-cal-disp-foundations-pin-ventigeepers-drop-duplicates-dependency-budget" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T09, T13, T17 (T06 only for the upstream PR, ADR-0021)
+<strong>Context:</strong> cal-disp pins <code>Venti@2a7e61f</code>; has its own UNR code (<code>download/_stage_unr.py</code>, <code>product/_unr.py</code>) duplicating geepers; <code>worker_settings</code> unused; TODO lists <code>mask_file</code> accepted but ignored, NISAR filename unsupported. R-O6: the ops image must exclude dask, zarr, matplotlib, jupyter; CI enforces allow-list, size budget, peak memory.
+- [~] T26.1 Pin <code>venti-dev[calibration]</code> and <code>geepers[grid]</code> by tag; <code>opera-utils[tropo]</code>; remove <code>[download]</code> extra deps not needed in ops (asf_search → optional). <em>2026-10-06:</em> Venti pinned to the fork stack commit <code>1150c52</code> (no tags yet), geepers[grid] comes through Venti's core; gamma golden validates at 1e-6 (cal-disp fork PR #3). <code>opera-utils[disp]</code> stays: <code>_find_reference_point</code> uses <code>opera_utils.disp.rebase_reference</code> (zarr), to resolve in T26.4.
+- [ ] T26.2 Replace <code>_stage_unr.py</code> / <code>_unr.py</code> with <code>geepers.gps_sources.UnrGridSource</code>; keep the CLI <code>cal-disp download unr</code> behaviour identical (tests with cassettes). <em>2026-10-07:</em> cal-disp's downloader is the stronger one (atomic <code>.part</code>, HTML and length checks), so it was ported into geepers first (geepers PR #4, plus the <code>thread_map</code> kwargs fix in #3). The cal-disp swap lands with the next Venti/geepers pin bump (T37 needs one anyway), keeping <code>cal-disp download unr</code> identical.
+- [~] T26.3 Thin wrappers over <code>venti.core.sensor.S1Spec</code> in <code>product/_disp.py</code>, <code>_static.py</code>. When the Venti pin moves past the T16.3 fix, drop <code>_unwrap_cycle_length_m()</code> and pass the full radar wavelength to <code>estimate_calibration_surface</code> (Venti now halves internally; see Venti CHANGELOG). <em>2026-10-06:</em> the wavelength part done (cal-disp passes λ; contract tested on both sides, PR #3); the SensorSpec wrappers remain.
+- [x] T26.4 <code>scripts/check_env_budget.py</code>: resolve the <code>ops</code> env, fail if a forbidden package is present or the image exceeds <code>MAX_IMAGE_MB</code> (start at current size; tighten later); CI job. <em>Done 2026-10-07</em> (cal-disp PR #5): <code>budget.yaml</code> + <code>scripts/check_env_budget.py</code> (<code>--closure cal-disp</code>, offline), pixi task <code>budget</code>, CI step. The core dropped <code>opera-utils[disp]</code> (reference-pixel rule ported, golden unchanged): 84 → 75 distributions, no dask/zarr. matplotlib tolerated (browse PNG, v0.5 image decision); image-size budget deferred to T49 (the image still installs the <code>download</code> extra for the golden build).
+- [x] T26.5 Peak-memory CI check on the golden pair (<code>/usr/bin/time -v</code> or <code>tracemalloc</code> wrapper) with a threshold file <code>budget.yaml</code> (start at 7 GB; target 4 GB in T47). <em>Done 2026-10-07:</em> <code>peak_memory_gb: 7.0</code> in <code>budget.yaml</code>, <code>--peak-memory-log</code> checks a golden run (5.38 GB). Not in CI: the golden data (4.9 GB) is not available to GitHub runners; it is part of the release gate run.
+- [x] T26.6 Honour <code>mask_file</code> (TODO item) or reject it explicitly with a clear error; decide and test. <em>Done 2026-10-07</em> (cal-disp PR #4): applied (uint8 0/1 on the DISP grid, ANDed into the valid mask; contract violations raise); golden unchanged.</p>
+<h3 id="t27-frame-parameter-table">T27. Frame-parameter table<a class="headerlink" href="#t27-frame-parameter-table" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T19
+<strong>Context:</strong> PRD §4.3: versioned table frame → plate (NA/PA/CA), tropo mode, k (σ inflation), benchmark category. Runconfig is frozen, so the table is delivered through the existing <code>static_ancillary_group.algorithm_parameters_overrides_json</code> field (per-frame overrides), which keeps the interface byte-compatible.
+- [x] T27.1 Define <code>frame_parameters.json</code> schema (<code>{"version": "...", "default": {...}, "frames": {"08882": {"plate": "NA", "tropo_mode": "off", "k_grid": 3.9}}}</code>) and a pydantic model in Venti core. <em>Done 2026-10-06:</em> <code>venti/frames.py</code> <code>FrameParameterTable</code> (<code>version</code>, <code>description</code>, <code>default</code>, <code>data["08882"]</code>) — the shape of cal-disp's overrides JSON; <code>calibration_options.frame</code> (<code>plate</code> validated against geepers' tables, <code>name</code>, <code>benchmark_category</code>).
+- [x] T27.2 Loader with precedence: algorithm_parameters defaults &lt; frame table &lt; explicit overrides; tests. <em>Done 2026-10-06:</em> <code>overrides_for</code>/<code>apply</code> with precedence schema defaults &lt; <code>default</code> &lt; frame &lt; explicit; shorthand keys target <code>calibration_options</code>; tests.
+- [x] T27.3 Populate initial entries for F08882, F08886, F16940, F08622 from the trade studies (k = 3.9 placeholder for all; tropo: Houston off, OKC off, LA stratified, NYC off). <em>Done 2026-10-06:</em> <code>src/venti/data/frame_parameters.json</code> v0.1-draft — F08882 off, F08886 off, F16940 stratified, F08622 off; <code>k_grid</code> 3.9 in <code>default</code>; plate NA.
+- [~] T27.4 cal-disp reads the table via <code>algorithm_parameters_overrides_json</code>; metadata records <code>frame_parameters_version</code>. <em>Prepared:</em> <code>FrameParameterTable.write(..., materialize=True)</code> emits exactly what cal-disp's <code>_parse_algorithm_overrides</code> reads (<code>data[frame]</code>). <em>Blocked until T37:</em> cal-disp's own <code>CalibrationOptions</code> (<code>extra=forbid</code>) does not yet know the <code>tropo</code>/<code>uncertainty</code>/<code>frame</code> groups, so it would reject the entries; it adopts Venti's schema in T37 and records <code>frame_parameters_version</code> then.</p>
+<hr />
+<h2 id="phase-2-science-port-into-venti-m2-weeks-23">Phase 2: Science port into Venti (M2, weeks 2–3)<a class="headerlink" href="#phase-2-science-port-into-venti-m2-weeks-23" title="Permanent link">&para;</a></h2>
+<p>All behind T19 flags; gamma defaults reproduce the golden until T37.</p>
+<h3 id="t28-sample_gnss_enu-the-single-gnss-sampling-path">T28. <code>sample_gnss_enu</code>: the single GNSS sampling path<a class="headerlink" href="#t28-sample_gnss_enu-the-single-gnss-sampling-path" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T14, T18, T19
+<strong>Context:</strong> R-G1–R-G5 and PRD §4.3. Port <code>surface_fitting/continuous_surface/gnss_extend.py</code> (<code>find_stations_padded</code>, <code>sample_los_extrapolated</code>). Steps: select grid nodes in frame bbox + 50 km buffer → optionally drop nodes in defo/event areas and re-interpolate (<code>geepers.gps_imaging.reinterpolate_nodes</code>) → constant grid: velocity × Δt (variable: per-epoch positions, reprocessing only) → interpolate vE/vN/vU/σ onto the (downsampled) DISP grid → project to LOS with ENU, extrapolating LOS outside the swath → provenance hash.
+- [x] T28.1 <code>GnssGridConfig</code> (version, type, snapshot path/hash, buffer_m, exclude_defo_nodes, reinterp radius) in core config. <em>Done 2026-10-06:</em> <code>GnssGridConfig</code> dataclass in <code>venti/gnss/sampling.py</code> (snapshot paths, UTM EPSG, frame/type/version, buffer, exclusion flags, reprocessing, snapshot_id, start_year, RBF basis); the YAML-facing knobs are <code>calibration_options.gnss</code> (T19).
+- [x] T28.2 <code>sample_gnss_enu(cfg, defo_db, geometry) -&gt; GnssField(vE, vN, vU, σE, σN, σU, provenance)</code> on the target grid; tests on a synthetic plane with padding. <em>Done 2026-10-06:</em> <code>sample_gnss_enu(cfg, grid, exclude, defo_db_version) -&gt; GnssField(ve, vn, vu, sigma_*, nodes, provenance)</code>; synthetic plane recovered to 0.05 mm/yr; buffer nodes measurably improve the frame edge.
+- [x] T28.3 <code>project_to_los(field, enu_los, dt) -&gt; (los, σ_los)</code> with LOS extrapolation for buffer nodes (nearest-in-swath or plane-fit of ENU unit vectors); tests. <em>Done 2026-10-06 (design change):</em> <code>project_field_to_los(field, e, n, u, dt_years)</code> projects the <strong>gridded</strong> E/N/U per pixel with the LOS rasters, so nodes outside the swath never need a LOS look — the quadratic LOS extrapolation of <code>gnss_extend.py</code> is unnecessary and was not ported. No-look pixels (e = n = 0 or NaN) are NaN.
+- [x] T28.4 <code>provenance_hash(cfg, defo_db_version, field)</code> (sha256 over config JSON + array bytes) and <code>Provenance</code> dataclass written to metadata; test that changing one node changes the hash. <em>Done 2026-10-06:</em> <code>Provenance</code> (grid_version, grid_type, reference_frame, snapshot_id, lookup_sha256, buffer, n_nodes/missing/excluded/reinterpolated, defo_db_version, field_sha256, config_sha256, <code>digest</code>); deterministic; changing one node changes the field hash, changing the snapshot id changes the digest only.
+- [x] T28.5 <code>variable</code> mode gated by <code>reprocessing=True</code>; raises otherwise (R-G1). <em>Done 2026-10-06:</em> <code>grid_type='variable'</code> raises unless <code>reprocessing=True</code>; in reprocessing mode rates come from <code>calculate_station_velocity</code> (per-epoch fit from <code>start_year</code>).</p>
+<h3 id="t29-gap-filling-and-continuous-surface-support">T29. Gap filling and continuous surface support<a class="headerlink" href="#t29-gap-filling-and-continuous-surface-support" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T19
+<strong>Context:</strong> R-S3: fill gaps before fitting; the surface is never 0 on masked cells; <code>_find_data_extent</code> off-by-one and the Hann taper at edges (TODO.md) go away with the new method. Filled pixels get weight 0.02 (R-S4).
+- [x] T29.1 <code>fill_gaps(arr, mask, method="inpaint_biharmonic"|"nearest_then_smooth") -&gt; (filled, filled_mask)</code>; tests: constant field with holes recovers exactly; ramp with holes recovers within tolerance. <em>Done 2026-10-06:</em> <code>venti.calibration.gaps.fill_gaps(data, mask, method=nearest|nearest_smooth|biharmonic|idw) -&gt; (filled, filled_mask)</code>; constant field exact for all methods, ramp within tolerance, biharmonic &lt; 0.6 in the enclosed gap.
+- [x] T29.2 Weight map builder: <code>base_weights(mask, filled_mask, w_filled=0.02)</code>. <em>Done 2026-10-06:</em> <code>base_weights(valid, filled_mask, w_filled=0.02)</code>.
+- [x] T29.3 Property test: output surface has no zeros/NaNs anywhere inside the frame for any mask pattern. <em>Done 2026-10-06:</em> property test over random masks (finite everywhere, no zeros, filled count = invalid count).</p>
+<h3 id="t30-local-linear-surface-with-physical-cutoff">T30. Local-linear surface with physical cutoff<a class="headerlink" href="#t30-local-linear-surface-with-physical-cutoff" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T29
+<strong>Context:</strong> R-S2. Port <code>surface_v2.py</code> (<code>loclin_v2</code>, <code>_loclin_weighted</code>, also <code>mw_v2</code>, <code>fft_v2</code> for comparison). The parameter is <code>cutoff_wavelength_meters</code> (half-response); gamma's <code>window_size_meters</code> is kept for the legacy method only. The trade study showed half-response ≈ 4.5 × window for the old method.
+- [x] T30.1 <code>loclin_surface(residual, weights, x, y, cutoff_m) -&gt; surface</code> with a Gaussian/tricube kernel whose bandwidth is derived from <code>cutoff_m</code>; numba or scipy KD-tree implementation; works on the downsampled grid. <em>Done 2026-10-06:</em> <code>venti.calibration.loclin.local_linear_surface(field, weights, sigma_px)</code> (Gaussian-moment solve, O(N log N) for any kernel width) and <code>loclin_surface(field, weights, pixel_m, cutoff_wavelength_m)</code> with the low-coverage blend; <code>kernel_sigma_px</code> from the cutoff.
+- [x] T30.2 Half-response calibration test: feed sinusoids of several wavelengths; the transfer function must be 0.5 ± 0.05 at <code>cutoff_m</code>. <em>Done 2026-10-06:</em> transfer-function test — response 0.5 ± 0.05 at the cutoff and matches the Gaussian at 20 and 200 km.
+- [x] T30.3 Keep <code>windowed_plane_surface</code> (gamma) as <code>surface.method = windowed_plane</code>; both share the same signature. <em>Pending T33:</em> the method switch (<code>surface.method = windowed_plane|loclin</code>) is wired in the two-pass orchestrator, where the gamma <code>fit_windowed_plane</code> and <code>loclin_surface</code> are called through one adapter. <em>Done 2026-10-06 in T33:</em> <code>calibrate_pair</code> dispatches on <code>surface.method</code>; <code>windowed_plane</code> reproduces <code>estimate_calibration_surface</code> to 1e-7 (tested) and keeps the unwrap shift as a component.
+- [x] T30.4 Benchmark on the F08882 golden pair: <code>loclin</code> at 50 km vs gamma; record RMSE vs real stations (expect ≈ 12.9 mm vs 17.4 mm). <em>Done 2026-10-06:</em> <code>scripts/benchmark_golden_pair.py</code> + <code>docs/benchmarks.md</code>: gamma 600 km 21.4 mm (= trade study), loclin 50 km two-pass 13.6 mm pair / 12.3 mm MIDAS at 83 / 123 real stations (prototype <code>loclin_v2</code> 12.9); coh⁸ +0.7 mm on this metric (decision stays with TS-B1/T44); defo exclusion moves the bias by −0.4 mm; +2 mm bias vs gamma to carry into T38/T39. Found and fixed: gamma path used the GNSS sigma as weights unconditionally; sigma maps factor-trimmed; pass-1 tie 290 s → 60 s.</p>
+<h3 id="t31-robust-coherence-weights-no-global-quantile-mask">T31. Robust coherence weights, no global quantile mask<a class="headerlink" href="#t31-robust-coherence-weights-no-global-quantile-mask" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T30
+<strong>Context:</strong> R-S4. The 15/85% global residual-quantile mask cost ~4.5 mm RMSE; replace with local robust (Huber/MAD on local residuals) × coherence^p, p = 8 default (TS-B1 may change it). Keep the quantile mask behind <code>weights.quantile_mask</code> for gamma reproduction.
+- [x] T31.1 <code>coherence_weights(coh, p)</code>; <code>robust_weights(residual_local, c=1.345)</code> (Huber) with two IRLS iterations inside <code>loclin_surface</code>. <em>Done 2026-10-06:</em> <code>venti.calibration.weights.coherence_weights(coh, p)</code>, <code>robust_weights(field, w, sigma_px, method=huber|gate, threshold=4 MAD, iterations=2)</code>.
+- [x] T31.2 Combined weight = base × coh^p × robust; tests: a single 10 cm outlier pixel moves the surface by &lt; 0.1 mm at 50 km. <em>Done 2026-10-06:</em> <code>fit_weights</code> = base × coh^p × robust; test: a 10 cm 4×4-px blunder moves the 50 km surface by &lt; 0.1 mm with robust weights, &gt; 0.1 mm without.
+- [~] T31.3 Flag wiring: <code>weights.quantile_mask=True</code> reproduces gamma exactly on the golden (regression test). <em>Partly:</em> <code>fit_weights</code> with the gamma defaults (<code>coherence_power=0</code>, <code>robust=False</code>) is the identity (tested); the golden regression with the gamma quantile mask is a cal-disp run (T37).</p>
+<h3 id="t32-remove-restore-defoevent-areas">T32. Remove-restore: defo/event areas<a class="headerlink" href="#t32-remove-restore-defoevent-areas" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T29
+<strong>Context:</strong> A5/R-S5, PRD §2.8. Port <code>defo_area.py</code> + <code>defo_area2.geojson</code>. Areas are curated GeoJSON (<code>defo_area_db_json</code>, <code>event_db_json</code>); events carry a time window. Inside areas: InSAR pixels excluded from the fit (surface interpolated through from outside); σ_CAL grows with distance into the area (R-E1). GNSS-node exclusion is in T28.
+- [x] T32.1 <code>DefoAreaDB</code>/<code>EventDB</code> pydantic models + GeoJSON loaders (<code>id</code>, <code>name</code>, <code>geometry</code>, <code>version</code>; events add <code>t0</code>, <code>t1</code>, <code>magnitude</code>, <code>source</code>). <em>Done 2026-10-06:</em> <code>venti.calibration.remove_restore.Area/Event/AreaDB/EventDB</code>, GeoJSON loaders (<code>id</code>, <code>name</code>, <code>source</code>, <code>version</code> required at the collection level; events <code>t0</code>, <code>t1</code>, <code>magnitude</code>).
+- [x] T32.2 <code>remove_restore_mask(db, event_db, pair_dates, grid) -&gt; mask</code> (events only when the pair spans <code>t0</code>). <em>Done 2026-10-06:</em> <code>remove_restore_mask(grid, crs_epsg, areas, events, ref, sec)</code> (events only when the pair spans <code>t0</code> / overlaps <code>[t0, t1]</code>); <code>RemoveRestore.for_pair</code> records versions and active events.
+- [x] T32.3 <code>sigma_inflation_inside(mask, scale_km) -&gt; factor map</code> (1 at the boundary, growing inward with a documented function). <em>Done 2026-10-06:</em> <code>sigma_inflation_inside(mask, scale_px, max_factor)</code> = 1 + (max−1)(1 − e^{−d/scale}).
+- [x] T32.4 Tests: synthetic bowl inside a polygon leaves the fitted surface flat (max |surface| inside &lt; 1 mm); a pair not spanning the event ignores it. <em>Done 2026-10-06:</em> synthetic 20 cm bowl inside a polygon → surface flat inside (&lt; 1 mm vs the regional plane; &gt; 10 mm without exclusion); a pair not spanning the event gives the same mask as no event DB.</p>
+<h3 id="t33-two-pass-orchestration-and-component-bookkeeping">T33. Two-pass orchestration and component bookkeeping<a class="headerlink" href="#t33-two-pass-orchestration-and-component-bookkeeping" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T30, T31, T32
+<strong>Context:</strong> R-S1 and D6: pass 1 robust frame-wide tie (plane or loclin at a long cutoff) → CAL₁; unwrap hook on DISP − CAL₁ (T36, default no-op) → shifts applied to raw DISP → pass 2 final surface. <code>calibration = cal_gnss_surface + cal_tropo + cal_set + cal_unwrap_shift + cal_reference_offset</code> exactly. Replace the stubbed <code>CalibrationWorkflow</code> from T16.6.
+- [x] T33.1 <code>CalibrationResult</code> dataclass with every component array, σ_CAL, decisions, provenance, and <code>calibration</code> as a computed property; <code>assert_closed()</code> checks the sum within 1e-6. <em>Done 2026-10-06:</em> <code>CalibrationResult</code> (components, <code>calibration</code> property, <code>assert_closed</code>, <code>components()</code>, coverage, fit residual std, unwrap decisions, passes).
+- [x] T33.2 <code>calibrate_pair(disp, coh, masks, gnss_los, σ_gnss, corrections, params) -&gt; CalibrationResult</code> implementing the two passes with hooks; single-pass path when <code>two_pass=False</code>. <em>Done 2026-10-06:</em> <code>calibrate_pair(...)</code> with <code>surface.method</code> dispatch; <code>UnwrapHook = hook(residual, valid, cycle_m) -&gt; (shift, decisions)</code>; single-pass when <code>two_pass=False</code>.
+- [x] T33.3 Reference-point handling: pick by quality (as cal-disp does), record the offset as <code>cal_reference_offset</code>; test no double-referencing (structural review item). <em>Done 2026-10-06:</em> reference offset removed before and restored as <code>cal_reference_offset</code>; test: no residual offset at the reference after calibration (no double referencing).
+- [x] T33.4 Synthetic end-to-end test: plane + bowl + 1-cycle island + noise; with unwrap hook mocked to return the true shift, recovered surface error &lt; 1 mm RMS outside the bowl. <em>Done 2026-10-06:</em> synthetic plane + 15 cm bowl (excluded) + 1-cycle island + noise with a mocked hook → calibrated − GNSS &lt; 1 mm RMS outside the bowl; the bowl survives in the product; without unwrap the island stays one cycle high in the product and the robust weights keep it out of the surface.</p>
+<h3 id="t34-tropo-modes">T34. Tropo modes<a class="headerlink" href="#t34-tropo-modes" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T19, T27
+<strong>Context:</strong> R-T1. cal-disp <code>prep/tropo.py</code> (ZTD at DEM surface in 512-row blocks, −ZTD/los_up, sec − ref) is copied into <code>venti.calibration.tropo</code> and kept identical by a parity test; <code>trade studies/two_pass/tropo_mode.py</code> has the stratified fit ([1, x, y, h, h²] per epoch). <code>mode=auto</code> chooses from DEM relief p5–p95: off &lt; 0.3 km; stratified ≥ 1.5 km; 0.3–1.5 km → off (until TS-T1). Data access via <code>opera_utils.tropo</code>.
+- [x] T34.1 Copy <code>prep/tropo.py</code> → <code>venti/calibration/tropo.py</code>; parity test runs both on a 256×256 fixture and asserts bit-identical output; cal-disp CI imports both. <em>Done 2026-10-06:</em> <code>interpolate_in_time</code>, <code>interpolate_to_dem_surface</code>, <code>compute_los_correction</code>, <code>pair_correction</code> in <code>venti.calibration.tropo</code>; <code>tests/test_calibration_tropo.py::TestParityWithCalDisp</code> asserts bit-identity (runs when <code>cal_disp</code> is importable; verified locally against <code>00_tools/src/cal-disp</code>). The cal-disp CI side lands with the T37 wiring, which is when cal-disp can pin this Venti.
+- [x] T34.2 <code>stratified_tropo(ztd_los, dem, mask) -&gt; model</code> and <code>apply_tropo(disp, mode, ...)</code> returning the <code>cal_tropo</code> component. <em>Done 2026-10-06:</em> <code>stratified_tropo</code> → <code>StratifiedModel</code>, <code>stratified_delay</code>, <code>apply_tropo(correction, mode, dem=...)</code> → <code>cal_tropo</code> (None for off); linearity test shows the pair fit equals the per-date difference; integration test feeds it to <code>calibrate_pair</code>.
+- [x] T34.3 <code>choose_tropo_mode(dem, table_entry) -&gt; mode</code> with the relief rule; unit tests for the three bands. <em>Done 2026-10-06:</em> <code>choose_tropo_mode(TropoOptions, dem)</code>; the table entry arrives as the frame-applied <code>TropoOptions</code> (<code>FrameParameterTable.apply</code>); tests cover the bands, <code>legacy</code>, and F16940/F08882/unknown-frame table behaviour.
+- [x] T34.4 Reproduce <code>tropo_check/independent_check.py</code> (within 0.5 mm) as a test on the golden pair (skipped without data). <em>Done 2026-10-06:</em> <code>test_golden_dem_surface_delay_matches_an_independent_interpolation</code> (needs <code>CAL_DISP_GOLDEN_DIR</code> and <code>cal_disp</code>); passes on the F08882 golden inputs.</p>
+<h3 id="t35-_cal-model">T35. σ_CAL model<a class="headerlink" href="#t35-_cal-model" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T27, T33
+<strong>Context:</strong> R-E1: σ_CAL² = (k·σ_grid)² + σ_fit² + σ_tropo² + σ_ref²; k per frame from the table (3.9 placeholder); σ_fit from the weighted local fit (kernel-weighted residual variance / effective n); grows inside defo areas (T32.3); unwrap shifts σ = 0. Replace the gamma RBF-interpolated station σ (<code>calibration_std</code> meaning upgrade).
+- [x] T35.1 <code>fit_sigma</code> from <code>loclin_surface</code> (return effective dof and residual variance per node). <em>Done 2026-10-06:</em> <code>venti.calibration.uncertainty.fit_sigma(field, weights, sigma_px, surface) -&gt; (sigma_fit, n_eff)</code> computed from the loclin inputs/outputs (the <code>loclin_surface</code> signature is unchanged); <code>effective_n</code> gives <code>4 pi sigma_px**2</code> for unit weights.
+- [x] T35.2 <code>sigma_cal(components, k, inflation_map) -&gt; σ</code> + unit documentation (mm). <em>Done 2026-10-06:</em> <code>sigma_cal(sigma_grid, sigma_fit, k, sigma_tropo=, sigma_ref=, inflation=)</code>; units follow the inputs (metres inside <code>calibrate_pair</code>; cal-disp converts for <code>calibration_std</code> in T37); <code>CalibrationResult.sigma_cal/sigma_fit/n_eff</code>.
+- [x] T35.3 Test: on synthetic data with known noise, std(z) of (surface − truth)/σ_CAL ∈ [0.8, 1.25]. <em>Done 2026-10-06:</em> <code>tests/test_calibration_uncertainty.py::TestCalibrated::test_z_scores_are_calibrated</code> (40 realisations, white DISP noise + k-inflated grid error).</p>
+<h3 id="t36-unwrap-error-module-gated-default-off">T36. Unwrap-error module (gated, default off)<a class="headerlink" href="#t36-unwrap-error-module-gated-default-off" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T18, T33
+<strong>Context:</strong> R-U1 and TS-U1. Port <code>two_pass/estimator_c.py</code> (<code>estimate(R, G, coh, ws, res, half)</code>), <code>unwrap_step.py</code>, <code>unwrap_prototype/harness.py</code>, <code>score.py</code>, <code>truth.csv</code>. Method: water-mask watershed regions (Brisbane recipe, ~33 regions on F08882); estimate on DISP − CAL₁; jump vs anchored neighbour across water; only accepted/0-cycle regions anchor; GNSS-direction veto; whole cycles of <code>sensor.cycle_m</code>; free offsets (≥ 0.3 cycle) <strong>not</strong> enabled for v0.5. Output per-pixel shifts and a decisions CSV. <code>unwrap.enabled=False</code> by default.
+- [x] T36.1 <code>segment_regions(water_mask, valid_mask) -&gt; labels</code> (skimage watershed) with a test on a synthetic archipelago. <em>Done 2026-10-06:</em> <code>venti.unwrap.regions.segment_regions</code> (+ <code>largest_region</code>, <code>downsample_labels</code> for the fit grid); necks stay joined as in the prototype, slivers and &lt; 20 px pieces are dropped.
+- [x] T36.2 <code>estimate_cycles(residual, labels, gnss_los, coh, cycle_m, veto=True) -&gt; Decisions</code> (region id, jump, cycles, accepted, anchor id, reason). <em>Done 2026-10-06:</em> <code>venti.unwrap.cycles.estimate_cycles(..., pixel_m, options)</code>; thresholds are <code>UnwrapOptions</code> fields in metres/km² so they follow the grid; <code>RegionDecision</code>/<code>Decisions</code> with CSV + summary.
+- [x] T36.3 <code>apply_shifts(disp, labels, decisions, cycle_m) -&gt; (disp_shifted, cal_unwrap_shift)</code>. <em>Done 2026-10-06:</em> <code>disp - cal_unwrap_shift == disp_shifted</code> (tested).
+- [x] T36.4 Test bench: port <code>harness.py</code> + <code>truth.csv</code> as a pytest with the 14 labelled cases; the estimator must score 14/14 (regression floor, not proof). <em>Done 2026-10-06:</em> <code>tests/test_unwrap_bench.py</code> + <code>tests/data/unwrap_truth.csv</code>; runs on the prototype caches (<code>VENTI_UNWRAP_BENCH_DIR=.../unwrap_prototype/runs/pairs</code>, 87 s); 14/14, 0 unverified, with and without the residual gate.
+- [x] T36.5 Wire into the T33 hook; <code>enabled=False</code> → component is all zeros and decisions CSV is empty. <em>Done 2026-10-06:</em> <code>make_unwrap_hook(labels, gnss_los, coherent, options, pixel_m)</code>; tested through <code>calibrate_pair</code> at factor 1 and 3; off → zeros and <code>unwrap_decisions is None</code>; <code>Decisions.empty().to_csv</code> writes a header only.</p>
+<h3 id="t37-cal-disp-wiring-to-the-new-venti-workflow">T37. cal-disp wiring to the new Venti workflow<a class="headerlink" href="#t37-cal-disp-wiring-to-the-new-venti-workflow" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T26, T33, T34, T35
+<strong>Context:</strong> cal-disp <code>workflow.py::run_calibration</code> (831 lines) currently calls <code>venti.surface.estimate_calibration_surface</code>. Replace with <code>venti.workflow.calibrate_pair</code> via T18/T28/T33; keep the CLI and runconfig unchanged; <code>algorithm_parameters.yaml</code> with gamma defaults must reproduce the golden bit-for-bit (or within 1e-6). Metadata records flags, <code>schema_version</code>, frame table version, GNSS provenance.
+- [x] T37.1 Adapter: runconfig + algorithm params → Venti <code>CalibrationParams</code>, <code>GnssGridConfig</code>, sensor <code>S1Spec</code>; unit tests. <em>Done 2026-10-09</em> (cal-disp PR #6): schema-v2 groups in <code>calibration_options</code>, typed with Venti's models; <code>GnssGridConfig</code>/<code>SensorSpec</code> adapters wait for the GNSS-path switch (T48.3).
+- [x] T37.2 Replace the fit section of <code>run_calibration</code> with <code>calibrate_pair</code>; write <code>calibration</code>, <code>calibration_std</code> as before; keep component arrays in memory only (packaging later, T61). <em>Done 2026-10-09:</em> <code>calibrate_pair</code>, tropo modes via Venti, σ_CAL as <code>calibration_std</code> on loclin; components in memory only.
+- [ ] T37.3 <code>/metadata</code>: add <code>algorithm_schema_version</code>, <code>frame_parameters_version</code>, <code>gnss_provenance</code> (JSON string), <code>components_applied</code>; tests. <em>Open:</em> needs a deliberate golden update (validate fails on new attributes); own PR.
+- [x] T37.4 Golden regression with gamma defaults passes (<code>pixi run validate --golden-dir test_golden</code>). <em>Done 2026-10-09:</em> passes at 1e-6 through <code>calibrate_pair</code> (validate now compares the embedded parameters semantically).
+- [x] T37.5 Test <code>calibration == Σ components</code> on the golden pair with the v0.5 flags on. <em>Done 2026-10-09:</em> v0.5 run on the golden pair, max |calibration − Σ| = 0.0.
+- [x] T37.6 Full-frame memory and runtime measured with v0.5 flags; recorded in <code>docs/performance.md</code>. <em>Done 2026-10-09:</em> cal-disp <code>docs/performance.md</code>: gamma 6.0 GB; v0.5 55 s / 7.27 GB after two Venti memory fixes (−3 GB).</p>
+<h3 id="t38-e2e-on-the-4-existing-frames">T38. e2e on the 4 existing frames<a class="headerlink" href="#t38-e2e-on-the-4-existing-frames" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T25, T37
+<strong>Context:</strong> Frames F08882 (Houston), F08886 (OKC), F16940 (LA), F08622 (NYC); baseline = gamma 0.3 numbers (<code>trade studies/e2e_validation/README.md</code>, <code>two_pass/README.md</code>): F08882 sill 257 → 80.8 mm², RMSE 5.07 → 3.28; F08886 190.6 → 25.8; F16940 200 → 52; F08622 PASS, sill −80.7%. The +3.7 mm/yr velocity bias vs MIDAS traced to input DISP is a known open issue (PRD §7.4).
+- [x] T38.1 Stage the 4 stacks and tropo under <code>/mnt/aurora-z0/govorcin/cal_disp_e2e/</code> with a manifest (reuse existing runs). <em>Done 2026-10-09:</em> the manifest is the run configs in disp2vlm_validation <code>configs/aurora/</code> (stacks, masks, LOS, GNSS caches, reference pixels); driver <code>t38/run_t38.sh</code>. Tropo not staged (v0.5 runs tropo off).
+- [x] T38.2 Run <code>disp-validate</code> for gamma (baseline) and v0.5 flags (candidate) on each frame; archive reports. <em>Done 2026-10-09:</em> <code>t38/runs/&lt;frame&gt;/{gamma,v05-loclin}</code> + <code>t38/release_summary_v05.html</code>; v0.5 calibration 27 min per 208 epochs, 0 failures.
+- [x] T38.3 Gate passes on all 4 frames; discrepancies vs the trade-study numbers &gt; 10% are investigated and explained in <code>docs/baselines.md</code>. <em>Done 2026-10-09:</em> <strong>4/4 PASS</strong>: sill vs gamma −64.6 / −81.5 / −71.8 / −68.5%, bias +1.14 / +0.06 / +0.65 / +0.25 mm/yr (Houston misses the 1 mm/yr target, reported only). Gaps vs the trade-study two-pass runs trace to its estimator C (per-region free offsets + unwrap shifts; not in v0.5): Galveston, LA islands; F08622 sill +63% only partly explained → TS-U1 (T42). GATE-4 n/a: no v0.5 golden until T49.
+- [x] T38.4 Open an issue with evidence for the +3.7 mm/yr bias (per-frame bias vs reference date; comparison with DOLPHIN chaining) and, if confirmed upstream, report to the DISP-S1 team. <em>Done 2026-10-09:</em> disp2vlm_validation issue #2 (<code>studies/bias_by_block.py</code>): the bias accumulates inside the reference blocks with an annual pattern, chaining dates align exactly (F08882 +4.1 from blocks vs +3.9 chained; F16940 +1.96 vs +2.01); hypothesis: DS phase-linking bias at low coherence. Upstream report pending confirmation (TS-B1).</p>
+<hr />
+<h2 id="phase-3-trade-studies-and-benchmark-data-m3-weeks-26-parallel-to-phase-2">Phase 3: Trade studies and benchmark data (M3, weeks 2–6, parallel to phase 2)<a class="headerlink" href="#phase-3-trade-studies-and-benchmark-data-m3-weeks-26-parallel-to-phase-2" title="Permanent link">&para;</a></h2>
+<h3 id="t39-ts-g1-grid-fidelity-and-per-frame-k">T39. TS-G1: grid fidelity and per-frame k<a class="headerlink" href="#t39-ts-g1-grid-fidelity-and-per-frame-k" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T21, T28
+<strong>Context:</strong> PRD §7.2. Interpolate the UNR grid onto the DISP grid (T28 only, no InSAR), sample at independent stations (MIDAS + daily UNR), compare velocities and σ as a function of station density. Determine k per frame such that std(z) ≈ 1, using a held-out station split (T21.3) so validation stations never fit k.
+- [x] T39.1 Script <code>ts_g1.py</code> in the validation repo (<code>studies/</code>): per frame, grid-vs-station bias, RMSE, z-stats, nearest-station distance.
+- [x] T39.2 Run on the 4 frames; figures: bias and RMSE vs station spacing; z histogram. <em>Done 2026-10-09:</em> grid unbiased at stations (|bias| ≤ 0.3 mm/yr, RMSE 0.9–2.9); misfit largest at dense urban clusters, not where GNSS is sparse.
+- [x] T39.3 Fit k per frame (held-out split); write to the frame table (T27) with provenance; keep 3.9 as fallback for frames without a fit. <em>Done 2026-10-09:</em> k = 1.35 / 3.39 / 2.69 / 2.82 (velocity level), frame table 0.2-draft, Venti PR #20. <strong>Pair level: a multiplicative k cannot fit short pairs; an additive σ₀ = 2.6–4.9 mm is needed</strong> (proposal <code>uncertainty.sigma_station_mm</code>, owner decision).
+- [x] T39.4 <code>studies/TS-G1/REPORT.md</code> with the exit criteria from PRD §7.2 and a recommendation on whether σ_grid encodes support.</p>
+<h3 id="t40-benchmark-data-staging-frames-58">T40. Benchmark data staging (frames 5–8)<a class="headerlink" href="#t40-benchmark-data-staging-frames-58" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T11
+<strong>Context:</strong> Benchmark table in PRD §2.7: Central Valley (fast basin), Ridgecrest 2019 (coseismic), Great Basin/Montana (sparse GNSS), Hawaii (PA) and/or Puerto Rico (CA). Frame IDs via <code>opera_utils</code> frame DB. Each needs the DISP-S1 stack (200–300 epochs), DISP-S1-STATIC, tropo, UNR grid. Use <code>cal-disp download</code> and <code>trade studies/e2e_validation/stage_tropo.py</code>; long-running, <code>setsid nohup</code>, never <code>/tmp</code>.
+- [x] T40.1 Choose frame IDs (one per category; two for Hawaii/PR if both affordable); record in <code>frame_parameters.json</code> with <code>benchmark_category</code>. <em>Done 2026-10-09 (owner-approved):</em> F36542 Central Valley, F16941 Ridgecrest, F07081 Montana (sparse, 0.3 stations/1000 km²), F23211 Hawaii (PA), F35991 Puerto Rico (CA), plus F38238 (descending partner of F08882 for VLM); frame table 0.3-draft.
+- [~] T40.2 Stage DISP stacks + static layers; manifest with sizes and sha256. <em>Started 2026-10-09:</em> <code>/mnt/aurora-z0/govorcin/cal_disp_e2e/t40/</code> (<code>fetch_disp.sh</code>, <code>stage_inputs.sh</code>, <code>post.sh</code>, <code>quicklook.py</code>); statics (DISP-S1-STATIC from ASF) and UNR grid staged for all six; DISP downloads 2016-07 → 2023-12 running (~1 TB). Note: <code>cal-disp download unr --help</code> still says parquet (it writes tenv8), and the static download functions are placeholders.
+- [ ] T40.3 Stage tropo for the LA/Hawaii/Ridgecrest frames (relief); skip for flat frames.
+- [ ] T40.4 Quick-look velocities per frame (OLS) to confirm the expected signal (bowl, coseismic step, island motion).</p>
+<h3 id="t41-curate-defo-and-event-geojson-databases">T41. Curate defo and event GeoJSON databases<a class="headerlink" href="#t41-curate-defo-and-event-geojson-databases" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T32, T40
+<strong>Context:</strong> D9: curated static GeoJSON, offline, versioned. Recipe (trade study rr4): areas from InSAR velocity vs regional trend + buffer, reaching stable ground; keep real GNSS points nearby. Events: Ridgecrest Mw 7.1 (2019-07-06) footprint from a scaling law + buffer; Kīlauea 2018. Start from <code>defo_area2.geojson</code> (Houston).
+- [x] T41.1 Tool <code>venti-defo-areas</code> (in <code>[research]</code>): velocity raster → candidate polygons (threshold on |v − trend|, buffer, simplify, must touch stable ground) → GeoJSON draft for human review. <em>Done 2026-10-09 (venti-dev PR #25):</em> <code>venti.research.defo_areas</code>; on Houston the draft lies 100% inside the curated polygon but covers 28% of it (calibrated input required; raw DISP unusable) — a review aid, not a replacement.
+- [~] T41.2 Review and finalize polygons for Houston/Galveston, Central Valley (San Joaquin), Kīlauea; <code>defo_area_db_v1.geojson</code>. <em>Started:</em> <code>defo_area_db_v1.geojson</code> 1.0-draft with Houston-Galveston (trade-study polygon); Central Valley and Kīlauea wait for the T40 stacks.
+- [x] T41.3 <code>event_db_v1.geojson</code>: Ridgecrest (t0, footprint, source USGS ComCat); schema per T32.1. <em>Done 2026-10-09 (venti-dev PR #25, 1.0-draft):</em> Mw 7.1 + Mw 6.4 from ComCat; footprint = W&amp;C 1994 rupture along strike, buffer max(15 km, 0.75 L); to check vs the F16941 coseismic step.
+- [~] T41.4 Tests: every polygon is valid, has <code>id</code>/<code>version</code>, and reaches outside its own velocity anomaly (checked against T40.4 quick-looks).</p>
+<h3 id="t42-ts-u1-phase-1-islands-with-trusted-gnss">T42. TS-U1 phase 1: islands with trusted GNSS<a class="headerlink" href="#t42-ts-u1-phase-1-islands-with-trusted-gnss" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T36, T38
+<strong>Context:</strong> Truth = islands / cut-off peninsulas with trusted GNSS (Galveston on F08882; LA harbour islands on F16940; candidates on Hawaii/PR after T40). Pass: estimated whole-cycle shift equals the GNSS-derived offset on every truth island, no shifts on decoys (regions with real fractional motion), e2e sill does not rise. Free offsets stay out of v0.5.
+- [x] T42.1 Build the truth set: per island region, GNSS offset (station vs mainland reference) per pair, over ≥ 30 pairs per frame; label integer cycles; store <code>studies/TS-U1/truth_islands.csv</code>.
+- [x] T42.2 Run <code>estimate_cycles</code> (whole cycles + veto) over the truth set; precision/recall per frame; confusion by jump fraction.
+- [x] T42.3 Decoy test: regions with real motion (e.g. Terminal Island subsidence) must receive 0 shifts.
+- [x] T42.4 e2e with <code>unwrap.enabled=True</code> on F08882 and F16940; sill and velocity vs baseline. <em>Done 2026-10-09:</em> required three fixes first (cal-disp passed no hook on the loclin route, PR #7; hook fed DISP − G − CAL1, Venti <code>8219a52</code>; shift upsample crashed on non-divisible frames, <code>c10ba88</code>; venti-dev PR #21). F08882: sill −0.2% (n.s.), RMSE 4.79 → 4.31, Galveston stations 3–6 mm/yr better, 0 mainland false shifts; |bias| +0.22 → gate FAIL (artefact: the corrected outliers had masked the positive bias). F16940: 0 shifts (islands beyond the 12 km anchor).
+- [x] T42.5 <code>studies/TS-U1/REPORT.md</code> with a go/no-go for enabling the flag in v0.5 (default remains off unless precision ≥ 0.99 and recall ≥ 0.8 on ≥ 100 cases). <em>Done 2026-10-09:</em> <strong>no-go for v0.5, default stays off</strong>: truth has 2 error blocks (PRD needs ≥ 100 cases), 0/2 corrected — the Galveston −2-cycle error is sub-region (→ T62).</p>
+<h3 id="t43-ts-s1-disp-noise-model-_disp-50-km">T43. TS-S1: DISP noise model (σ_DISP &lt; 50 km)<a class="headerlink" href="#t43-ts-s1-disp-noise-model-_disp-50-km" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T21, T38
+<strong>Context:</strong> R-E2: the product documents that users must add DISP's own short-wavelength noise (~10 mm placeholder). Candidates: structure function of (DISP − CAL − GNSS) at station pairs &lt; 50 km; temporal coherence and <code>timeseries_inversion_residuals</code> as proxies; per-frame budget.
+- [x] T43.1 Structure function per frame from the T38 stacks at lags 1–50 km; fit a model (nugget + power law).
+- [x] T43.2 Correlate pixel-wise |residual| with temporal coherence and inversion residuals; decide if a proxy model is usable.
+- [x] T43.3 <code>studies/TS-S1/REPORT.md</code>: per-frame σ_DISP(λ) table and the recommended documentation text for the product spec (replaces the 10 mm placeholder or confirms it). <em>Done 2026-10-09:</em> S(10–50 km) per epoch 9.6 / 5.5 / 8.9 / 7.0 mm (4–7 mm per point); 10 mm kept as a documented upper bound; power-law fit fragile where pairs are scarce; coherence not a usable proxy (|ρ| ≤ 0.25); inversion residuals not tested.</p>
+<h3 id="t44-ts-t1-tropo-at-0315-km-relief-and-ts-b1-stable-bias">T44. TS-T1 (tropo at 0.3–1.5 km relief) and TS-B1 (stable bias)<a class="headerlink" href="#t44-ts-t1-tropo-at-0315-km-relief-and-ts-b1-stable-bias" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T31, T34, T38
+<strong>Context:</strong> TS-T1: the stratified model helps LA (−15% sill) and hurts flat Houston (+17%); the 0.3–1.5 km band is untested. TS-B1: stable stations sit +2.8 mm/yr high; stations are on the most coherent pixels; candidate remedies coh⁸ vs coh¹⁶ vs threshold.
+- [ ] T44.1 TS-T1: pick a frame with p5–p95 relief in 0.3–1.5 km (from T40 or an extra frame); run off/stratified/full; sill and RMSE; update the <code>choose_tropo_mode</code> rule and the frame table.
+- [x] T44.2 TS-B1: on F08886 and F08882, run p ∈ {4, 8, 16} and a coherence threshold; bias at stable stations and sill; decide the default <code>coherence_power</code>. <em>Done 2026-10-09:</em> p changes bias/sill by ≤ 0.1 mm/yr / ≤ 2.2 mm² (all PASS); the gamma→v0.5 drop comes from the 50 km surface; <strong>keep p = 8</strong>. Threshold not run (no schema option; unlikely to differ). Stable stations defined kinematically (the class rule calls inland water 'coastal').
+- [ ] T44.3 Reports in <code>studies/TS-T1/</code> and <code>studies/TS-B1/</code>; parameter defaults updated in T19 docs if changed (behind the flags, golden unaffected until T49).</p>
+<hr />
+<h2 id="phase-4-cal-disp-v05-calval-release-m4-weeks-68">Phase 4: cal-disp v0.5 CalVal release (M4, ~weeks 6–8)<a class="headerlink" href="#phase-4-cal-disp-v05-calval-release-m4-weeks-68" title="Permanent link">&para;</a></h2>
+<h3 id="t45-populate-the-frame-table-for-the-8-benchmark-frames">T45. Populate the frame table for the 8 benchmark frames<a class="headerlink" href="#t45-populate-the-frame-table-for-the-8-benchmark-frames" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T27, T39, T44
+- [ ] T45.1 Plate per frame (NA default; PA Hawaii; CA Puerto Rico; California NA).
+- [ ] T45.2 Tropo mode per frame from relief + TS-T1.
+- [ ] T45.3 k per frame from TS-G1 (fallback 3.9 flagged <code>k_source: default</code>).
+- [ ] T45.4 Tag <code>frame_parameters v1.0</code>; test that every benchmark frame resolves without defaults where a study value exists.</p>
+<h3 id="t46-8-frame-gate-and-edge-cases">T46. 8-frame gate and edge cases<a class="headerlink" href="#t46-8-frame-gate-and-edge-cases" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T38, T40, T41, T45
+<strong>Context:</strong> PRD §2.7 and §2.8. Category conditions: Houston subsiding stations bias &lt; 1, RMSE &lt; 2 mm/yr; OKC stable |bias| &lt; 1; LA sill drops and tropo does not worsen; NYC vertical pattern vs GNSS; Central Valley surface continuous and outside stations unaffected, bowl extent kept; Ridgecrest no step in CAL for spanning pairs, non-spanning pairs identical to no-event-DB; sparse frame realistic σ and no artifacts; Hawaii/PR correct plate layer, Kīlauea excluded.
+- [ ] T46.1 Add the category conditions to <code>gate.yaml</code> as per-frame rules (T23 schema extension if needed).
+- [ ] T46.2 Run candidate (v0.5 flags) and baseline (gamma) on all 8 frames via batch; archive.
+- [ ] T46.3 Edge-case assertions as tests in the validation repo: Central Valley (max |surface change| at outside stations &lt; 0.5 mm/yr), Ridgecrest (|CAL step across the fault| &lt; 2 mm for spanning pairs; identical products for non-spanning pairs with/without event DB), plate boundary note for LA.
+- [ ] T46.4 Fix failures in Venti/cal-disp with the usual PR flow; rerun until all 8 pass; each fix leaves gamma golden green (flags default off until T49).</p>
+<h3 id="t47-memory-and-runtime-toward-a-small-ec2-instance">T47. Memory and runtime toward a small EC2 instance<a class="headerlink" href="#t47-memory-and-runtime-toward-a-small-ec2-instance" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T37
+<strong>Context:</strong> R-O3: target ≤ 4 GB peak (from 6.35 GB); <code>worker_settings</code> unused; <code>NUMPY_MADVISE_HUGEPAGE=0</code> needed on aurora. Blocked row processing already exists for tropo; extend to the fit on the downsampled grid and to the product write.
+- [x] T47.1 Profile the v0.5 run (<code>memray</code>/<code>tracemalloc</code>) on the golden pair; identify the top 3 allocations. <em>Done 2026-10-09:</em> memray: LOS bands kept through the fit, decoded masks/coherence cached in the xarray dataset, unused full-res diagnostics, <code>np.nanmedian</code> copies for log lines.
+- [x] T47.2 Stream displacement/mask/coherence loads and the final subtraction in row blocks; downsampled fit arrays only in memory. <em>Done 2026-10-09:</em> masks/coherence via row-block <code>_load_layer</code>, LOS freed after the GNSS projection, <code>calibrate_pair(diagnostic_maps=False)</code>.
+- [x] T47.3 Honour <code>worker_settings</code> (threads for numba/BLAS) or remove the field from the docs (field itself stays, runconfig is frozen). <em>Done 2026-10-09:</em> BLAS/OpenMP pools capped at n_workers × threads_per_worker (threadpoolctl); <code>block_shape</code> documented as reserved.
+- [~] T47.4 Lower <code>budget.yaml</code> to the achieved value; measure on a <code>t3.medium</code>/<code>t3.large</code>-class instance and record runtime; the 72 h latency requirement is trivially met and documented. <em>Done 2026-10-09 (partly):</em> v0.5 7.27 → 4.0–4.1 GB, gamma 6.0 → 3.6–4.0 GB, products bit-identical; budget 7.0 → 4.5 GB (cal-disp PR #8, venti-dev PR #22); two-core emulation 1 min 43 s at 4.02 GB → t3.large fits, t3.medium does not. <strong>Open:</strong> a measurement on EC2 itself.</p>
+<h3 id="t48-frozen-unr-grid-snapshot">T48. Frozen UNR grid snapshot<a class="headerlink" href="#t48-frozen-unr-grid-snapshot" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T28
+<strong>Context:</strong> R-G4: a versioned snapshot per release, mirrored to controlled storage (S3 bucket TBD, PRD §7.5 Q6), hash recorded in metadata; roll-forward deliberate (proposal every 6 months) and gated by e2e.
+- [x] T48.1 <code>scripts/snapshot_unr_grid.py</code> (validation or cal-disp repo): download v0.3 constant (and variable) for IGS20 via geepers, write <code>unr_grid_&lt;version&gt;_&lt;date&gt;/</code> + <code>MANIFEST.sha256</code> + <code>snapshot.json</code> (UNR version, date, node count, data span). <em>Done 2026-10-06 in Venti</em> (<code>venti.gnss.snapshot</code> + <code>scripts/snapshot_unr_grid.py</code>): Venti owns the sampler that reads the layout, so the writer lives next to it; <code>--bounds</code>, <code>--grid-types</code>, <code>--verify</code>; tests with injected fetch/download fakes.
+- [x] T48.2 Upload to S3; document the bucket layout and IAM in <code>docs/operations.md</code>. <em>Proposed 2026-10-06:</em> <code>s3://opera-adt/opera-ancillary/unr-grid/&lt;snapshot_id&gt;/</code> + a <code>CURRENT</code> pointer, next to the existing shared ancillary data (<code>docs/operations.md</code>, Storage). Waiting for the owner's OK; nothing uploaded. <em>Uploaded 2026-10-06</em> (location approved): <code>unr_grid_0.3_IGS20_20261006</code>, 28,492 nodes, 31 not published upstream (404), sample re-download verified; <code>CURRENT</code> waits for T46.
+- [ ] T48.3 cal-disp <code>download unr</code> can read from the snapshot path (<code>unr_timeseries_dir</code>), and metadata records <code>gnss_snapshot_id</code> + hash (through T28.4 provenance). <em>Waits for the cal-disp wiring (T37, behind T26/T09).</em>
+- [x] T48.4 Roll-forward procedure documented: new snapshot → T46 gate → new frame-table k if needed → minor version. <em>Done 2026-10-06:</em> <code>docs/operations.md</code> (moves to cal-disp docs with T48.3).</p>
+<h3 id="t49-v05-docker-image-golden-regeneration-changelog">T49. v0.5 Docker image, golden regeneration, changelog<a class="headerlink" href="#t49-v05-docker-image-golden-regeneration-changelog" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T46, T47, T48
+<strong>Context:</strong> D13 and PRD §7.3: one deliberate golden regeneration in Docker with a changelog explaining every value difference vs gamma; v0.5 defaults switch to the trade-study algorithm (<code>schema_version: 2</code> defaults) while gamma remains reproducible via flags.
+- [ ] T49.1 Flip <code>algorithm_parameters.yaml</code> defaults in <code>configs/</code> and <code>test_golden/configs/</code> to v0.5 values; add <code>configs/algorithm_parameters_gamma.yaml</code> for reproduction; test that the gamma file still reproduces the 0.3 golden.
+- [ ] T49.2 Build <code>cal-disp:0.5.0-rc</code> (docker-build skill); env budget check passes.
+- [ ] T49.3 Regenerate the golden inside the image; <code>run_validation.sh</code> passes; new <code>MANIFEST.sha256</code>.
+- [ ] T49.4 <code>CHANGELOG.md</code> v0.5.0: per component the median/max change on the golden pair vs 0.3 and which requirement motivated it (workflow-regression skill).</p>
+<h3 id="t50-vnv-report-and-sign-off">T50. VnV report and sign-off<a class="headerlink" href="#t50-vnv-report-and-sign-off" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T24, T46
+- [ ] T50.1 <code>disp-validate summary</code> across the 8 frames → release summary HTML/PDF with traceability (R-* → result).
+- [ ] T50.2 Add TS-G1/TS-S1/TS-U1/TS-T1/TS-B1 report links and the σ-realism section (reported, not gated).
+- [ ] T50.3 Review with Talib / OPERA CalVal; record sign-off and any waivers in <code>docs/decisions/0002-v0.5-calval.md</code>.</p>
+<h3 id="t51-release-cal-disp-v05">T51. Release cal-disp v0.5<a class="headerlink" href="#t51-release-cal-disp-v05" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T49, T50
+- [ ] T51.1 Update docs (quickstart, algorithm parameters, product spec deltas, performance, operations).
+- [ ] T51.2 Tag <code>v0.5.0</code> on the fork; upstream PR to <code>opera-adt/cal-disp</code> with the changelog and VnV summary; tag Venti and geepers forks with matching versions.
+- [ ] T51.3 Delivery package (image, docs, VnV report, snapshot id, frame table version).
+- [ ] T51.4 Move remaining items to <code>TODO.md</code> and open issues for phase 5/6 work.</p>
+<hr />
+<h2 id="phase-5-vlm-v01-m5-34-weeks-after-m4">Phase 5: VLM v0.1 (M5, ~3–4 weeks after M4)<a class="headerlink" href="#phase-5-vlm-v01-m5-34-weeks-after-m4" title="Permanent link">&para;</a></h2>
+<h3 id="t52-vlm-repo-skeleton">T52. VLM repo skeleton<a class="headerlink" href="#t52-vlm-repo-skeleton" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T07, T17
+<strong>Context:</strong> New repo under <code>mgovorcin/</code> (<em>2026-10-06:</em> named <strong><code>opera_vlm</code></strong> by the owner: one sensor-agnostic repo producing <strong>VLM-S1</strong> and <strong>VLM-NI</strong>; private <code>mgovorcin/opera_vlm</code>, tag <code>v0.0.0</code>). Depends on <code>venti-dev[decomposition]</code>, <code>geepers[grid]</code>, <code>opera-utils[disp]</code>. Mirror cal-disp structure (cli/config/product/workflow) but no frozen interface yet; design the runconfig deliberately.
+- [x] T52.1 Create with the <code>sas-scaffold</code> skill (PGE runconfig, algorithm parameters + per-frame overrides, click CLI, product writer with <code>/identification</code> and <code>/metadata</code>, golden validation, Docker, pixi, pre-commit, CI) and the standards kit; <code>CLAUDE.md</code> (Invariants: GNSS provenance must match DISP-CAL; N always from GNSS; per-pixel mode flag). <em>Done 2026-10-06:</em> rendered from a spec built on PRD §3.2 (inputs asc/desc DISP + DISP-CAL, LOS, optional UNR snapshot and GIA; algorithm groups decomposition/temporal/gnss; layers vertical, vertical_std, east, east_std, mode); install, lint, gen-configs, docs and 29 tests pass; invariants in <code>CLAUDE.md</code> (PR #1). The input/output layout and the runconfig (T52.2) are a draft until reviewed.
+- [x] T52.2 Runconfig draft (<code>vlm_workflow</code>: asc/desc DISP + CAL inputs, GNSS config, output options) with pydantic <code>extra=forbid</code>; ADR on what will later be frozen. <em>Done 2026-10-09 (opera_vlm PR #7):</em> <code>output_options.write_velocity_product</code> (owner: per-pair official, velocity optional), GNSS options mirror DISP-CAL (buffer 50 km, R-G5), ADR 0001 (frozen at v0.1 vs draft).
+- [ ] T52.3 Product spec draft: layers <code>vertical</code>, <code>east</code> (where available), <code>vertical_std</code>, <code>east_std</code>, <code>mode</code> (uint8: 0 none, 1 projected, 2 decomposed), <code>/metadata</code>, context <code>gia_rate</code>, <code>plate_motion_rate</code>.</p>
+<h3 id="t53-venti-decomposition-wls-and-projection">T53. Venti <code>[decomposition]</code>: WLS and projection<a class="headerlink" href="#t53-venti-decomposition-wls-and-projection" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T18, T35
+<strong>Context:</strong> PRD §3.2. Asc+desc: per pixel solve <code>[los_a, los_d]ᵀ = A·[E, U]ᵀ + n-term</code> with N fixed from GNSS, weighted by σ (σ_CAL ⊕ σ_DISP); single geometry: <code>U = (LOS − e·E_gnss − n·N_gnss)/u</code>. σ propagation (R-E3). Replace the stub <code>workflow/decomposition.py</code>.
+- [x] T53.1 <code>decompose_wls(los_a, σ_a, enu_a, los_d, σ_d, enu_d, vN) -&gt; (E, U, σE, σU, cond)</code>; test against a synthetic ENU field. <em>Done 2026-10-06:</em> <code>venti.decomposition.decompose_wls(los, sigma, enu, north, sigma_north=)</code> for K ≥ 2 looks (sequences); exact recovery without noise, z-scores 0.93–1.07 with noise, weights tested with a third biased look, singular/ill-conditioned cases.
+- [x] T53.2 <code>project_vertical(los, σ, enu, vE, vN) -&gt; (U, σU)</code>; test. <em>Done 2026-10-06</em> (+ <code>sigma_east</code>, <code>sigma_north</code>, <code>min_up</code>); the east-leak test shows why the mode flag exists.
+- [x] T53.3 <code>decompose(...)</code> dispatcher producing the mode flag; ill-conditioned pixels (cond &gt; threshold) fall back to projection and are flagged. <em>Done 2026-10-06:</em> <code>DecompositionResult(east, up, sigma_east, sigma_up, mode, cond, n_looks)</code>; <code>cond_max=10</code> default; projection = inverse-variance mean over the valid looks.
+- [x] T53.4 Document the single-geometry validity assumption (horizontal motion long-wavelength) in the API docs and product spec. <em>Done 2026-10-06:</em> <code>venti.decomposition.wls</code> module docstring (API reference) + <code>docs/architecture.md</code>; the PRD §3.2 already states the flag; the VLM product spec (T56) inherits the wording.</p>
+<h3 id="t54-temporal-resampling-of-ascdesc">T54. Temporal resampling of asc/desc<a class="headerlink" href="#t54-temporal-resampling-of-ascdesc" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T17
+<strong>Context:</strong> D15: moving-window denoising + temporal interpolation to sample asc and desc on common epochs. Keep it simple for v0.1: per-pixel moving-window robust (Theil–Sen or Huber) linear fit of the calibrated time series, evaluated at the target epochs; σ from the window residuals.
+- [x] T54.1 <code>resample_timeseries(ts, dates, target_dates, window_days, method="huber_linear") -&gt; (values, σ)</code> chunked over space (dask/xarray). <em>Done 2026-10-06:</em> <code>venti.temporal.resample_timeseries</code> (numpy, <code>chunk_pixels</code>) + <code>resample_dataarray</code> (<code>xarray.apply_ufunc</code>, dask-parallel when chunked; dask stays a research dependency).
+- [x] T54.2 Tests: noisy linear + seasonal synthetic; interpolation error vs window length; edge handling at the series ends. <em>Done 2026-10-06:</em> <code>tests/test_temporal_resample.py</code> (also sigma calibration, missing epochs, Theil–Sen vs a blundered epoch, chunking identity, the xarray wrapper).
+- [ ] T54.3 Benchmark on one asc/desc pair of frames (choose in T56) for runtime/memory. <em>Waits for the T56 frame choice and staged stacks.</em></p>
+<h3 id="t55-gnss-en-for-vlm-with-provenance-check">T55. GNSS E/N for VLM with provenance check<a class="headerlink" href="#t55-gnss-en-for-vlm-with-provenance-check" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T28, T37
+<strong>Context:</strong> D15/PRD §3.2: use DISP-CAL <code>gnss_ve/vn</code> layers when present (after T61) else <code>sample_gnss_enu</code>; the provenance hash must match the DISP-CAL <code>/metadata.gnss_provenance</code>, else fail.
+- [x] T55.1 <code>load_gnss_for_vlm(cal_products, grid_cfg, defo_db) -&gt; GnssField</code> with the two paths and <code>verify_provenance()</code>. <em>Done 2026-10-09 (venti-dev PR #24):</em> <code>venti.gnss.vlm</code>; products without a record (pre-T37.3) raise unless <code>allow_missing_provenance=True</code>; the provenance config hash no longer includes file paths (portable).
+- [x] T55.2 Tests: matching hash passes; mismatched grid version or DB version raises <code>ProvenanceMismatch</code> with a clear message. <em>Done 2026-10-09:</em> named <code>ProvenanceMismatchError</code> / <code>ProvenanceMissingError</code> (ruff N818); 9 tests.
+- [x] T55.3 Velocities scaled to the target epoch pair (<code>v·Δt</code>). <em>Done 2026-10-09:</em> <code>pair_displacement</code>.</p>
+<h3 id="t56-vlm-workflow-and-product-writer">T56. VLM workflow and product writer<a class="headerlink" href="#t56-vlm-workflow-and-product-writer" title="Permanent link">&para;</a></h3>
+<p><strong>Owner decision 2026-10-09:</strong> per-pair VLM is the official product; add an option (<code>output.velocity_product</code>) that also writes a velocity-domain product (one calibration of the chained velocity; issue #3).
+<strong>Depends on:</strong> T53, T54, T55
+- [ ] T56.1 Pick the first asc/desc overlap (e.g. LA F16940 with its ascending counterpart) and stage calibrated stacks (reuse T38/T46 products).
+- [ ] T56.2 <code>vlm run runconfig.yaml</code>: load → resample → GNSS → decompose/project → write NetCDF per target epoch pair with the T52.3 layers; browse image.
+- [ ] T56.3 Context layers via <code>venti.models.gia</code> (ICE-6G_D / Caron 2018) and <code>geepers.euler</code> (plate rate) sampled onto the grid.
+- [ ] T56.4 Regression fixture on a 128×128 synthetic asc/desc pair (golden for the VLM repo).</p>
+<h3 id="t57-vlm-validation-and-v01-release">T57. VLM validation and v0.1 release<a class="headerlink" href="#t57-vlm-validation-and-v01-release" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T24, T56
+- [ ] T57.1 Validation package: <code>vertical</code> vs GNSS Up and <code>east</code> vs GNSS East at independent stations; per-class metrics; σ realism.
+- [ ] T57.2 Gate for VLM (<code>gate_vlm.yaml</code>): RMSE_U and |bias_U| targets to be set from the first run; recorded as baseline.
+- [ ] T57.3 Report, tag <code>v0.1.0</code>, docs; ADR on which interfaces are now frozen.</p>
+<hr />
+<h2 id="phase-6-disp-nisar-m6-when-beta-data-arrives">Phase 6: DISP-NISAR (M6, when beta data arrives)<a class="headerlink" href="#phase-6-disp-nisar-m6-when-beta-data-arrives" title="Permanent link">&para;</a></h2>
+<h3 id="t58-nisar-sensorspec">T58. NISAR <code>SensorSpec</code><a class="headerlink" href="#t58-nisar-sensorspec" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T18, beta DISP-NISAR data available
+<strong>Context:</strong> L-band λ ≈ 0.2413 m, cycle ≈ 12 cm; displacement arrives iono-corrected; correction cube holds the ionosphere phase screen; different frame/track grid, filename pattern and static layers (<code>disp-nisar</code> repo in <code>00_tools/src</code> for the format).
+- [ ] T58.1 <code>NisarSpec</code> (filename parser, readers, corrections incl. <code>ionosphere_phase_screen</code>, static layers).
+- [ ] T58.2 cal-disp accepts NISAR inputs through <code>SensorSpec</code> dispatch without runconfig changes (the <code>disp_file</code> path decides); tests on a beta granule.
+- [ ] T58.3 Frame table entries and GNSS sampling for a NISAR frame; a first calibrated pair.</p>
+<h3 id="t59-ts-n1-ionosphere">T59. TS-N1: ionosphere<a class="headerlink" href="#t59-ts-n1-ionosphere" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T38, T58
+- [ ] T59.1 Undo the delivered iono correction with the phase-screen layer; calibrate with and without; e2e metrics.
+- [ ] T59.2 Check whether the &gt; 50 km GNSS surface absorbs iono (compare <code>cal_gnss_surface</code> with and without).
+- [ ] T59.3 <code>studies/TS-N1/REPORT.md</code> and the chosen default for NISAR in the frame table / algorithm parameters.</p>
+<h3 id="t60-nisar-benchmark-and-cal-disp-v2">T60. NISAR benchmark and cal-disp v2<a class="headerlink" href="#t60-nisar-benchmark-and-cal-disp-v2" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T59
+- [ ] T60.1 Stage ≥ 3 NISAR frames overlapping S1 benchmark frames; gate with the S1 rules.
+- [ ] T60.2 Golden NISAR pair; Docker image; changelog; tag <code>v2.0.0</code>; upstream PR.</p>
+<hr />
+<h2 id="later-cross-cutting">Later / cross-cutting<a class="headerlink" href="#later-cross-cutting" title="Permanent link">&para;</a></h2>
+<h3 id="t61-output-packaging-component-and-gnss-layers">T61. Output packaging: component and GNSS layers<a class="headerlink" href="#t61-output-packaging-component-and-gnss-layers" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T14, T51
+<strong>Context:</strong> D8: new layers go into <code>/auxiliary</code> (already a placeholder) without changing existing names: <code>cal_gnss_surface</code>, <code>cal_tropo</code>, <code>cal_set</code>, <code>cal_unwrap_shift</code> (int8 cycles), <code>cal_reference_offset</code>, <code>defo_area_mask</code>, <code>plate_motion</code> (ENU plate rate → LOS × Δt), <code>gnss_ve</code>, <code>gnss_vn</code> (+σ) as velocities. Enables VLM path A (T55).
+- [ ] T61.1 Product spec update and <code>/auxiliary</code> writer with CF attributes; <code>calibration == Σ cal_*</code> test on the product file.
+- [ ] T61.2 <code>plate_motion</code> layer from <code>geepers.euler.plate_velocity_enu</code> with the frame-table plate; test on a Hawaii pixel (PA) and a Houston pixel (NA).
+- [ ] T61.3 Compression and size budget (gamma product was 585 MB uncompressed → compressed); measure.
+- [ ] T61.4 Golden regeneration (deliberate) and minor version bump; <code>cal-disp validate --group auxiliary</code> covers the new layers.</p>
+<h3 id="t62-ts-u1-phase-2-inland-unwrap-errors">T62. TS-U1 phase 2: inland unwrap errors<a class="headerlink" href="#t62-ts-u1-phase-2-inland-unwrap-errors" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> T42
+<strong>Owner decision 2026-10-09:</strong> unwrap-error correction stays <strong>off</strong> (as TS-U1 phase 1 recommends). Come back to it here: no release enables <code>unwrap_error_correction</code> until a trade study on a truth set large enough for the PRD bar (precision ≥ 0.99, recall ≥ 0.8, ≥ 100 cases; e.g. Hawaii/PR after T40, bay frames) confirms it. Phase 1 evidence: <code>disp2vlm_validation/studies/TS-U1/REPORT.md</code> (Galveston's −2-cycle error is sub-region; LA islands are beyond the 12 km anchor; whole cycles alone don't reproduce the trade-study gains, free offsets did).
+- [ ] T62.1 Use <code>timeseries_inversion_residuals</code> and temporal step detection (k·cycle steps persistent across epochs) to propose inland regions and labels.
+- [ ] T62.2 Extend the T36 estimator to non-water regions; test bench with the new labels.
+- [ ] T62.3 Report and decision on enabling inland correction in a later release.</p>
+<hr />
+<h2 id="dependency-overview">Dependency overview<a class="headerlink" href="#dependency-overview" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart LR
+  subgraph P0[Phase 0 gamma]
+    T01 --&gt; T03; T02 --&gt; T03; T01 --&gt; T04; T01 --&gt; T05; T03 --&gt; T06; T04 --&gt; T06; T05 --&gt; T06
+  end
+  subgraph P1[Phase 1 foundations]
+    T07 --&gt; T08; T07 --&gt; T09; T06 --&gt; T09; T07 --&gt; T10; T07 --&gt; T11
+    T10 --&gt; T12 --&gt; T13; T13 --&gt; T14; T13 --&gt; T15
+    T08 --&gt; T16; T14 --&gt; T17; T16 --&gt; T17; T17 --&gt; T18; T17 --&gt; T19; T08 --&gt; T20
+    T11 --&gt; T21; T15 --&gt; T21; T21 --&gt; T22; T21 --&gt; T23; T22 --&gt; T24; T23 --&gt; T24; T24 --&gt; T25
+    T09 --&gt; T26; T13 --&gt; T26; T17 --&gt; T26; T19 --&gt; T27
+  end
+  subgraph P2[Phase 2 science]
+    T14 --&gt; T28; T18 --&gt; T28; T19 --&gt; T28; T19 --&gt; T29; T29 --&gt; T30; T30 --&gt; T31; T29 --&gt; T32
+    T30 --&gt; T33; T31 --&gt; T33; T32 --&gt; T33; T19 --&gt; T34; T27 --&gt; T34; T27 --&gt; T35; T33 --&gt; T35
+    T18 --&gt; T36; T33 --&gt; T36; T26 --&gt; T37; T33 --&gt; T37; T34 --&gt; T37; T35 --&gt; T37; T25 --&gt; T38; T37 --&gt; T38
+  end
+  subgraph P3[Phase 3 studies]
+    T21 --&gt; T39; T28 --&gt; T39; T11 --&gt; T40; T32 --&gt; T41; T40 --&gt; T41
+    T36 --&gt; T42; T38 --&gt; T42; T21 --&gt; T43; T38 --&gt; T43; T31 --&gt; T44; T34 --&gt; T44; T38 --&gt; T44
+  end
+  subgraph P4[Phase 4 CalVal]
+    T27 --&gt; T45; T39 --&gt; T45; T44 --&gt; T45; T38 --&gt; T46; T40 --&gt; T46; T41 --&gt; T46; T45 --&gt; T46
+    T37 --&gt; T47; T28 --&gt; T48; T46 --&gt; T49; T47 --&gt; T49; T48 --&gt; T49; T24 --&gt; T50; T46 --&gt; T50; T49 --&gt; T51; T50 --&gt; T51
+  end
+  subgraph P5[Phase 5 VLM]
+    T07 --&gt; T52; T17 --&gt; T52; T18 --&gt; T53; T35 --&gt; T53; T17 --&gt; T54; T28 --&gt; T55; T37 --&gt; T55
+    T53 --&gt; T56; T54 --&gt; T56; T55 --&gt; T56; T24 --&gt; T57; T56 --&gt; T57
+  end
+  subgraph P6[Phase 6 NISAR]
+    T18 --&gt; T58; T38 --&gt; T59; T58 --&gt; T59; T59 --&gt; T60
+  end
+  T14 --&gt; T61; T51 --&gt; T61; T42 --&gt; T62</code></pre>
+<h2 id="critical-path-to-v05-calval">Critical path (to v0.5 CalVal)<a class="headerlink" href="#critical-path-to-v05-calval" title="Permanent link">&para;</a></h2>
+<p>T07 → T10 → T12 → T13 → T14 → T17 → T18/T19 → T28 → T33 → T37 → T38 → T46 → T49 → T51, with T21–T25 (validation package) needed by T38 and T39–T45 needed by T46. Phase 0 (T01–T06) runs alongside and only gates T09.</p>
+<h2 id="suggested-weekly-focus">Suggested weekly focus<a class="headerlink" href="#suggested-weekly-focus" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Week</th>
+<th>Focus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>T01, T02, T07, T08, T10, T11, T16 (parallel: T03–T05 as answers arrive)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>T06, T09, T12–T15, T17–T20, T21–T23, T27</td>
+</tr>
+<tr>
+<td>3</td>
+<td>T24–T26, T28–T33, T39 starts, T40 staging starts</td>
+</tr>
+<tr>
+<td>4</td>
+<td>T34–T37, T38, T41, T43</td>
+</tr>
+<tr>
+<td>5–6</td>
+<td>T42, T44, T45, T46 iteration, T47, T48</td>
+</tr>
+<tr>
+<td>7–8</td>
+<td>T49, T50, T51</td>
+</tr>
+<tr>
+<td>9–12</td>
+<td>T52–T57</td>
+</tr>
+<tr>
+<td>when data arrives</td>
+<td>T58–T60; later T61, T62</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.indexes", "content.code.copy", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

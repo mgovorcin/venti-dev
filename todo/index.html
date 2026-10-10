@@ -1,0 +1,1109 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="GNSS calibration of OPERA DISP and projection to vertical land motion">
+      
+      
+      
+        <link rel="canonical" href="https://mgovorcin.github.io/venti-dev/todo/">
+      
+      
+        <link rel="prev" href="../benchmarks/">
+      
+      
+        <link rel="next" href="../decisions/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Task tracker - Venti</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#todo-tracker" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Venti" class="md-header__button md-logo" aria-label="Venti" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Venti
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Task tracker
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mgovorcin/venti-dev" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mgovorcin/venti-dev
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Venti" class="md-nav__button md-logo" aria-label="Venti" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Venti
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mgovorcin/venti-dev" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mgovorcin/venti-dev
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Product requirements (PRD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithm_parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Algorithm parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations (UNR snapshot)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Task tracker
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Task tracker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#phase-0-gamma-03-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0: Gamma 0.3 release
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-foundations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Foundations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-science-port-into-venti" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Science port into Venti
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-trade-studies-and-benchmark-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Trade studies and benchmark data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4-cal-disp-v05-calval-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: cal-disp v0.5 CalVal release
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-5-vlm-v01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: VLM v0.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-disp-nisar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: DISP-NISAR
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#later" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Later
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notebooks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Notebooks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/calibration_workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Calibration workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/vertical_land_motion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vertical land motion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#phase-0-gamma-03-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0: Gamma 0.3 release
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-foundations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Foundations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-science-port-into-venti" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Science port into Venti
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-trade-studies-and-benchmark-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Trade studies and benchmark data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4-cal-disp-v05-calval-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: cal-disp v0.5 CalVal release
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-5-vlm-v01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: VLM v0.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-disp-nisar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: DISP-NISAR
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#later" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Later
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="todo-tracker">TODO tracker<a class="headerlink" href="#todo-tracker" title="Permanent link">&para;</a></h1>
+<p>Task-level status for <a href="../plan/">plan.md</a>. One line per task; subtask checkboxes
+live in <code>plan.md</code>. A task is checked here only when every subtask in <code>plan.md</code>
+is checked and the definition of done in <code>plan.md</code> holds. "Blocked" names the
+external input that is missing.</p>
+<p>Legend: <code>[x]</code> done · <code>[~]</code> in progress · <code>[ ]</code> not started · <code>[!]</code> blocked</p>
+<h2 id="phase-0-gamma-03-release">Phase 0: Gamma 0.3 release<a class="headerlink" href="#phase-0-gamma-03-release" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[x] T01 Confirm the gamma configuration with Talib — done 2026-10-06: 600 km, tropo off, unwrap off (cal-disp <code>docs/decisions/0001-gamma-config.md</code>)</li>
+<li>[x] T02 Secure a Docker build host and build the gamma image — done 2026-10-05: aurora has Docker; <code>cal-disp:0.3.0-rc</code> built, record on cal-disp <code>feature/docker-build-record</code></li>
+<li>[x] T03 Rebuild the golden inside Docker and validate — done 2026-10-06: <code>cal-disp:0.3.0-rc2</code>, 1e-6 in image and on aurora, manifest committed (<code>8bafac7</code>)</li>
+<li>[ ] T04 Fix the delivery documents — depends on T01</li>
+<li>[ ] T05 Confirm product URLs and version string — depends on T01</li>
+<li>[ ] T06 Release gamma 0.3 — depends on T03, T04, T05</li>
+</ul>
+<h2 id="phase-1-foundations">Phase 1: Foundations<a class="headerlink" href="#phase-1-foundations" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[x] T07 Shared engineering-standards kit</li>
+<li>[x] T08 Apply standards to Venti (<code>venti-dev</code>) — done 2026-10-05 on <code>feature/standards</code> (pre-commit.ci switch-on is a manual owner step)</li>
+<li>[ ] T09 Apply standards to cal-disp — depends on T07; T06 only for the upstream PR (ADR-0021)</li>
+<li>[x] T10 Apply standards to geepers fork — done 2026-10-05 on geepers <code>feature/standards</code> (3 commits: env, kit, type fixes)</li>
+<li>[x] T11 Create the validation package repo — done 2026-10-06: private <code>mgovorcin/disp2vlm_validation</code> (<code>v0.0.0</code>)</li>
+<li>[x] T12 geepers dependency audit — done 2026-10-06 (T12.3 approved by the owner on geepers PR #2)</li>
+<li>[x] T13 geepers lean core — done 2026-10-06 on geepers <code>feature/extras-split</code> (provisional on the T12.3 sign-off)</li>
+<li>[x] T14 <code>geepers[grid]</code>: GPS Imaging + Euler, with exclusion areas — done 2026-10-06 on geepers <code>feature/extras-split</code> (reinterpolate_nodes, plate tables, plate_velocity_enu)</li>
+<li>[x] T15 <code>geepers[analysis]</code> and <code>[all]</code> — done 2026-10-06 on geepers <code>feature/extras-split</code> (CI matrix per tier, README install matrix, CHANGELOG)</li>
+<li>[x] T16 Venti bug fixes and packaging repair — done 2026-10-05 on <code>feature/venti-bugfixes</code> (T16.7 research-branch copy still open, see plan)</li>
+<li>[x] T17 Venti package layout: lean core + extras — done 2026-10-06 on <code>feature/lean-core</code> (tiers by dependency, ADR-0020; <code>venti.staging</code>; plate motion from geepers; <code>gnss/unr.py</code> deferred to T28)</li>
+<li>[x] T18 <code>SensorSpec</code> abstraction — done 2026-10-06 on <code>feature/sensor-spec</code> (<code>venti.sensor</code>: S1 implemented, NISAR registered/refused until T58)</li>
+<li>[x] T19 Venti algorithm-parameters schema — done 2026-10-06 on <code>feature/algorithm-schema</code> (schema v2: nested option groups, versioned loader, extra=forbid, unwrap default off)</li>
+<li>[x] T20 Venti documentation site — done 2026-10-05 on <code>feature/docs-site</code> (gh-pages deploy verified only after first push to main)</li>
+<li>[x] T21 Validation package: port the e2e core — depends on T11, T15</li>
+<li>[x] T22 Station classes and per-class metrics — depends on T21</li>
+<li>[x] T23 Gate logic and comparison modes — depends on T21</li>
+<li>[x] T24 Reports and traceability — depends on T22, T23</li>
+<li>[x] T25 Validation CLI, caching, batch execution — depends on T24 (T25.3 batch deferred to T46)</li>
+<li>[~] T26 cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget — T26.1/T26.3 (wavelength) PR #3, T26.6 PR #4, T26.4–T26.5 PR #5 done; T26.2 swap waits for the next pin bump (geepers hardened in PR #4); T26.3 SensorSpec wrappers open</li>
+<li>[x] T27 Frame-parameter table — done 2026-10-06 on <code>feature/frame-table</code> (<code>venti.frames</code>, <code>calibration_options.frame</code>, bundled table for 4 frames; T27.4 cal-disp consumption waits for T37)</li>
+</ul>
+<h2 id="phase-2-science-port-into-venti">Phase 2: Science port into Venti<a class="headerlink" href="#phase-2-science-port-into-venti" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[x] T28 <code>sample_gnss_enu</code> — done 2026-10-06 on <code>feature/gnss-sampling</code> (<code>venti.gnss.sampling</code>: buffer, exclusion + re-interpolation, E/N/U fields, provenance; per-pixel LOS projection replaces LOS extrapolation)</li>
+<li>[x] T29 Gap filling and continuous surface support — done 2026-10-06 on <code>feature/calibration-surface</code> (<code>venti.calibration.gaps</code>)</li>
+<li>[x] T30 Local-linear surface with physical cutoff — done 2026-10-06; T30.4 benchmark on <code>feature/golden-benchmark</code> (<code>docs/benchmarks.md</code>: 21.4 → 13.6 mm station RMSE on the F08882 golden pair)</li>
+<li>[~] T31 Robust coherence weights — core done 2026-10-06 (<code>venti.calibration.weights</code>); gamma-mask golden regression (T31.3) is a cal-disp run in T37</li>
+<li>[x] T32 Remove-restore: defo/event areas — done 2026-10-06 on <code>feature/calibration-weights-rr</code> (<code>venti.calibration.remove_restore</code>)</li>
+<li>[x] T33 Two-pass orchestration and component bookkeeping — done 2026-10-06 on <code>feature/calibration-two-pass</code> (<code>venti.calibration.two_pass.calibrate_pair</code>, <code>CalibrationResult</code>; gamma path reproduces <code>estimate_calibration_surface</code> to 1e-7)</li>
+<li>[x] T34 Tropo modes — done 2026-10-06 on <code>feature/tropo-modes</code> (<code>venti.calibration.tropo</code>: cal-disp numerics bit-identical, stratified fit, relief rule, <code>apply_tropo</code> → <code>cal_tropo</code>; cal-disp CI import deferred to T37)</li>
+<li>[x] T35 σ_CAL model — done 2026-10-06 on <code>feature/sigma-cal</code> (<code>venti.calibration.uncertainty</code>; <code>calibrate_pair</code> returns <code>sigma_cal</code>; z-score test 0.8–1.25)</li>
+<li>[x] T36 Unwrap-error module (gated) — done 2026-10-06 on <code>feature/unwrap-module</code> (<code>venti.unwrap.regions/cycles</code>; 14/14 bench; still off by default until TS-U1)</li>
+<li>[~] T37 cal-disp wiring to the new Venti workflow — T37.1, T37.2, T37.4–T37.6 done 2026-10-09 (cal-disp PR #6; golden 1e-6, v0.5 closure exact, 55 s / 7.27 GB); T37.3 metadata needs a deliberate golden update</li>
+<li>[x] T38 e2e on the 4 existing frames — depends on T25, T37</li>
+</ul>
+<h2 id="phase-3-trade-studies-and-benchmark-data">Phase 3: Trade studies and benchmark data<a class="headerlink" href="#phase-3-trade-studies-and-benchmark-data" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[x] T39 TS-G1: grid fidelity and per-frame k — depends on T21, T28 (σ₀ term proposal open)</li>
+<li>[~] T40 Benchmark data staging (frames 5–8) — frames chosen (T40.1); statics + UNR staged; DISP downloads running (cal_disp_e2e/t40)</li>
+<li>[~] T41 Curate defo and event GeoJSON databases — tool + Ridgecrest events + Houston area done (PR #25); Central Valley, Kīlauea wait for T40 stacks</li>
+<li>[x] T42 TS-U1 phase 1 — depends on T36, T38 (no-go for v0.5; 3 bugs fixed on the way)</li>
+<li>[x] T43 TS-S1: DISP noise model — depends on T21, T38</li>
+<li>[~] T44 TS-T1 and TS-B1 — TS-B1 done 2026-10-09 (keep p = 8); TS-T1 waits for a 0.3–1.5 km relief frame (T40)</li>
+</ul>
+<h2 id="phase-4-cal-disp-v05-calval-release">Phase 4: cal-disp v0.5 CalVal release<a class="headerlink" href="#phase-4-cal-disp-v05-calval-release" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] T45 Populate the frame table — depends on T27, T39, T44</li>
+<li>[~] T46 8-frame gate and edge cases — running 2026-10-09 (cal_disp_e2e/t46): v0.5 + 50 km GNSS buffer re-run on the 4 T38 frames; new frames gamma + v0.5 as their stacks land (<code>t46/progress*.log</code>)</li>
+<li>[~] T47 Memory and runtime toward a small EC2 instance — v0.5 7.27 → 4.1 GB, budget 4.5 GB (cal-disp PR #8, venti-dev PR #22); EC2 measurement open</li>
+<li>[~] T48 Frozen UNR grid snapshot — T48.1, T48.2, T48.4 done 2026-10-06: <code>unr_grid_0.3_IGS20_20261006</code> on <code>s3://opera-adt/opera-ancillary/unr-grid/</code> (28,492 nodes); T48.3 waits for T37</li>
+<li>[ ] T49 v0.5 Docker image, golden regeneration, changelog — depends on T46, T47, T48</li>
+<li>[ ] T50 VnV report and sign-off — depends on T24, T46</li>
+<li>[ ] T51 Release cal-disp v0.5 — depends on T49, T50</li>
+</ul>
+<h2 id="phase-5-vlm-v01">Phase 5: VLM v0.1<a class="headerlink" href="#phase-5-vlm-v01" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[~] T52 VLM repo skeleton — T52.1 done 2026-10-06: private <code>mgovorcin/opera_vlm</code> (VLM-S1 + VLM-NI, scaffold <code>v0.0.0</code>, PR #1 invariants); T52.2 done (opera_vlm PR #7, 2026-10-09); T52.3 product spec open</li>
+<li>[x] T53 Venti <code>[decomposition]</code>: WLS and projection — done 2026-10-06 on <code>feature/decomposition</code> (<code>venti.decomposition</code>: <code>decompose_wls</code>, <code>project_vertical</code>, <code>decompose</code> with mode flag)</li>
+<li>[~] T54 Temporal resampling of asc/desc — T54.1–T54.2 done 2026-10-06 on <code>feature/temporal-resampling</code> (<code>venti.temporal</code>); T54.3 benchmark waits for the T56 frame choice</li>
+<li>[x] T55 GNSS E/N for VLM with provenance check — depends on T28, T37 (strict once cal-disp writes the record, T37.3)</li>
+<li>[ ] T56 VLM workflow and product writer — depends on T53, T54, T55</li>
+<li>[ ] T57 VLM validation and v0.1 release — depends on T24, T56</li>
+</ul>
+<h2 id="phase-6-disp-nisar">Phase 6: DISP-NISAR<a class="headerlink" href="#phase-6-disp-nisar" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] T58 NISAR <code>SensorSpec</code> — depends on T18, beta data</li>
+<li>[ ] T59 TS-N1: ionosphere — depends on T38, T58</li>
+<li>[ ] T60 NISAR benchmark and cal-disp v2 — depends on T59</li>
+</ul>
+<h2 id="later">Later<a class="headerlink" href="#later" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] T61 Output packaging: component and GNSS layers — depends on T14, T51</li>
+<li>[ ] T62 TS-U1 phase 2: inland unwrap errors — depends on T42</li>
+</ul>
+<h2 id="log">Log<a class="headerlink" href="#log" title="Permanent link">&para;</a></h2>
+<ul>
+<li>2026-10-05 Tracker created. Phase 0 is blocked on external inputs (Talib, a Docker host); starting phase 1 at T07.</li>
+<li>2026-10-05 T07 done (<code>00_tools/standards</code>, 16 kit tests). T08 done: Venti <code>feature/prd-docs</code> → <code>feature/standards</code> (pixi fix, kit, SPDX) → <code>feature/docs-site</code> (T20) and <code>feature/venti-bugfixes</code> (T16: λ/2 cycle, ITRF import, cal-disp YAML compat; 271 tests, lint clean). T10/T12 in progress on geepers <code>feature/standards</code> (dependency audit written; <code>affine</code> 3 warning filter + mypy hook bump needed for a green dev env). T02 unblocked: Docker daemon available on aurora; gamma image build started (<code>cal-disp:0.3.0-rc</code>).</li>
+<li>2026-10-05 (cont.) geepers <code>feature/standards</code> committed (env, kit, 21 type fixes; 348 tests, lint green); <code>feature/extras-split</code> holds the T12 audit. Venti branches rebased into one linear stack (prd-docs → standards → docs-site → venti-bugfixes). Gamma image <code>cal-disp:0.3.0-rc</code> built and validated in-image at 1e-6 (cal-disp <code>feature/docker-build-record</code>). Open decisions: T12.3 partition sign-off; validation/VLM repo names (T11/T52); T01 with Talib.</li>
+<li>2026-10-06 All branches pushed; PRs open on the forks (venti-dev #1–#4, geepers #1–#2, cal-disp #1). T13 done: geepers core imports without geopandas/pandera, deps split core/[grid]/[analysis]/[plot]/[all], <code>core-only</code> CI job. Fork Actions are off until enabled in each fork's Actions tab. Next: T14 (incl. T14.3a ITRF2020 plate table), T15.</li>
+<li>2026-10-06 T14 and T15 done on geepers <code>feature/extras-split</code> (PR #2): ITRF2020/2014 plate tables + <code>plate_velocity_enu</code>, <code>reinterpolate_nodes</code>, CI matrix per tier, README/CHANGELOG. 376 tests. Phase 1 remaining: T09 (blocked on T06), T11 (repo name), T17–T19, T21–T27. Next: T17 (Venti layout) now that T14 and T16 are done.</li>
+<li>2026-10-06 T17 done on <code>feature/lean-core</code> (PR #5): tiers by dependency (ADR-0020), <code>venti.staging</code>, plate motion from geepers, <code>ops</code>/<code>core-test</code> envs; suite 291 passed in 19 s. Next: T18 <code>SensorSpec</code>, T19 algorithm-parameters schema, T27 frame table.</li>
+<li>2026-10-06 Phase 2 science port finished on the Venti side: T34 tropo modes (PR #13), T35 σ_CAL (PR #14), T36 unwrap module, gated, 14/14 bench (PR #15); then the unblocked later-phase work: T48.1/T48.4 UNR snapshot + operations doc (PR #16), T53 decomposition (PR #17), T54.1–T54.2 temporal resampling (PR #18). Suite 456 passed, 7 skipped (parity/golden/bench tests need <code>PYTHONPATH</code>, <code>CAL_DISP_GOLDEN_DIR</code>, <code>VENTI_UNWRAP_BENCH_DIR</code>). Everything left open needs a decision or an upstream step: T12.3 sign-off; T11/T52 repo names; T01 → T03–T06 → T09 → T26 → T37 (cal-disp wiring, which also closes T27.4, T30.4, T31.3, T34 CI import, T48.3); T48.2 S3 bucket; T58 beta DISP-NISAR data; fork Actions still to be enabled.</li>
+<li>2026-10-06 (later) CI on the fork fixed (full matrix installs every tier; pre-commit under 3.13; files committed before linting formatted at every branch tip). T30.4 benchmark done on <code>feature/golden-benchmark</code> (PR #19): gamma path reproduces the trade study exactly (21.4 mm); loclin 50 km 13.6 mm; three bugs found by the full-frame run and fixed mid-stack (gamma GNSS-sigma weights gate, sigma-map trimming, 290 s pass-1 tie). Open from it: TS-B1 on weights, +2 mm bias for T38/T39.</li>
+<li>2026-10-06 Gamma release confirmed <strong>not finished</strong> (upstream PR #21 open and unreviewed, no v0.3 tag; T01 sign-off, T03 Docker golden, T04 docs, T05 URLs open). T01.1 memo written (cal-disp fork PR #2: recommends 600 km, tropo off, unwrap off). ADR-0021: v0.5 cal-disp work proceeds on fork branches stacked on <code>gamma-release</code>; T06 gates only the upstream merge. T11 done (<code>disp2vlm_validation</code>, private). T12.3 sign-off requested on geepers PR #2. T48.2 proposal: <code>s3://opera-adt/opera-ancillary/unr-grid/&lt;snapshot_id&gt;/</code>.</li>
+<li>2026-10-06 (owner decisions) Talib accepted the gamma config (600 km, tropo off, unwrap off) → T01 done; golden rebuilt and validated at 1e-6 inside <code>cal-disp:0.3.0-rc2</code> and on aurora, manifest committed, upstream PR #21 updated → T03 done. geepers tiers approved → T12 done; geepers bug in <code>download_data_files</code> (kwargs into thread_map) fixed on geepers PR #3. S3 approved → first UNR snapshot uploaded (T48.2). VLM: products VLM-S1 / VLM-NI, one repo proposed, name pending. Gamma left: T04 docs, T05 URLs/version, T06 tag + delivery.</li>
+<li>2026-10-07 T26 mostly done on stacked cal-disp PRs #3–#5: mask_file applied; reference-pixel rule ported so the core drops opera-utils[disp] (no dask/zarr, golden unchanged); dependency + peak-memory budget with CI step. geepers: grid downloads now atomic and verified (PR #4) so cal-disp can switch to it at the next pin bump.</li>
+<li>2026-10-09 T37 wired: cal-disp calls <code>calibrate_pair</code>; schema-v2 options exposed; gamma golden passes at 1e-6; v0.5 on the golden pair closes exactly, 55 s / 7.27 GB. Wiring exposed two Venti memory regressions, fixed (<code>f7da024</code>, <code>2b2678b</code>, −3 GB). Next: T37.3 metadata + golden update, then T38 e2e on the four frames.</li>
+<li>2026-10-09 T21–T25 done in disp2vlm_validation (PR #1; T25.3 batch deferred to T46): pipeline, classes, gate, reports, traceability, <code>run</code>/<code>summary</code> CLI; reproduces the trade-study F08882 numbers to the printed digit. T38 done: v0.5 (cal-disp PR #6) PASSES on all four frames vs gamma (sill −65 to −82%); Houston bias +1.14 mm/yr misses the 1 mm/yr target; bias issue #2 (inside the products, not chaining). Next: T39 (TS-G1), T42 (TS-U1: per-region offsets), T44 (TS-B1), T37.3 with T49.</li>
+<li>2026-10-09 (later) T39 TS-G1, T43 TS-S1, T44.2 TS-B1 done (disp2vlm_validation <code>studies/TS-*/REPORT.md</code>). k per frame in the frame table (Venti PR #20). Open owner decisions: an additive σ₀ (2.6–4.9 mm) in σ_CAL; the class rule for 'coastal'. Issue #2 corrected: coherence power does not move the bias; the 50 km surface does. Next: T40 (stage frames 5–8), T42 (TS-U1), T47 (memory).</li>
+<li>2026-10-09 (later) T42 TS-U1 phase 1 done: no-go for v0.5 (flag stays off). The v0.5 unwrap path had never run: fixed in cal-disp PR #7 and venti-dev PR #21. Galveston's real error is sub-region (T62); LA islands are beyond the 12 km anchor. Gate note: |bias| rule penalises fixing negative outliers on a positively biased frame (owner decision).</li>
+<li>2026-10-09 (later) T47: memray-guided cuts, products bit-identical: v0.5 peak 7.27 → 4.0–4.1 GB, gamma 6.0 → 3.6–4.0 GB; budget 7.0 → 4.5 GB; worker_settings cap BLAS threads; 2-core run 1 min 43 s → t3.large fits. Unwrap correction stays off until a trade study confirms it (owner; note in T62).</li>
+<li>2026-10-09 (later) Owner decisions applied: (1) σ_CAL = calibration-surface uncertainty; opt-in <code>uncertainty.sigma_nonsecular_meters</code> (default 0) + <code>calibration_std</code> text (venti-dev #23, cal-disp #9); (2) coastal = within 10 km of water bodies ≥ 500 km² (sea); (3) gate bias = median (disp2vlm_validation decision 0001, PR #4). T38 re-run: 4/4 PASS, |median bias| ≤ 1 on all four. New finding: chained v0.5 velocities spread more than gamma (NMAD 1.3 → 2.7, issue #3; relevant to VLM T56).</li>
+<li>2026-10-09 (late) Owner: VLM per pair official + optional velocity product (opera_vlm PR #7). GNSS grid buffer was not applied in cal-disp (old path, padding 0): fixed for v0.5 via sample_gnss_enu (cal-disp PR #10, buffer 50 km); UNR 0–360 longitude bug made R-G5 a no-op (venti-dev PR #26). Defo/event DB v1 drafts + tool (PR #25). T40 downloads running.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.indexes", "content.code.copy", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
