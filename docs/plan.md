@@ -477,9 +477,9 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T55. GNSS E/N for VLM with provenance check
 **Depends on:** T28, T37
 **Context:** D15/PRD §3.2: use DISP-CAL `gnss_ve/vn` layers when present (after T61) else `sample_gnss_enu`; the provenance hash must match the DISP-CAL `/metadata.gnss_provenance`, else fail.
-- [ ] T55.1 `load_gnss_for_vlm(cal_products, grid_cfg, defo_db) -> GnssField` with the two paths and `verify_provenance()`.
-- [ ] T55.2 Tests: matching hash passes; mismatched grid version or DB version raises `ProvenanceMismatch` with a clear message.
-- [ ] T55.3 Velocities scaled to the target epoch pair (`v·Δt`).
+- [x] T55.1 `load_gnss_for_vlm(cal_products, grid_cfg, defo_db) -> GnssField` with the two paths and `verify_provenance()`. *Done 2026-10-09 (venti-dev PR #24):* `venti.gnss.vlm`; products without a record (pre-T37.3) raise unless `allow_missing_provenance=True`; the provenance config hash no longer includes file paths (portable).
+- [x] T55.2 Tests: matching hash passes; mismatched grid version or DB version raises `ProvenanceMismatch` with a clear message. *Done 2026-10-09:* named `ProvenanceMismatchError` / `ProvenanceMissingError` (ruff N818); 9 tests.
+- [x] T55.3 Velocities scaled to the target epoch pair (`v·Δt`). *Done 2026-10-09:* `pair_displacement`.
 
 ### T56. VLM workflow and product writer
 **Depends on:** T53, T54, T55

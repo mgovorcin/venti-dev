@@ -78,7 +78,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [~] T52 VLM repo skeleton — T52.1 done 2026-10-06: private `mgovorcin/opera_vlm` (VLM-S1 + VLM-NI, scaffold `v0.0.0`, PR #1 invariants); T52.2 runconfig ADR and T52.3 product spec open
 - [x] T53 Venti `[decomposition]`: WLS and projection — done 2026-10-06 on `feature/decomposition` (`venti.decomposition`: `decompose_wls`, `project_vertical`, `decompose` with mode flag)
 - [~] T54 Temporal resampling of asc/desc — T54.1–T54.2 done 2026-10-06 on `feature/temporal-resampling` (`venti.temporal`); T54.3 benchmark waits for the T56 frame choice
-- [ ] T55 GNSS E/N for VLM with provenance check — depends on T28, T37
+- [x] T55 GNSS E/N for VLM with provenance check — depends on T28, T37 (strict once cal-disp writes the record, T37.3)
 - [ ] T56 VLM workflow and product writer — depends on T53, T54, T55
 - [ ] T57 VLM validation and v0.1 release — depends on T24, T56
 
