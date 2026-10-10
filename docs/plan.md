@@ -364,10 +364,10 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T41. Curate defo and event GeoJSON databases
 **Depends on:** T32, T40
 **Context:** D9: curated static GeoJSON, offline, versioned. Recipe (trade study rr4): areas from InSAR velocity vs regional trend + buffer, reaching stable ground; keep real GNSS points nearby. Events: Ridgecrest Mw 7.1 (2019-07-06) footprint from a scaling law + buffer; Kīlauea 2018. Start from `defo_area2.geojson` (Houston).
-- [ ] T41.1 Tool `venti-defo-areas` (in `[research]`): velocity raster → candidate polygons (threshold on |v − trend|, buffer, simplify, must touch stable ground) → GeoJSON draft for human review.
-- [ ] T41.2 Review and finalize polygons for Houston/Galveston, Central Valley (San Joaquin), Kīlauea; `defo_area_db_v1.geojson`.
-- [ ] T41.3 `event_db_v1.geojson`: Ridgecrest (t0, footprint, source USGS ComCat); schema per T32.1.
-- [ ] T41.4 Tests: every polygon is valid, has `id`/`version`, and reaches outside its own velocity anomaly (checked against T40.4 quick-looks).
+- [x] T41.1 Tool `venti-defo-areas` (in `[research]`): velocity raster → candidate polygons (threshold on |v − trend|, buffer, simplify, must touch stable ground) → GeoJSON draft for human review. *Done 2026-10-09 (venti-dev PR #25):* `venti.research.defo_areas`; on Houston the draft lies 100% inside the curated polygon but covers 28% of it (calibrated input required; raw DISP unusable) — a review aid, not a replacement.
+- [~] T41.2 Review and finalize polygons for Houston/Galveston, Central Valley (San Joaquin), Kīlauea; `defo_area_db_v1.geojson`. *Started:* `defo_area_db_v1.geojson` 1.0-draft with Houston-Galveston (trade-study polygon); Central Valley and Kīlauea wait for the T40 stacks.
+- [x] T41.3 `event_db_v1.geojson`: Ridgecrest (t0, footprint, source USGS ComCat); schema per T32.1. *Done 2026-10-09 (venti-dev PR #25, 1.0-draft):* Mw 7.1 + Mw 6.4 from ComCat; footprint = W&C 1994 rupture along strike, buffer max(15 km, 0.75 L); to check vs the F16941 coseismic step.
+- [~] T41.4 Tests: every polygon is valid, has `id`/`version`, and reaches outside its own velocity anomaly (checked against T40.4 quick-looks).
 
 ### T42. TS-U1 phase 1: islands with trusted GNSS
 **Depends on:** T36, T38
