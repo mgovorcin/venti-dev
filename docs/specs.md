@@ -122,7 +122,7 @@ All are behind `algorithm_parameters.yaml` flags. Gamma behaviour stays reproduc
 
 | ID | Requirement |
 |---|---|
-| R-E1 | σ_CAL² = (k·σ_grid)² + σ_fit² + σ_tropo² + σ_ref². **k is per frame**, from TS-G1, fitted on a station split held out from validation stations. σ_CAL grows inside interpolated defo/event areas. Unwrap shifts are treated as exact. |
+| R-E1 | σ_CAL² = (k·σ_grid)² + σ_fit² + σ_tropo² + σ_ref². **k is per frame**, from TS-G1, fitted on a station split held out from validation stations. σ_CAL grows inside interpolated defo/event areas. Unwrap shifts are treated as exact. σ_CAL is the uncertainty of the calibration surface (owner, 2026-10-09); per-pair non-secular station motion (TS-G1: 2.6–4.9 mm) is documented and available as the opt-in `uncertainty.sigma_nonsecular_meters`. |
 | R-E2 | The product documents that σ_CAL covers only the calibration term. Users add DISP noise at wavelengths shorter than 50 km; the placeholder is about 10 mm until TS-S1 finishes. |
 | R-E3 | VLM σ_U and σ_E are propagated through the WLS, including σ_CAL, σ_DISP, σ_N and the temporal-interpolation σ |
 | R-E4 | σ realism (std(z) ∈ [0.8, 1.25], 95% coverage between 90% and 98%) is **reported** in v0.5, not gated |
