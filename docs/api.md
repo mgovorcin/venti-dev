@@ -23,6 +23,8 @@ Generated from the docstrings (NumPyDoc) by mkdocstrings.
 
 ::: venti.calibration.two_pass
 
+::: venti.calibration.tropo
+
 ## Calibration surface (gamma)
 
 ::: venti.surface

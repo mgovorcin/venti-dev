@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml  # type: ignore[import-untyped]
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # ============================================================================
 # Algorithm Parameters (algorithm_parameters.yaml)
@@ -173,6 +173,16 @@ class TropoOptions(BaseModel):
     )
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
+
+    @model_validator(mode="after")
+    def _bands_ordered(self) -> TropoOptions:
+        if self.relief_off_meters > self.relief_stratified_meters:
+            msg = (
+                "relief_off_meters must not exceed relief_stratified_meters "
+                f"({self.relief_off_meters} > {self.relief_stratified_meters})"
+            )
+            raise ValueError(msg)
+        return self
 
 
 class GnssOptions(BaseModel):

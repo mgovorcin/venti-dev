@@ -88,6 +88,18 @@ Value-changing entries say which product layers move and by how much
     unwrap hook on DISP − CAL₁, shifts applied, final surface). The result's
     `calibration` is exactly `cal_gnss_surface + cal_reference_offset +
     cal_tropo + cal_set + cal_unwrap_shift` (`assert_closed`).
+  - `tropo` (plan T34, R-T1): the cal-disp tropo numerics
+    (`interpolate_in_time`, `interpolate_to_dem_surface`,
+    `compute_los_correction`, `pair_correction`) ported verbatim and kept
+    bit-identical by a parity test that imports cal-disp when available;
+    `stratified_tropo` / `stratified_delay` (per-epoch ``a + b x + c y + d h
+    + e h**2`` fit, the height-dependent part only), `dem_relief` (p95 - p5),
+    `choose_tropo_mode` (``legacy`` -> `apply_tropo_correction`; ``auto``:
+    off below 1.5 km relief, stratified at or above; the frame table pins
+    F16940 stratified and F08882/F08886/F08622 off) and `apply_tropo`, which
+    returns the ``cal_tropo`` component for `calibrate_pair`. Schema v2
+    defaults (`tropo.mode = legacy`) change nothing. `TropoOptions` now
+    rejects `relief_off_meters > relief_stratified_meters`.
 - `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
   the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
   bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files

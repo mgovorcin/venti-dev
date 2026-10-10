@@ -48,7 +48,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [~] T31 Robust coherence weights — core done 2026-10-06 (`venti.calibration.weights`); gamma-mask golden regression (T31.3) is a cal-disp run in T37
 - [x] T32 Remove-restore: defo/event areas — done 2026-10-06 on `feature/calibration-weights-rr` (`venti.calibration.remove_restore`)
 - [x] T33 Two-pass orchestration and component bookkeeping — done 2026-10-06 on `feature/calibration-two-pass` (`venti.calibration.two_pass.calibrate_pair`, `CalibrationResult`; gamma path reproduces `estimate_calibration_surface` to 1e-7)
-- [ ] T34 Tropo modes — depends on T19, T27
+- [x] T34 Tropo modes — done 2026-10-06 on `feature/tropo-modes` (`venti.calibration.tropo`: cal-disp numerics bit-identical, stratified fit, relief rule, `apply_tropo` → `cal_tropo`; cal-disp CI import deferred to T37)
 - [ ] T35 σ_CAL model — depends on T27, T33
 - [ ] T36 Unwrap-error module (gated) — depends on T18, T33
 - [ ] T37 cal-disp wiring to the new Venti workflow — depends on T26, T33, T34, T35

@@ -12,7 +12,9 @@ flags in `calibration_options`, so the gamma algorithm stays reproducible:
 - `weights` (T31): robust x coherence^p weights;
 - `remove_restore` (T32): defo/event areas;
 - `two_pass` (T33): robust tie -> unwrap hook -> final surface, with the
-  component bookkeeping `calibration == sum(cal_*)`.
+  component bookkeeping `calibration == sum(cal_*)`;
+- `tropo` (T34): the cal-disp tropo numerics and the off/full/stratified/auto
+  modes that produce the ``cal_tropo`` component.
 """
 
 from .gaps import base_weights, fill_gaps
@@ -26,6 +28,15 @@ from .remove_restore import (
     remove_restore_mask,
     sigma_inflation_inside,
 )
+from .tropo import (
+    StratifiedModel,
+    apply_tropo,
+    choose_tropo_mode,
+    dem_relief,
+    pair_correction,
+    stratified_delay,
+    stratified_tropo,
+)
 from .two_pass import CalibrationResult, calibrate_pair
 from .weights import coherence_weights, fit_weights, robust_weights
 
@@ -34,16 +45,23 @@ __all__ = [
     "CalibrationResult",
     "EventDB",
     "RemoveRestore",
+    "StratifiedModel",
+    "apply_tropo",
     "base_weights",
     "calibrate_pair",
+    "choose_tropo_mode",
     "coherence_weights",
+    "dem_relief",
     "fill_gaps",
     "fit_weights",
     "kernel_sigma_px",
     "load_area_db",
     "load_event_db",
     "loclin_surface",
+    "pair_correction",
     "remove_restore_mask",
     "robust_weights",
     "sigma_inflation_inside",
+    "stratified_delay",
+    "stratified_tropo",
 ]
