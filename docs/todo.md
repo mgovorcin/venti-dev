@@ -9,9 +9,9 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 ## Phase 0: Gamma 0.3 release
 
-- [!] T01 Confirm the gamma configuration with Talib — blocked on Talib's answers
+- [x] T01 Confirm the gamma configuration with Talib — done 2026-10-06: 600 km, tropo off, unwrap off (cal-disp `docs/decisions/0001-gamma-config.md`)
 - [x] T02 Secure a Docker build host and build the gamma image — done 2026-10-05: aurora has Docker; `cal-disp:0.3.0-rc` built, record on cal-disp `feature/docker-build-record`
-- [ ] T03 Rebuild the golden inside Docker and validate — depends on T01, T02
+- [x] T03 Rebuild the golden inside Docker and validate — done 2026-10-06: `cal-disp:0.3.0-rc2`, 1e-6 in image and on aurora, manifest committed (`8bafac7`)
 - [ ] T04 Fix the delivery documents — depends on T01
 - [ ] T05 Confirm product URLs and version string — depends on T01
 - [ ] T06 Release gamma 0.3 — depends on T03, T04, T05
@@ -20,10 +20,10 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 
 - [x] T07 Shared engineering-standards kit
 - [x] T08 Apply standards to Venti (`venti-dev`) — done 2026-10-05 on `feature/standards` (pre-commit.ci switch-on is a manual owner step)
-- [ ] T09 Apply standards to cal-disp — depends on T06, T07
+- [ ] T09 Apply standards to cal-disp — depends on T07; T06 only for the upstream PR (ADR-0021)
 - [x] T10 Apply standards to geepers fork — done 2026-10-05 on geepers `feature/standards` (3 commits: env, kit, type fixes)
-- [ ] T11 Create the validation package repo — depends on T07
-- [~] T12 geepers dependency audit — T12.1–T12.2 done (`docs/dependency_audit.md` on `feature/extras-split`); T12.3 owner sign-off pending
+- [x] T11 Create the validation package repo — done 2026-10-06: private `mgovorcin/disp2vlm_validation` (`v0.0.0`)
+- [x] T12 geepers dependency audit — done 2026-10-06 (T12.3 approved by the owner on geepers PR #2)
 - [x] T13 geepers lean core — done 2026-10-06 on geepers `feature/extras-split` (provisional on the T12.3 sign-off)
 - [x] T14 `geepers[grid]`: GPS Imaging + Euler, with exclusion areas — done 2026-10-06 on geepers `feature/extras-split` (reinterpolate_nodes, plate tables, plate_velocity_enu)
 - [x] T15 `geepers[analysis]` and `[all]` — done 2026-10-06 on geepers `feature/extras-split` (CI matrix per tier, README install matrix, CHANGELOG)
@@ -32,27 +32,27 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T18 `SensorSpec` abstraction — done 2026-10-06 on `feature/sensor-spec` (`venti.sensor`: S1 implemented, NISAR registered/refused until T58)
 - [x] T19 Venti algorithm-parameters schema — done 2026-10-06 on `feature/algorithm-schema` (schema v2: nested option groups, versioned loader, extra=forbid, unwrap default off)
 - [x] T20 Venti documentation site — done 2026-10-05 on `feature/docs-site` (gh-pages deploy verified only after first push to main)
-- [ ] T21 Validation package: port the e2e core — depends on T11, T15
-- [ ] T22 Station classes and per-class metrics — depends on T21
-- [ ] T23 Gate logic and comparison modes — depends on T21
-- [ ] T24 Reports and traceability — depends on T22, T23
-- [ ] T25 Validation CLI, caching, batch execution — depends on T24
-- [ ] T26 cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget — depends on T09, T13, T17
+- [x] T21 Validation package: port the e2e core — depends on T11, T15
+- [x] T22 Station classes and per-class metrics — depends on T21
+- [x] T23 Gate logic and comparison modes — depends on T21
+- [x] T24 Reports and traceability — depends on T22, T23
+- [x] T25 Validation CLI, caching, batch execution — depends on T24 (T25.3 batch deferred to T46)
+- [~] T26 cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget — T26.1/T26.3 (wavelength) PR #3, T26.6 PR #4, T26.4–T26.5 PR #5 done; T26.2 swap waits for the next pin bump (geepers hardened in PR #4); T26.3 SensorSpec wrappers open
 - [x] T27 Frame-parameter table — done 2026-10-06 on `feature/frame-table` (`venti.frames`, `calibration_options.frame`, bundled table for 4 frames; T27.4 cal-disp consumption waits for T37)
 
 ## Phase 2: Science port into Venti
 
 - [x] T28 `sample_gnss_enu` — done 2026-10-06 on `feature/gnss-sampling` (`venti.gnss.sampling`: buffer, exclusion + re-interpolation, E/N/U fields, provenance; per-pixel LOS projection replaces LOS extrapolation)
 - [x] T29 Gap filling and continuous surface support — done 2026-10-06 on `feature/calibration-surface` (`venti.calibration.gaps`)
-- [~] T30 Local-linear surface with physical cutoff — done except T30.4 (golden-pair benchmark after the cal-disp wiring, T37); method switch in `calibrate_pair`
+- [x] T30 Local-linear surface with physical cutoff — done 2026-10-06; T30.4 benchmark on `feature/golden-benchmark` (`docs/benchmarks.md`: 21.4 → 13.6 mm station RMSE on the F08882 golden pair)
 - [~] T31 Robust coherence weights — core done 2026-10-06 (`venti.calibration.weights`); gamma-mask golden regression (T31.3) is a cal-disp run in T37
 - [x] T32 Remove-restore: defo/event areas — done 2026-10-06 on `feature/calibration-weights-rr` (`venti.calibration.remove_restore`)
 - [x] T33 Two-pass orchestration and component bookkeeping — done 2026-10-06 on `feature/calibration-two-pass` (`venti.calibration.two_pass.calibrate_pair`, `CalibrationResult`; gamma path reproduces `estimate_calibration_surface` to 1e-7)
 - [x] T34 Tropo modes — done 2026-10-06 on `feature/tropo-modes` (`venti.calibration.tropo`: cal-disp numerics bit-identical, stratified fit, relief rule, `apply_tropo` → `cal_tropo`; cal-disp CI import deferred to T37)
 - [x] T35 σ_CAL model — done 2026-10-06 on `feature/sigma-cal` (`venti.calibration.uncertainty`; `calibrate_pair` returns `sigma_cal`; z-score test 0.8–1.25)
 - [x] T36 Unwrap-error module (gated) — done 2026-10-06 on `feature/unwrap-module` (`venti.unwrap.regions/cycles`; 14/14 bench; still off by default until TS-U1)
-- [ ] T37 cal-disp wiring to the new Venti workflow — depends on T26, T33, T34, T35
-- [ ] T38 e2e on the 4 existing frames — depends on T25, T37
+- [~] T37 cal-disp wiring to the new Venti workflow — T37.1, T37.2, T37.4–T37.6 done 2026-10-09 (cal-disp PR #6; golden 1e-6, v0.5 closure exact, 55 s / 7.27 GB); T37.3 metadata needs a deliberate golden update
+- [x] T38 e2e on the 4 existing frames — depends on T25, T37
 
 ## Phase 3: Trade studies and benchmark data
 
@@ -68,14 +68,14 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] T45 Populate the frame table — depends on T27, T39, T44
 - [ ] T46 8-frame gate and edge cases — depends on T38, T40, T41, T45
 - [ ] T47 Memory and runtime toward a small EC2 instance — depends on T37
-- [~] T48 Frozen UNR grid snapshot — T48.1 + T48.4 done 2026-10-06 on `feature/unr-snapshot` (`venti.gnss.snapshot`, `scripts/snapshot_unr_grid.py`, `docs/operations.md`); T48.2 blocked on the S3 bucket decision, T48.3 waits for T37
+- [~] T48 Frozen UNR grid snapshot — T48.1, T48.2, T48.4 done 2026-10-06: `unr_grid_0.3_IGS20_20261006` on `s3://opera-adt/opera-ancillary/unr-grid/` (28,492 nodes); T48.3 waits for T37
 - [ ] T49 v0.5 Docker image, golden regeneration, changelog — depends on T46, T47, T48
 - [ ] T50 VnV report and sign-off — depends on T24, T46
 - [ ] T51 Release cal-disp v0.5 — depends on T49, T50
 
 ## Phase 5: VLM v0.1
 
-- [ ] T52 VLM repo skeleton — depends on T07, T17
+- [~] T52 VLM repo skeleton — T52.1 done 2026-10-06: private `mgovorcin/opera_vlm` (VLM-S1 + VLM-NI, scaffold `v0.0.0`, PR #1 invariants); T52.2 runconfig ADR and T52.3 product spec open
 - [x] T53 Venti `[decomposition]`: WLS and projection — done 2026-10-06 on `feature/decomposition` (`venti.decomposition`: `decompose_wls`, `project_vertical`, `decompose` with mode flag)
 - [~] T54 Temporal resampling of asc/desc — T54.1–T54.2 done 2026-10-06 on `feature/temporal-resampling` (`venti.temporal`); T54.3 benchmark waits for the T56 frame choice
 - [ ] T55 GNSS E/N for VLM with provenance check — depends on T28, T37
@@ -102,3 +102,9 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-06 T14 and T15 done on geepers `feature/extras-split` (PR #2): ITRF2020/2014 plate tables + `plate_velocity_enu`, `reinterpolate_nodes`, CI matrix per tier, README/CHANGELOG. 376 tests. Phase 1 remaining: T09 (blocked on T06), T11 (repo name), T17–T19, T21–T27. Next: T17 (Venti layout) now that T14 and T16 are done.
 - 2026-10-06 T17 done on `feature/lean-core` (PR #5): tiers by dependency (ADR-0020), `venti.staging`, plate motion from geepers, `ops`/`core-test` envs; suite 291 passed in 19 s. Next: T18 `SensorSpec`, T19 algorithm-parameters schema, T27 frame table.
 - 2026-10-06 Phase 2 science port finished on the Venti side: T34 tropo modes (PR #13), T35 σ_CAL (PR #14), T36 unwrap module, gated, 14/14 bench (PR #15); then the unblocked later-phase work: T48.1/T48.4 UNR snapshot + operations doc (PR #16), T53 decomposition (PR #17), T54.1–T54.2 temporal resampling (PR #18). Suite 456 passed, 7 skipped (parity/golden/bench tests need `PYTHONPATH`, `CAL_DISP_GOLDEN_DIR`, `VENTI_UNWRAP_BENCH_DIR`). Everything left open needs a decision or an upstream step: T12.3 sign-off; T11/T52 repo names; T01 → T03–T06 → T09 → T26 → T37 (cal-disp wiring, which also closes T27.4, T30.4, T31.3, T34 CI import, T48.3); T48.2 S3 bucket; T58 beta DISP-NISAR data; fork Actions still to be enabled.
+- 2026-10-06 (later) CI on the fork fixed (full matrix installs every tier; pre-commit under 3.13; files committed before linting formatted at every branch tip). T30.4 benchmark done on `feature/golden-benchmark` (PR #19): gamma path reproduces the trade study exactly (21.4 mm); loclin 50 km 13.6 mm; three bugs found by the full-frame run and fixed mid-stack (gamma GNSS-sigma weights gate, sigma-map trimming, 290 s pass-1 tie). Open from it: TS-B1 on weights, +2 mm bias for T38/T39.
+- 2026-10-06 Gamma release confirmed **not finished** (upstream PR #21 open and unreviewed, no v0.3 tag; T01 sign-off, T03 Docker golden, T04 docs, T05 URLs open). T01.1 memo written (cal-disp fork PR #2: recommends 600 km, tropo off, unwrap off). ADR-0021: v0.5 cal-disp work proceeds on fork branches stacked on `gamma-release`; T06 gates only the upstream merge. T11 done (`disp2vlm_validation`, private). T12.3 sign-off requested on geepers PR #2. T48.2 proposal: `s3://opera-adt/opera-ancillary/unr-grid/<snapshot_id>/`.
+- 2026-10-06 (owner decisions) Talib accepted the gamma config (600 km, tropo off, unwrap off) → T01 done; golden rebuilt and validated at 1e-6 inside `cal-disp:0.3.0-rc2` and on aurora, manifest committed, upstream PR #21 updated → T03 done. geepers tiers approved → T12 done; geepers bug in `download_data_files` (kwargs into thread_map) fixed on geepers PR #3. S3 approved → first UNR snapshot uploaded (T48.2). VLM: products VLM-S1 / VLM-NI, one repo proposed, name pending. Gamma left: T04 docs, T05 URLs/version, T06 tag + delivery.
+- 2026-10-07 T26 mostly done on stacked cal-disp PRs #3–#5: mask_file applied; reference-pixel rule ported so the core drops opera-utils[disp] (no dask/zarr, golden unchanged); dependency + peak-memory budget with CI step. geepers: grid downloads now atomic and verified (PR #4) so cal-disp can switch to it at the next pin bump.
+- 2026-10-09 T37 wired: cal-disp calls `calibrate_pair`; schema-v2 options exposed; gamma golden passes at 1e-6; v0.5 on the golden pair closes exactly, 55 s / 7.27 GB. Wiring exposed two Venti memory regressions, fixed (`f7da024`, `2b2678b`, −3 GB). Next: T37.3 metadata + golden update, then T38 e2e on the four frames.
+- 2026-10-09 T21–T25 done in disp2vlm_validation (PR #1; T25.3 batch deferred to T46): pipeline, classes, gate, reports, traceability, `run`/`summary` CLI; reproduces the trade-study F08882 numbers to the printed digit. T38 done: v0.5 (cal-disp PR #6) PASSES on all four frames vs gamma (sill −65 to −82%); Houston bias +1.14 mm/yr misses the 1 mm/yr target; bias issue #2 (inside the products, not chaining). Next: T39 (TS-G1), T42 (TS-U1: per-region offsets), T44 (TS-B1), T37.3 with T49.

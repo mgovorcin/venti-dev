@@ -354,3 +354,40 @@ class TestFidelityFixes:
         coarse = seen["residual"]
         ok = valid & ~bowl_mask
         assert np.nanmax(np.abs(fine - coarse)[ok]) < 0.0005
+
+
+@pytest.mark.parametrize("method", ["windowed_plane", "loclin"])
+def test_inputs_are_not_modified(method):
+    """calibrate_pair no longer copies its inputs defensively (memory, T37);
+    it must never write into them."""
+    disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
+    disp = disp.astype(np.float32)
+    gnss32 = gnss.astype(np.float32)
+    tropo = np.full(disp.shape, 0.002, dtype=np.float32)
+    set_ = np.full(disp.shape, -0.0007, dtype=np.float32)
+    before = [a.copy() for a in (disp, gnss32, tropo, set_)]
+    if method == "loclin":
+        o = opts_v05(two_pass=True)
+    else:
+        o = CalibrationOptions(
+            unwrap_error_correction=False, window_size_meters=60 * PIXEL_M
+        )
+    res = calibrate_pair(
+        disp,
+        gnss32,
+        valid,
+        REF,
+        o,
+        PIXEL_M,
+        CYCLE_M,
+        coherence=coh,
+        tropo=tropo,
+        set_correction=set_,
+        exclude_mask=bowl_mask,
+        n_jobs=1,
+    )
+    for a, b in zip((disp, gnss32, tropo, set_), before, strict=True):
+        np.testing.assert_array_equal(a, b)
+    res.assert_closed()
+    # components that are not applied share one read-only zero layer
+    assert not res.cal_unwrap_shift.flags.writeable

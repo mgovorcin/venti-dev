@@ -24,9 +24,9 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T01. Confirm the gamma configuration with Talib
 **Depends on:** none
 **Context:** The delivered gamma 0.3 (600 km window, tropo on, unwrap on) was never validated end to end; our `gamma-release` has unwrap **off** and differs from the delivered `calibration` by a median of −6.7 cm. Talib's own validation used 30 km and tropo off. The release can't be tagged until one configuration is agreed. Open questions are in `gamma_release/delivery_docs_review.md`.
-- [ ] T01.1 Write a one-page decision memo: the three configurations (delivered, Talib's validated, ours), the GNSS-grid bias of each (−9.3 cm vs +0.5 cm), and the recommendation (600 km, tropo on, unwrap off).
-- [ ] T01.2 Send the memo and the four questions from `delivery_docs_review.md` to Talib; record the answers in `cal-disp/docs/decisions/0001-gamma-config.md`.
-- [ ] T01.3 Freeze `test_golden/configs/algorithm_parameters.yaml` to the agreed values; revert the `output2` paths noted in `GAMMA_RELEASE_HANDOFF.md`.
+- [x] T01.1 Write a one-page decision memo: the three configurations (delivered, Talib's validated, ours), the GNSS-grid bias of each (−9.3 cm vs +0.5 cm), and the recommendation (600 km, tropo on, unwrap off). *Done 2026-10-06:* cal-disp `docs/decisions/0001-gamma-config.md` (fork PR #2). The station evidence changed the recommendation to **600 km, tropo off, unwrap off** (36.9 → 21.4 mm RMSE at 83 real stations on the golden pair).
+- [x] T01.2 Send the memo and the four questions from `delivery_docs_review.md` to Talib; record the answers in `cal-disp/docs/decisions/0001-gamma-config.md`. *Done 2026-10-06:* Talib accepted all proposals; answers in cal-disp `docs/decisions/0001-gamma-config.md` (Q3 version string not covered: `v1.0` kept, to confirm with T05).
+- [x] T01.3 Freeze `test_golden/configs/algorithm_parameters.yaml` to the agreed values; revert the `output2` paths noted in `GAMMA_RELEASE_HANDOFF.md`. *Done 2026-10-06:* `apply_tropo_correction: false` in `scripts/build_golden_output.sh` (`ac9616f`); the `output2` paths are gone with the rebuilt golden configs.
 
 ### T02. Secure a Docker build host and build the gamma image
 **Depends on:** none
@@ -38,10 +38,10 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T03. Rebuild the golden inside Docker and validate
 **Depends on:** T01, T02
 **Context:** `scripts/build_golden_output.sh` builds the reference product; `scripts/run_validation.sh --golden-dir test_golden` reruns the workflow and compares at tolerance 1e-6 (`cal-disp validate` checks values, attrs, CRS, dtype and identification). Both must run inside the image, mounting `test_golden/` (4.9 GB: `configs`, `input_data`, `golden_output`).
-- [ ] T03.1 Run `build_golden_output.sh` inside the image with the T01 config; store the product in `test_golden/golden_output` (exactly one `OPERA_L4_DISP-CAL-S1_*.nc`).
-- [ ] T03.2 Run `run_validation.sh` inside the image; it must print `✓ Validation passed`. Save the log as `test_golden/validation_0.3.0.log`.
-- [ ] T03.3 Run `run_validation.sh` on aurora with the pixi `dev` env against the Docker-built golden; record whether it passes at 1e-6 (expected: possibly not, because of GDAL). Document the result in `docs/development.md`. *Dry run 2026-10-05 (before T01):* the reverse direction already holds — `run_validation.sh` inside `cal-disp:0.3.0-rc` (GDAL 3.13.3, Python 3.13.15, rasterio 1.5.1) reproduces the aurora-built golden at 1e-6, peak 6.31 GB (log `tmp/caldisp_docker_validate.log`). So for the gamma configuration the GDAL-version dependence of the tropo reprojection does not change the product at that tolerance.
-- [ ] T03.4 Write `test_golden/MANIFEST.sha256` for inputs and golden output and commit it (data itself stays out of git).
+- [x] T03.1 Run `build_golden_output.sh` inside the image with the T01 config; store the product in `test_golden/golden_output` (exactly one `OPERA_L4_DISP-CAL-S1_*.nc`). *Done 2026-10-06* in `cal-disp:0.3.0-rc2` (from `ac9616f`), 76 s.
+- [x] T03.2 Run `run_validation.sh` inside the image; it must print `✓ Validation passed`. Save the log as `test_golden/validation_0.3.0.log`. *Done:* passed at 1e-6, peak 5.65 GB (`test_golden/validation_0.3.0.log`).
+- [x] T03.3 Run `run_validation.sh` on aurora with the pixi `dev` env against the Docker-built golden; record whether it passes at 1e-6 (expected: possibly not, because of GDAL). Document the result in `docs/development.md`. *Dry run 2026-10-05 (before T01):* the reverse direction already holds — `run_validation.sh` inside `cal-disp:0.3.0-rc` (GDAL 3.13.3, Python 3.13.15, rasterio 1.5.1) reproduces the aurora-built golden at 1e-6, peak 6.31 GB (log `tmp/caldisp_docker_validate.log`). So for the gamma configuration the GDAL-version dependence of the tropo reprojection does not change the product at that tolerance. *Done:* passed at 1e-6 on aurora, pixi `dev` with Venti `2a7e61f`, GDAL 3.13.3.
+- [x] T03.4 Write `test_golden/MANIFEST.sha256` for inputs and golden output and commit it (data itself stays out of git). *Done:* `docs/golden/MANIFEST_0.3.0.sha256` + `docs/golden/README.md` (`8bafac7`, pushed to upstream PR #21).
 
 ### T04. Fix the delivery documents
 **Depends on:** T01
@@ -89,8 +89,8 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 - [x] T08.4 Enable pre-commit.ci and a GitHub Actions `test` workflow on the fork. (Actions: enabled on `mgovorcin/venti-dev`, `test.yaml` + `pre-commit.yaml` + `docs.yaml` run on PRs. pre-commit.ci: must be switched on at https://pre-commit.ci by the repo owner — not scriptable.)
 
 ### T09. Apply standards to cal-disp
-**Depends on:** T06, T07
-**Context:** Do this after the gamma release so the release diff stays clean. cal-disp already has pre-commit.ci, mkdocs and pixi; align them with the kit rather than replacing them. Two pytest configs existed (structural review); keep one.
+**Depends on:** T07 (development); T06 for the upstream PR only (ADR-0021)
+**Context:** Do this after the gamma release so the release diff stays clean. *ADR-0021 (2026-10-06):* developed now on fork branches stacked on `gamma-release`; upstream only after the gamma tag. cal-disp already has pre-commit.ci, mkdocs and pixi; align them with the kit rather than replacing them. Two pytest configs existed (structural review); keep one.
 - [ ] T09.1 Run `apply_standards.sh`; reconcile with the existing pre-commit config; one pytest config.
 - [ ] T09.2 Add `ops` pixi env mirroring the Docker image; `conda-lock` generated from it; document in `docker/README.md`.
 - [ ] T09.3 `CLAUDE.md` with Invariants: CLI and runconfig frozen (PRD §2.2), additive `algorithm_parameters.yaml`, golden policy.
@@ -105,17 +105,17 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 
 ### T11. Create the validation package repo
 **Depends on:** T07
-**Context:** New repo under `mgovorcin/`, name TBD (PRD §7.5 Q4; proposal `disp-validate`). It will depend on `geepers[analysis]` and must never be in the operational image.
-- [ ] T11.1 Create the repo from the kit (the `sas-scaffold` skill in `00_tools` provides the CLI/pixi/pre-commit/CI skeleton; skip its PGE runconfig and product-writer parts, this is a tool, not a SAS): `src/<pkg>/`, `tests/`, `docs/`, pixi, CI, `CLAUDE.md` (Invariants: uses only independent GNSS — UNR daily stations and MIDAS — never the calibration grid).
-- [ ] T11.2 Add the dependency list: `geepers[analysis]`, `xarray`, `rioxarray`, `scipy`, `pandas`, `jinja2`, `matplotlib`; pin `venti-dev` only as an optional extra.
-- [ ] T11.3 Write `docs/scope.md` from PRD §3.4 and §2.7 (metrics, modes, gate, outputs, audience).
+**Context:** New repo under `mgovorcin/`, name TBD (PRD §7.5 Q4; proposal `disp-validate`). *Done 2026-10-06:* named **`disp2vlm_validation`** by the owner; private `mgovorcin/disp2vlm_validation` (`v0.0.0`), lean tool skeleton (not the SAS scaffold), CLI `disp2vlm-validate gate`, gate and benchmark frames as data, licensing template (draft, so private). It will depend on `geepers[analysis]` and must never be in the operational image.
+- [x] T11.1 Create the repo from the kit (the `sas-scaffold` skill in `00_tools` provides the CLI/pixi/pre-commit/CI skeleton; skip its PGE runconfig and product-writer parts, this is a tool, not a SAS): `src/<pkg>/`, `tests/`, `docs/`, pixi, CI, `CLAUDE.md` (Invariants: uses only independent GNSS — UNR daily stations and MIDAS — never the calibration grid).
+- [x] T11.2 Add the dependency list: `geepers[analysis]`, `xarray`, `rioxarray`, `scipy`, `pandas`, `jinja2`, `matplotlib`; pin `venti-dev` only as an optional extra.
+- [x] T11.3 Write `docs/scope.md` from PRD §3.4 and §2.7 (metrics, modes, gate, outputs, audience).
 
 ### T12. geepers dependency audit
 **Depends on:** T10
 **Context:** geepers core deps are heavy (dask, zarr, pandera, lxml, rasterio, rioxarray, geopandas, pyogrio). The operational image needs only UNR grid/station retrieval (`gps_sources/unr_grid.py`, `gps_sources/unr.py`, `gps_sources/base.py`, `schemas.py`) and, in `[grid]`, GPS Imaging (`gps_imaging.py`) and Euler (`euler.py`). PRD §4.4: ≤ 4 extras + `[all]`.
 - [x] T12.1 Generate an import graph (`pydeps` or a script over `ast`) of `src/geepers`; list third-party imports per module; commit as `docs/dependency_audit.md`.
 - [x] T12.2 Propose the partition: `core` = {`gps_sources/*`, `schemas`, `utils`, `io` (reduced)}, `[grid]` = {`gps_imaging`, `euler`, `surface`?}, `[analysis]` = everything else. Record which modules need lazy imports or splitting (e.g. `schemas.py` using pandera).
-- [ ] T12.3 Get owner sign-off on the partition (issue on the fork).
+- [x] T12.3 Get owner sign-off on the partition (issue on the fork). *Requested 2026-10-06* as a comment on geepers fork PR #2 (issues are disabled on the fork); waiting for "approved". *Approved by the owner 2026-10-06* (recorded on geepers PR #2); partition frozen.
 
 ### T13. geepers lean core
 **Depends on:** T12
@@ -193,50 +193,50 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T21. Validation package: port the e2e core
 **Depends on:** T11, T15
 **Context:** `trade studies/e2e_validation/validate_stack.py` has the DD semivariogram sill (median γ for pairs ≥ 50 km, station-bootstrap CI), `VelocityFit` (OLS velocity per pixel/station), `StationSampler`, MIDAS fetch; `calibrate_stack.py` applies CAL to a stack; `stage_tropo.py`. Station UH01 is excluded. Turn scripts into a library with no hard-coded paths.
-- [ ] T21.1 `dd_sill(stack, stations, min_pair_km=50, n_boot=1000) -> SillResult(sill, ci_lo, ci_hi, n_pairs)`; tests on a synthetic stack with known variogram.
-- [ ] T21.2 `velocity_fit(stack, dates) -> (v, σ_v)` and `station_velocities(frame, stations, source="midas") -> DataFrame` via `geepers[analysis]`; LOS projection with the static ENU layer; tests with cassettes.
-- [ ] T21.3 `StationSampler` with an exclusion list (config, not code) and a `held_out` split API (used by TS-G1 so k-fitting stations never enter validation).
-- [ ] T21.4 `apply_calibration(stack, cal_products) -> stack` (port `calibrate_stack.py`), chunked with xarray/dask.
+- [x] T21.1 `dd_sill(stack, stations, min_pair_km=50, n_boot=1000) -> SillResult(sill, ci_lo, ci_hi, n_pairs)`; tests on a synthetic stack with known variogram. *Done 2026-10-09 (disp2vlm_validation PR #1):* `metrics.double_differences` (all variants, paired station bootstrap) → `SillResult`; synthetic ramp test.
+- [x] T21.2 `velocity_fit(stack, dates) -> (v, σ_v)` and `station_velocities(frame, stations, source="midas") -> DataFrame` via `geepers[analysis]`; LOS projection with the static ENU layer; tests with cassettes. *Done 2026-10-09:* `stack.VelocityFit` (streaming OLS, chained blocks; no σ_v yet), `gnss.fetch_gnss`/`load_or_fetch_gnss` (UNR + MIDAS, frozen per frame) and `station_pixels`; tests use a pre-filled GNSS cache instead of cassettes.
+- [x] T21.3 `StationSampler` with an exclusion list (config, not code) and a `held_out` split API (used by TS-G1 so k-fitting stations never enter validation). *Done 2026-10-09:* `split_held_out` hashes station ids (order- and machine-independent).
+- [x] T21.4 `apply_calibration(stack, cal_products) -> stack` (port `calibrate_stack.py`), chunked with xarray/dask. *Done 2026-10-09:* `stack.apply_calibration`/`stream_epochs`, epoch-streamed with process read-ahead rather than xarray/dask (same memory bound, simpler).
 
 ### T22. Station classes and per-class metrics
 **Depends on:** T21
 **Context:** PRD §3.4: metrics per class stable / subsiding / coastal / in defo area / near event. Classification needs the defo/event GeoJSON (T41 later; here use any GeoJSON) and a coast mask (water mask from the DISP product or Natural Earth).
-- [ ] T22.1 `classify_stations(stations, defo_db, event_db, water_mask, v_gnss, subsiding_thresh=-3 mm/yr, coast_km=10) -> Series[class]`.
-- [ ] T22.2 `metrics_by_class(v_insar, v_gnss, σ) -> DataFrame[class, n, bias, rmse, corr, std_z, coverage95]`.
-- [ ] T22.3 σ realism: `normalized_residuals(z)` with std(z) and 95% coverage; report-only (R-E4).
+- [x] T22.1 `classify_stations(stations, defo_db, event_db, water_mask, v_gnss, subsiding_thresh=-3 mm/yr, coast_km=10) -> Series[class]`.
+- [x] T22.2 `metrics_by_class(v_insar, v_gnss, σ) -> DataFrame[class, n, bias, rmse, corr, std_z, coverage95]`.
+- [x] T22.3 σ realism: `normalized_residuals(z)` with std(z) and 95% coverage; report-only (R-E4). *Done 2026-10-09:* in `metrics_by_class`; the pipeline passes no σ yet (σ_CAL lands with the v0.5 products), so reports show no σ section.
 
 ### T23. Gate logic and comparison modes
 **Depends on:** T21
 **Context:** PRD §2.7 FAIL rules (sill not below raw; sill up > 5% vs baseline and significant; RMSE or |bias| up > 0.2 mm/yr; golden-epoch check fails), target |bias| ≤ 1 mm/yr. Rules must be configurable per release.
-- [ ] T23.1 `gate.yaml` schema (thresholds, significance level, per-class targets) + pydantic model.
-- [ ] T23.2 `evaluate(candidate, raw, baseline, gate) -> GateResult(passed, reasons[])` with tests for each FAIL rule.
-- [ ] T23.3 Golden-epoch check: compare the candidate's pair product at the golden epochs with `cal-disp validate` tolerance; wrap the CLI call.
+- [x] T23.1 `gate.yaml` schema (thresholds, significance level, per-class targets) + pydantic model.
+- [x] T23.2 `evaluate(candidate, raw, baseline, gate) -> GateResult(passed, reasons[])` with tests for each FAIL rule.
+- [x] T23.3 Golden-epoch check: compare the candidate's pair product at the golden epochs with `cal-disp validate` tolerance; wrap the CLI call.
 
 ### T24. Reports and traceability
 **Depends on:** T22, T23
 **Context:** Audience: internal team + OPERA CalVal review. Outputs: `metrics.json`, `stations.csv`, HTML (PDF via `weasyprint` optional) per frame, a release summary across frames, and a requirements traceability table (requirement ID → metric → result → pass/fail). Use the `dataviz` conventions for figures.
-- [ ] T24.1 Jinja2 templates: `frame_report.html` (sill before/after with CI, velocity scatter vs MIDAS, bias/RMSE by class, σ realism, map of stations by class), `release_summary.html`.
-- [ ] T24.2 `write_outputs(result, out_dir)` → `metrics.json`, `stations.csv`, `report.html`, figures as SVG.
-- [ ] T24.3 `traceability.yaml` mapping R-* IDs to metrics; rendered as a table in the release summary.
-- [ ] T24.4 Snapshot test of the rendered HTML on a tiny synthetic run.
+- [x] T24.1 Jinja2 templates: `frame_report.html` (sill before/after with CI, velocity scatter vs MIDAS, bias/RMSE by class, σ realism, map of stations by class), `release_summary.html`. *Done 2026-10-09:* `templates/frame.html.j2`, `summary.html.j2`; semivariogram, scatter and class-RMSE SVGs each with a data table. *Not yet:* station map by class, σ-realism section (no σ input yet).
+- [x] T24.2 `write_outputs(result, out_dir)` → `metrics.json`, `stations.csv`, `report.html`, figures as SVG.
+- [x] T24.3 `traceability.yaml` mapping R-* IDs to metrics; rendered as a table in the release summary.
+- [x] T24.4 Snapshot test of the rendered HTML on a tiny synthetic run. *Done 2026-10-09:* `tests/test_pipeline.py` renders a synthetic frame end to end and checks the verdict and every traceability ID in the HTML (content assertions, not a byte snapshot).
 
 ### T25. Validation CLI, caching, batch execution
 **Depends on:** T24
 **Context:** Runs are cached by code+config hash (as `e2e_validate.sh` does). Benchmark runs go through AWS Batch with `batchkit` (`/batchkit` skill). Work dir on aurora: `/mnt/aurora-z0/govorcin/cal_disp_e2e/`.
-- [ ] T25.1 `disp-validate run --frame F08882 --candidate <dir> --baseline <dir> --gate gate.yaml --out <dir>`; `disp-validate summary <runs...>`.
-- [ ] T25.2 Content-hash cache keyed on (package version, config, input manifest); `--no-cache` flag.
-- [ ] T25.3 `batch/` job definition + Dockerfile for the validation image (may be heavy: `geepers[analysis]`); `disp-validate submit --frames ...` via batchkit.
-- [ ] T25.4 Reproduce the F08882 baseline numbers from `trade studies/e2e_validation/README.md` (sill 257 mm² raw-vs-calibrated, RMSE 5.07) within tolerance; record in `docs/baselines.md`.
+- [x] T25.1 `disp-validate run --frame F08882 --candidate <dir> --baseline <dir> --gate gate.yaml --out <dir>`; `disp-validate summary <runs...>`. *Done 2026-10-09:* `disp2vlm-validate run --config run.yaml` (all of those as YAML fields) and `summary RUNS --out`.
+- [x] T25.2 Content-hash cache keyed on (package version, config, input manifest); `--no-cache` flag.
+- [ ] T25.3 `batch/` job definition + Dockerfile for the validation image (may be heavy: `geepers[analysis]`); `disp-validate submit --frames ...` via batchkit. *Deferred 2026-10-09:* frame runs take 5–10 min on aurora; needed only for the 8-frame gate (T46).
+- [x] T25.4 Reproduce the F08882 baseline numbers from `trade studies/e2e_validation/README.md` (sill 257 mm² raw-vs-calibrated, RMSE 5.07) within tolerance; record in `docs/baselines.md`. *Done 2026-10-09:* identical to the printed digit (sills 257.0/510.0/271.5 and their CIs, bias/RMSE, verdict); disp2vlm_validation `docs/baselines.md`.
 
 ### T26. cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget
-**Depends on:** T09, T13, T17
+**Depends on:** T09, T13, T17 (T06 only for the upstream PR, ADR-0021)
 **Context:** cal-disp pins `Venti@2a7e61f`; has its own UNR code (`download/_stage_unr.py`, `product/_unr.py`) duplicating geepers; `worker_settings` unused; TODO lists `mask_file` accepted but ignored, NISAR filename unsupported. R-O6: the ops image must exclude dask, zarr, matplotlib, jupyter; CI enforces allow-list, size budget, peak memory.
-- [ ] T26.1 Pin `venti-dev[calibration]` and `geepers[grid]` by tag; `opera-utils[tropo]`; remove `[download]` extra deps not needed in ops (asf_search → optional).
-- [ ] T26.2 Replace `_stage_unr.py` / `_unr.py` with `geepers.gps_sources.UnrGridSource`; keep the CLI `cal-disp download unr` behaviour identical (tests with cassettes).
-- [ ] T26.3 Thin wrappers over `venti.core.sensor.S1Spec` in `product/_disp.py`, `_static.py`. When the Venti pin moves past the T16.3 fix, drop `_unwrap_cycle_length_m()` and pass the full radar wavelength to `estimate_calibration_surface` (Venti now halves internally; see Venti CHANGELOG).
-- [ ] T26.4 `scripts/check_env_budget.py`: resolve the `ops` env, fail if a forbidden package is present or the image exceeds `MAX_IMAGE_MB` (start at current size; tighten later); CI job.
-- [ ] T26.5 Peak-memory CI check on the golden pair (`/usr/bin/time -v` or `tracemalloc` wrapper) with a threshold file `budget.yaml` (start at 7 GB; target 4 GB in T47).
-- [ ] T26.6 Honour `mask_file` (TODO item) or reject it explicitly with a clear error; decide and test.
+- [~] T26.1 Pin `venti-dev[calibration]` and `geepers[grid]` by tag; `opera-utils[tropo]`; remove `[download]` extra deps not needed in ops (asf_search → optional). *2026-10-06:* Venti pinned to the fork stack commit `1150c52` (no tags yet), geepers[grid] comes through Venti's core; gamma golden validates at 1e-6 (cal-disp fork PR #3). `opera-utils[disp]` stays: `_find_reference_point` uses `opera_utils.disp.rebase_reference` (zarr), to resolve in T26.4.
+- [ ] T26.2 Replace `_stage_unr.py` / `_unr.py` with `geepers.gps_sources.UnrGridSource`; keep the CLI `cal-disp download unr` behaviour identical (tests with cassettes). *2026-10-07:* cal-disp's downloader is the stronger one (atomic `.part`, HTML and length checks), so it was ported into geepers first (geepers PR #4, plus the `thread_map` kwargs fix in #3). The cal-disp swap lands with the next Venti/geepers pin bump (T37 needs one anyway), keeping `cal-disp download unr` identical.
+- [~] T26.3 Thin wrappers over `venti.core.sensor.S1Spec` in `product/_disp.py`, `_static.py`. When the Venti pin moves past the T16.3 fix, drop `_unwrap_cycle_length_m()` and pass the full radar wavelength to `estimate_calibration_surface` (Venti now halves internally; see Venti CHANGELOG). *2026-10-06:* the wavelength part done (cal-disp passes λ; contract tested on both sides, PR #3); the SensorSpec wrappers remain.
+- [x] T26.4 `scripts/check_env_budget.py`: resolve the `ops` env, fail if a forbidden package is present or the image exceeds `MAX_IMAGE_MB` (start at current size; tighten later); CI job. *Done 2026-10-07* (cal-disp PR #5): `budget.yaml` + `scripts/check_env_budget.py` (`--closure cal-disp`, offline), pixi task `budget`, CI step. The core dropped `opera-utils[disp]` (reference-pixel rule ported, golden unchanged): 84 → 75 distributions, no dask/zarr. matplotlib tolerated (browse PNG, v0.5 image decision); image-size budget deferred to T49 (the image still installs the `download` extra for the golden build).
+- [x] T26.5 Peak-memory CI check on the golden pair (`/usr/bin/time -v` or `tracemalloc` wrapper) with a threshold file `budget.yaml` (start at 7 GB; target 4 GB in T47). *Done 2026-10-07:* `peak_memory_gb: 7.0` in `budget.yaml`, `--peak-memory-log` checks a golden run (5.38 GB). Not in CI: the golden data (4.9 GB) is not available to GitHub runners; it is part of the release gate run.
+- [x] T26.6 Honour `mask_file` (TODO item) or reject it explicitly with a clear error; decide and test. *Done 2026-10-07* (cal-disp PR #4): applied (uint8 0/1 on the DISP grid, ANDed into the valid mask; contract violations raise); golden unchanged.
 
 ### T27. Frame-parameter table
 **Depends on:** T19
@@ -274,7 +274,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 - [x] T30.1 `loclin_surface(residual, weights, x, y, cutoff_m) -> surface` with a Gaussian/tricube kernel whose bandwidth is derived from `cutoff_m`; numba or scipy KD-tree implementation; works on the downsampled grid. *Done 2026-10-06:* `venti.calibration.loclin.local_linear_surface(field, weights, sigma_px)` (Gaussian-moment solve, O(N log N) for any kernel width) and `loclin_surface(field, weights, pixel_m, cutoff_wavelength_m)` with the low-coverage blend; `kernel_sigma_px` from the cutoff.
 - [x] T30.2 Half-response calibration test: feed sinusoids of several wavelengths; the transfer function must be 0.5 ± 0.05 at `cutoff_m`. *Done 2026-10-06:* transfer-function test — response 0.5 ± 0.05 at the cutoff and matches the Gaussian at 20 and 200 km.
 - [x] T30.3 Keep `windowed_plane_surface` (gamma) as `surface.method = windowed_plane`; both share the same signature. *Pending T33:* the method switch (`surface.method = windowed_plane|loclin`) is wired in the two-pass orchestrator, where the gamma `fit_windowed_plane` and `loclin_surface` are called through one adapter. *Done 2026-10-06 in T33:* `calibrate_pair` dispatches on `surface.method`; `windowed_plane` reproduces `estimate_calibration_surface` to 1e-7 (tested) and keeps the unwrap shift as a component.
-- [~] T30.4 Benchmark on the F08882 golden pair: `loclin` at 50 km vs gamma; record RMSE vs real stations (expect ≈ 12.9 mm vs 17.4 mm). *Pending:* needs the golden-pair data run (after T33 wiring); expected ≈ 12.9 mm vs 17.4 mm RMSE at real stations.
+- [x] T30.4 Benchmark on the F08882 golden pair: `loclin` at 50 km vs gamma; record RMSE vs real stations (expect ≈ 12.9 mm vs 17.4 mm). *Done 2026-10-06:* `scripts/benchmark_golden_pair.py` + `docs/benchmarks.md`: gamma 600 km 21.4 mm (= trade study), loclin 50 km two-pass 13.6 mm pair / 12.3 mm MIDAS at 83 / 123 real stations (prototype `loclin_v2` 12.9); coh⁸ +0.7 mm on this metric (decision stays with TS-B1/T44); defo exclusion moves the bias by −0.4 mm; +2 mm bias vs gamma to carry into T38/T39. Found and fixed: gamma path used the GNSS sigma as weights unconditionally; sigma maps factor-trimmed; pass-1 tie 290 s → 60 s.
 
 ### T31. Robust coherence weights, no global quantile mask
 **Depends on:** T30
@@ -326,20 +326,20 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T37. cal-disp wiring to the new Venti workflow
 **Depends on:** T26, T33, T34, T35
 **Context:** cal-disp `workflow.py::run_calibration` (831 lines) currently calls `venti.surface.estimate_calibration_surface`. Replace with `venti.workflow.calibrate_pair` via T18/T28/T33; keep the CLI and runconfig unchanged; `algorithm_parameters.yaml` with gamma defaults must reproduce the golden bit-for-bit (or within 1e-6). Metadata records flags, `schema_version`, frame table version, GNSS provenance.
-- [ ] T37.1 Adapter: runconfig + algorithm params → Venti `CalibrationParams`, `GnssGridConfig`, sensor `S1Spec`; unit tests.
-- [ ] T37.2 Replace the fit section of `run_calibration` with `calibrate_pair`; write `calibration`, `calibration_std` as before; keep component arrays in memory only (packaging later, T61).
-- [ ] T37.3 `/metadata`: add `algorithm_schema_version`, `frame_parameters_version`, `gnss_provenance` (JSON string), `components_applied`; tests.
-- [ ] T37.4 Golden regression with gamma defaults passes (`pixi run validate --golden-dir test_golden`).
-- [ ] T37.5 Test `calibration == Σ components` on the golden pair with the v0.5 flags on.
-- [ ] T37.6 Full-frame memory and runtime measured with v0.5 flags; recorded in `docs/performance.md`.
+- [x] T37.1 Adapter: runconfig + algorithm params → Venti `CalibrationParams`, `GnssGridConfig`, sensor `S1Spec`; unit tests. *Done 2026-10-09* (cal-disp PR #6): schema-v2 groups in `calibration_options`, typed with Venti's models; `GnssGridConfig`/`SensorSpec` adapters wait for the GNSS-path switch (T48.3).
+- [x] T37.2 Replace the fit section of `run_calibration` with `calibrate_pair`; write `calibration`, `calibration_std` as before; keep component arrays in memory only (packaging later, T61). *Done 2026-10-09:* `calibrate_pair`, tropo modes via Venti, σ_CAL as `calibration_std` on loclin; components in memory only.
+- [ ] T37.3 `/metadata`: add `algorithm_schema_version`, `frame_parameters_version`, `gnss_provenance` (JSON string), `components_applied`; tests. *Open:* needs a deliberate golden update (validate fails on new attributes); own PR.
+- [x] T37.4 Golden regression with gamma defaults passes (`pixi run validate --golden-dir test_golden`). *Done 2026-10-09:* passes at 1e-6 through `calibrate_pair` (validate now compares the embedded parameters semantically).
+- [x] T37.5 Test `calibration == Σ components` on the golden pair with the v0.5 flags on. *Done 2026-10-09:* v0.5 run on the golden pair, max |calibration − Σ| = 0.0.
+- [x] T37.6 Full-frame memory and runtime measured with v0.5 flags; recorded in `docs/performance.md`. *Done 2026-10-09:* cal-disp `docs/performance.md`: gamma 6.0 GB; v0.5 55 s / 7.27 GB after two Venti memory fixes (−3 GB).
 
 ### T38. e2e on the 4 existing frames
 **Depends on:** T25, T37
 **Context:** Frames F08882 (Houston), F08886 (OKC), F16940 (LA), F08622 (NYC); baseline = gamma 0.3 numbers (`trade studies/e2e_validation/README.md`, `two_pass/README.md`): F08882 sill 257 → 80.8 mm², RMSE 5.07 → 3.28; F08886 190.6 → 25.8; F16940 200 → 52; F08622 PASS, sill −80.7%. The +3.7 mm/yr velocity bias vs MIDAS traced to input DISP is a known open issue (PRD §7.4).
-- [ ] T38.1 Stage the 4 stacks and tropo under `/mnt/aurora-z0/govorcin/cal_disp_e2e/` with a manifest (reuse existing runs).
-- [ ] T38.2 Run `disp-validate` for gamma (baseline) and v0.5 flags (candidate) on each frame; archive reports.
-- [ ] T38.3 Gate passes on all 4 frames; discrepancies vs the trade-study numbers > 10% are investigated and explained in `docs/baselines.md`.
-- [ ] T38.4 Open an issue with evidence for the +3.7 mm/yr bias (per-frame bias vs reference date; comparison with DOLPHIN chaining) and, if confirmed upstream, report to the DISP-S1 team.
+- [x] T38.1 Stage the 4 stacks and tropo under `/mnt/aurora-z0/govorcin/cal_disp_e2e/` with a manifest (reuse existing runs). *Done 2026-10-09:* the manifest is the run configs in disp2vlm_validation `configs/aurora/` (stacks, masks, LOS, GNSS caches, reference pixels); driver `t38/run_t38.sh`. Tropo not staged (v0.5 runs tropo off).
+- [x] T38.2 Run `disp-validate` for gamma (baseline) and v0.5 flags (candidate) on each frame; archive reports. *Done 2026-10-09:* `t38/runs/<frame>/{gamma,v05-loclin}` + `t38/release_summary_v05.html`; v0.5 calibration 27 min per 208 epochs, 0 failures.
+- [x] T38.3 Gate passes on all 4 frames; discrepancies vs the trade-study numbers > 10% are investigated and explained in `docs/baselines.md`. *Done 2026-10-09:* **4/4 PASS**: sill vs gamma −64.6 / −81.5 / −71.8 / −68.5%, bias +1.14 / +0.06 / +0.65 / +0.25 mm/yr (Houston misses the 1 mm/yr target, reported only). Gaps vs the trade-study two-pass runs trace to its estimator C (per-region free offsets + unwrap shifts; not in v0.5): Galveston, LA islands; F08622 sill +63% only partly explained → TS-U1 (T42). GATE-4 n/a: no v0.5 golden until T49.
+- [x] T38.4 Open an issue with evidence for the +3.7 mm/yr bias (per-frame bias vs reference date; comparison with DOLPHIN chaining) and, if confirmed upstream, report to the DISP-S1 team. *Done 2026-10-09:* disp2vlm_validation issue #2 (`studies/bias_by_block.py`): the bias accumulates inside the reference blocks with an annual pattern, chaining dates align exactly (F08882 +4.1 from blocks vs +3.9 chained; F16940 +1.96 vs +2.01); hypothesis: DS phase-linking bias at low coherence. Upstream report pending confirmation (TS-B1).
 
 ---
 
@@ -423,7 +423,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Depends on:** T28
 **Context:** R-G4: a versioned snapshot per release, mirrored to controlled storage (S3 bucket TBD, PRD §7.5 Q6), hash recorded in metadata; roll-forward deliberate (proposal every 6 months) and gated by e2e.
 - [x] T48.1 `scripts/snapshot_unr_grid.py` (validation or cal-disp repo): download v0.3 constant (and variable) for IGS20 via geepers, write `unr_grid_<version>_<date>/` + `MANIFEST.sha256` + `snapshot.json` (UNR version, date, node count, data span). *Done 2026-10-06 in Venti* (`venti.gnss.snapshot` + `scripts/snapshot_unr_grid.py`): Venti owns the sampler that reads the layout, so the writer lives next to it; `--bounds`, `--grid-types`, `--verify`; tests with injected fetch/download fakes.
-- [ ] T48.2 Upload to S3; document the bucket layout and IAM in `docs/operations.md`. *Proposed 2026-10-06:* `s3://opera-adt/opera-ancillary/unr-grid/<snapshot_id>/` + a `CURRENT` pointer, next to the existing shared ancillary data (`docs/operations.md`, Storage). Waiting for the owner's OK; nothing uploaded.
+- [x] T48.2 Upload to S3; document the bucket layout and IAM in `docs/operations.md`. *Proposed 2026-10-06:* `s3://opera-adt/opera-ancillary/unr-grid/<snapshot_id>/` + a `CURRENT` pointer, next to the existing shared ancillary data (`docs/operations.md`, Storage). Waiting for the owner's OK; nothing uploaded. *Uploaded 2026-10-06* (location approved): `unr_grid_0.3_IGS20_20261006`, 28,492 nodes, 31 not published upstream (404), sample re-download verified; `CURRENT` waits for T46.
 - [ ] T48.3 cal-disp `download unr` can read from the snapshot path (`unr_timeseries_dir`), and metadata records `gnss_snapshot_id` + hash (through T28.4 provenance). *Waits for the cal-disp wiring (T37, behind T26/T09).*
 - [x] T48.4 Roll-forward procedure documented: new snapshot → T46 gate → new frame-table k if needed → minor version. *Done 2026-10-06:* `docs/operations.md` (moves to cal-disp docs with T48.3).
 
@@ -454,8 +454,8 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 
 ### T52. VLM repo skeleton
 **Depends on:** T07, T17
-**Context:** New repo under `mgovorcin/` (name TBD). Depends on `venti-dev[decomposition]`, `geepers[grid]`, `opera-utils[disp]`. Mirror cal-disp structure (cli/config/product/workflow) but no frozen interface yet; design the runconfig deliberately.
-- [ ] T52.1 Create with the `sas-scaffold` skill (PGE runconfig, algorithm parameters + per-frame overrides, click CLI, product writer with `/identification` and `/metadata`, golden validation, Docker, pixi, pre-commit, CI) and the standards kit; `CLAUDE.md` (Invariants: GNSS provenance must match DISP-CAL; N always from GNSS; per-pixel mode flag).
+**Context:** New repo under `mgovorcin/` (*2026-10-06:* named **`opera_vlm`** by the owner: one sensor-agnostic repo producing **VLM-S1** and **VLM-NI**; private `mgovorcin/opera_vlm`, tag `v0.0.0`). Depends on `venti-dev[decomposition]`, `geepers[grid]`, `opera-utils[disp]`. Mirror cal-disp structure (cli/config/product/workflow) but no frozen interface yet; design the runconfig deliberately.
+- [x] T52.1 Create with the `sas-scaffold` skill (PGE runconfig, algorithm parameters + per-frame overrides, click CLI, product writer with `/identification` and `/metadata`, golden validation, Docker, pixi, pre-commit, CI) and the standards kit; `CLAUDE.md` (Invariants: GNSS provenance must match DISP-CAL; N always from GNSS; per-pixel mode flag). *Done 2026-10-06:* rendered from a spec built on PRD §3.2 (inputs asc/desc DISP + DISP-CAL, LOS, optional UNR snapshot and GIA; algorithm groups decomposition/temporal/gnss; layers vertical, vertical_std, east, east_std, mode); install, lint, gen-configs, docs and 29 tests pass; invariants in `CLAUDE.md` (PR #1). The input/output layout and the runconfig (T52.2) are a draft until reviewed.
 - [ ] T52.2 Runconfig draft (`vlm_workflow`: asc/desc DISP + CAL inputs, GNSS config, output options) with pydantic `extra=forbid`; ADR on what will later be frozen.
 - [ ] T52.3 Product spec draft: layers `vertical`, `east` (where available), `vertical_std`, `east_std`, `mode` (uint8: 0 none, 1 projected, 2 decomposed), `/metadata`, context `gia_rate`, `plate_motion_rate`.
 

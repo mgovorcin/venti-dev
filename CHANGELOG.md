@@ -162,6 +162,14 @@ Value-changing entries say which product layers move and by how much
   bias vs window length, the series ends, missing epochs, a blundered epoch
   and the xarray wrapper. The frame benchmark (T54.3) waits for the T56
   frame choice.
+- `scripts/benchmark_golden_pair.py` + `docs/benchmarks.md` (plan T30.4): the
+  F08882 golden pair calibrated with `calibrate_pair` for the gamma and the
+  v0.5 option sets and scored at 123 real UNR stations
+  (`tests/data/f08882_golden_pair_stations.csv`, from the trade study). Gamma
+  600 km reproduces the trade-study 21.4 mm; loclin 50 km two-pass 13.6 mm
+  (pair) / 12.3 mm (MIDAS); coherence/robust weights and the defo-area
+  exclusion are within 1 mm on this metric; +2 mm bias vs gamma recorded for
+  the e2e gate.
 - `venti.gnss.sampling` (plan T28): `sample_gnss_enu(cfg, grid, exclude)` —
   the single GNSS sampling path for DISP-CAL and VLM. Nodes inside the frame
   bounds plus a buffer (R-G2), rates from the constant-grid tenv8 files
@@ -208,6 +216,18 @@ Value-changing entries say which product layers move and by how much
 
 - `venti.models.load_itrf.convert_to_euler_poles` imported from a module path
   that did not exist (`plate_motion.euler_pole`) and raised `ImportError`.
+- `calibrate_pair` passed `gnss_los_std` to the gamma windowed fit
+  unconditionally; cal-disp passes it only with
+  `weight_fit_by_gnss_uncertainty`. On the F08882 golden pair the gamma
+  station RMSE moved from 21.4 mm (the trade-study value) to 24.3 mm with the
+  sigma supplied; now gated like cal-disp (found by the T30.4 benchmark).
+- The two-pass pass-1 tie is computed on a grid of at most 256 pixels across
+  (`TIE_MAX_PX`) and interpolated back: its 4-frame-wide Gaussian moments on
+  the 1288 x 1577 fit grid took about 4 of the 5 minutes of a full-frame run;
+  the coarse and fine ties agree to well below a millimetre (tested).
+- `sigma_cal` / `sigma_fit` / `n_eff` were factor-trimmed (7728 x 9462 for
+  the 7733 x 9464 F08882 frame) and `calibrate_pair` failed at full
+  resolution; each pixel now takes its block's node.
 
 ## [0.0.0] – upstream `2a7e61f` (2025-11)
 
