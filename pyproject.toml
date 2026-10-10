@@ -60,7 +60,7 @@ dependencies = [
   # imported by `opera_utils` at the top level but not declared by it
   "rich",
   # GNSS retrieval, GPS Imaging and plate motion: single source (plan D10)
-  "geepers[grid] @ git+https://github.com/mgovorcin/geepers.git@677f95ddd863f9edd5f6bc5a0adca98e4297d857",
+  "geepers[grid] @ git+https://github.com/mgovorcin/geepers.git@30182ce425c2a972cc11b2ffba791bde3bba3a4a",
 ]
 
 # The version will be written into a version.py upon install, auto-generated
