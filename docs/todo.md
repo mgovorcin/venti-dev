@@ -57,7 +57,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Phase 3: Trade studies and benchmark data
 
 - [x] T39 TS-G1: grid fidelity and per-frame k — depends on T21, T28 (σ₀ term proposal open)
-- [ ] T40 Benchmark data staging (frames 5–8) — depends on T11
+- [~] T40 Benchmark data staging (frames 5–8) — frames chosen (T40.1); statics + UNR staged; DISP downloads running (cal_disp_e2e/t40)
 - [ ] T41 Curate defo and event GeoJSON databases — depends on T32, T40
 - [x] T42 TS-U1 phase 1 — depends on T36, T38 (no-go for v0.5; 3 bugs fixed on the way)
 - [x] T43 TS-S1: DISP noise model — depends on T21, T38

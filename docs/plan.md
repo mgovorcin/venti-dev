@@ -356,8 +356,8 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T40. Benchmark data staging (frames 5–8)
 **Depends on:** T11
 **Context:** Benchmark table in PRD §2.7: Central Valley (fast basin), Ridgecrest 2019 (coseismic), Great Basin/Montana (sparse GNSS), Hawaii (PA) and/or Puerto Rico (CA). Frame IDs via `opera_utils` frame DB. Each needs the DISP-S1 stack (200–300 epochs), DISP-S1-STATIC, tropo, UNR grid. Use `cal-disp download` and `trade studies/e2e_validation/stage_tropo.py`; long-running, `setsid nohup`, never `/tmp`.
-- [ ] T40.1 Choose frame IDs (one per category; two for Hawaii/PR if both affordable); record in `frame_parameters.json` with `benchmark_category`.
-- [ ] T40.2 Stage DISP stacks + static layers; manifest with sizes and sha256.
+- [x] T40.1 Choose frame IDs (one per category; two for Hawaii/PR if both affordable); record in `frame_parameters.json` with `benchmark_category`. *Done 2026-10-09 (owner-approved):* F36542 Central Valley, F16941 Ridgecrest, F07081 Montana (sparse, 0.3 stations/1000 km²), F23211 Hawaii (PA), F35991 Puerto Rico (CA), plus F38238 (descending partner of F08882 for VLM); frame table 0.3-draft.
+- [~] T40.2 Stage DISP stacks + static layers; manifest with sizes and sha256. *Started 2026-10-09:* `/mnt/aurora-z0/govorcin/cal_disp_e2e/t40/` (`fetch_disp.sh`, `stage_inputs.sh`, `post.sh`, `quicklook.py`); statics (DISP-S1-STATIC from ASF) and UNR grid staged for all six; DISP downloads 2016-07 → 2023-12 running (~1 TB). Note: `cal-disp download unr --help` still says parquet (it writes tenv8), and the static download functions are placeholders.
 - [ ] T40.3 Stage tropo for the LA/Hawaii/Ridgecrest frames (relief); skip for flat frames.
 - [ ] T40.4 Quick-look velocities per frame (OLS) to confirm the expected signal (bowl, coseismic step, island motion).
 
