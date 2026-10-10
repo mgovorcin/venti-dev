@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# SPDX-FileCopyrightText: 2025, opera-adt
+# SPDX-License-Identifier: BSD-3-Clause
+# Part of Venti, https://github.com/opera-adt/Venti.
+# Kit copy of 00_tools/standards/scripts/spdx_check.py; re-apply the kit, do not edit.
 """Check (or add) SPDX license headers on Python files.
 
 Every ``.py`` file must declare the repository's license in its first lines::
@@ -18,7 +22,8 @@ Add missing headers in place::
 
     spdx_check.py --license Apache-2.0 --fix \
         --copyright '2025-2026 California Institute of Technology ("Caltech")' \
-        --notice 'Part of geepers, https://github.com/opera-adt/geepers.' $(git ls-files '*.py')
+        --notice 'Part of geepers, https://github.com/opera-adt/geepers.' \
+        $(git ls-files '*.py')
 
 Exit code 1 when any file is missing or has a different identifier.
 """
@@ -57,13 +62,15 @@ def header_insert_index(lines: list[str]) -> int:
     return index
 
 
-def build_header(license_id: str, copyright_text: str | None, notice: str | None) -> list[str]:
+def build_header(
+    license_id: str, copyright_text: str | None, notices: list[str] | None
+) -> list[str]:
     """Build the header lines for `--fix`."""
     header = []
     if copyright_text:
         header.append(f"# SPDX-FileCopyrightText: {copyright_text}")
     header.append(f"# SPDX-License-Identifier: {license_id}")
-    if notice:
+    for notice in notices or []:
         header.append(f"# {notice}")
     return header
 
@@ -74,7 +81,7 @@ def check_file(
     *,
     fix: bool = False,
     copyright_text: str | None = None,
-    notice: str | None = None,
+    notices: list[str] | None = None,
 ) -> str | None:
     """Check one file. Return a problem description, or None when it passes.
 
@@ -93,17 +100,28 @@ def check_file(
         return f"{path}: missing '# SPDX-License-Identifier: {license_id}' header"
     lines = text.splitlines(keepends=True)
     index = header_insert_index([line.rstrip("\n") for line in lines])
-    header = [line + "\n" for line in build_header(license_id, copyright_text, notice)]
+    header = [line + "\n" for line in build_header(license_id, copyright_text, notices)]
     path.write_text("".join(lines[:index] + header + lines[index:]), encoding="utf-8")
     return None
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the check on the given files; return the process exit code."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--license", required=True, help="Expected SPDX identifier, e.g. Apache-2.0")
-    parser.add_argument("--fix", action="store_true", help="Insert a header where none exists")
-    parser.add_argument("--copyright", help="SPDX-FileCopyrightText value used by --fix")
-    parser.add_argument("--notice", help="Extra comment line after the identifier, used by --fix")
+    parser.add_argument(
+        "--license", required=True, help="Expected SPDX identifier, e.g. Apache-2.0"
+    )
+    parser.add_argument(
+        "--fix", action="store_true", help="Insert a header where none exists"
+    )
+    parser.add_argument(
+        "--copyright", help="SPDX-FileCopyrightText value used by --fix"
+    )
+    parser.add_argument(
+        "--notice",
+        action="append",
+        help="Extra comment line after the identifier, used by --fix; repeatable",
+    )
     parser.add_argument("files", nargs="*", type=Path)
     args = parser.parse_args(argv)
 
@@ -116,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
             args.license,
             fix=args.fix,
             copyright_text=args.copyright,
-            notice=args.notice,
+            notices=args.notice,
         )
         if problem:
             problems.append(problem)

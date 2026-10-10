@@ -110,7 +110,7 @@ def convert_to_euler_poles(df: pd.DataFrame) -> pd.DataFrame:
         'angular_velocity', and optionally 'name'.
 
     """
-    from .plate_motion.euler_pole import rotation_rate_to_euler_pole
+    from .plate_motion import rotation_rate_to_euler_pole
 
     results = []
 

@@ -172,3 +172,35 @@ def test_surface_follows_gnss_offset_up_to_the_coast():
     change = surface(gnss) - surface(gnss + offset)
 
     np.testing.assert_allclose(change[land], offset, atol=1e-5)
+
+
+def test_unwrap_correction_uses_half_wavelength(monkeypatch):
+    """Integration: estimate_calibration_surface quantises unwrap offsets in lambda/2."""
+    import venti.surface as surface_mod
+    from venti import unwrap as unwrap_pkg
+    from venti.workflow.config import CalibrationOptions
+
+    seen = {}
+
+    def fake_correct(input_disp, mask, cycle_length, **kwargs):
+        seen["cycle_length"] = cycle_length
+        return np.asarray(input_disp)
+
+    # surface.py does `from .unwrap import correct_region_offset` inside the
+    # call, so the package namespace is where the lookup happens.
+    monkeypatch.setattr(unwrap_pkg, "correct_region_offset", fake_correct)
+    n = 48
+    disp = np.zeros((n, n), dtype=np.float32)
+    gnss = np.zeros((n, n), dtype=np.float32)
+    mask = np.ones((n, n), dtype=bool)
+    surface_mod.estimate_calibration_surface(
+        disp,
+        gnss,
+        mask,
+        ref_point=(n // 2, n // 2),
+        window_size=n,
+        options=CalibrationOptions(unwrap_error_correction=True),
+        wavelength_m=0.05546,
+        n_jobs=1,
+    )
+    assert seen["cycle_length"] == pytest.approx(0.05546 / 2)

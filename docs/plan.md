@@ -31,16 +31,16 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T02. Secure a Docker build host and build the gamma image
 **Depends on:** none
 **Context:** No Docker daemon was available on aurora, so `docker/Dockerfile` + `conda-lock.txt` on `gamma-release` have never been built. The golden must be produced inside the image because tropo reprojection depends on the GDAL version. Use the `docker-build` skill (BuildKit, pinned, non-root).
-- [ ] T02.1 Pick the build host (a laptop with Docker, an EC2 builder, or a rootless `podman` on aurora); document it in `docker/README.md`.
-- [ ] T02.2 Build `cal-disp:0.3.0-rc` from the checkout with `docker/build-docker-image.sh`; fix any lock or Dockerfile breakage in small PRs.
-- [ ] T02.3 Record the image digest and the resolved package list; compare with `OPERA_TROPO_CalVal_Installed_Packages.csv`-style listing and commit it as `docker/installed_packages_0.3.0.csv`.
+- [x] T02.1 Pick the build host (a laptop with Docker, an EC2 builder, or a rootless `podman` on aurora); document it in `docker/README.md`. *Result:* aurora itself has a working Docker daemon (`/var/lib/docker` 64 GB, 25 GB free); `docker/build-docker-image.sh` already passes `--network=host`, which this host needs.
+- [x] T02.2 Build `cal-disp:0.3.0-rc` from the checkout with `docker/build-docker-image.sh`; fix any lock or Dockerfile breakage in small PRs. *Result 2026-10-05:* built first time from `gamma-release` `7085ec9` without changes, 1.5 GB; log `tmp/caldisp_docker_build.log`.
+- [x] T02.3 Record the image digest and the resolved package list; compare with `OPERA_TROPO_CalVal_Installed_Packages.csv`-style listing and commit it as `docker/installed_packages_0.3.0.csv`. *Done 2026-10-05:* `docker/BUILD_RECORD.md` + `docker/installed_packages_0.3.0rc.csv` on cal-disp `feature/docker-build-record` (`a3e4fd7`).
 
 ### T03. Rebuild the golden inside Docker and validate
 **Depends on:** T01, T02
 **Context:** `scripts/build_golden_output.sh` builds the reference product; `scripts/run_validation.sh --golden-dir test_golden` reruns the workflow and compares at tolerance 1e-6 (`cal-disp validate` checks values, attrs, CRS, dtype and identification). Both must run inside the image, mounting `test_golden/` (4.9 GB: `configs`, `input_data`, `golden_output`).
 - [ ] T03.1 Run `build_golden_output.sh` inside the image with the T01 config; store the product in `test_golden/golden_output` (exactly one `OPERA_L4_DISP-CAL-S1_*.nc`).
 - [ ] T03.2 Run `run_validation.sh` inside the image; it must print `✓ Validation passed`. Save the log as `test_golden/validation_0.3.0.log`.
-- [ ] T03.3 Run `run_validation.sh` on aurora with the pixi `dev` env against the Docker-built golden; record whether it passes at 1e-6 (expected: possibly not, because of GDAL). Document the result in `docs/development.md`.
+- [ ] T03.3 Run `run_validation.sh` on aurora with the pixi `dev` env against the Docker-built golden; record whether it passes at 1e-6 (expected: possibly not, because of GDAL). Document the result in `docs/development.md`. *Dry run 2026-10-05 (before T01):* the reverse direction already holds — `run_validation.sh` inside `cal-disp:0.3.0-rc` (GDAL 3.13.3, Python 3.13.15, rasterio 1.5.1) reproduces the aurora-built golden at 1e-6, peak 6.31 GB (log `tmp/caldisp_docker_validate.log`). So for the gamma configuration the GDAL-version dependence of the tropo reprojection does not change the product at that tolerance.
 - [ ] T03.4 Write `test_golden/MANIFEST.sha256` for inputs and golden output and commit it (data itself stays out of git).
 
 ### T04. Fix the delivery documents
@@ -100,8 +100,8 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 **Depends on:** T07
 **Context:** `00_tools/src/geepers` (`origin` = fork, `upstream` = `opera-adt/geepers`, on `main`, clean). geepers already has SPDX headers and ruff; mainly add templates, `CLAUDE.md`, pixi.
 - [x] T10.1 Run `apply_standards.sh`; commit.
-- [ ] T10.2 Add pixi envs; `pixi run -e dev test` passes (uses `pytest-recording` cassettes, no live network).
-- [ ] T10.3 Create branch `feat/extras-split` for T12–T15.
+- [x] T10.2 Add pixi envs; `pixi run -e dev test` passes (uses `pytest-recording` cassettes, no live network). *Result 2026-10-05:* `dev`/`ops` envs added; full suite 348 passed / 4 skipped (the one failure, the kit checker lacking a header, is fixed); pre-commit green after an `affine` 3 warning filter, mypy 2.3.1 targeting 3.12 and 21 genuine type fixes (`fix(types)` commit). Note: the suite is network-bound (~15–19 min here), not cassette-only as assumed.
+- [x] T10.3 Create branch `feat/extras-split` for T12–T15. *Created as `feature/extras-split` (naming convention) on top of `feature/standards`; holds the T12 audit.*
 
 ### T11. Create the validation package repo
 **Depends on:** T07
@@ -120,36 +120,37 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T13. geepers lean core
 **Depends on:** T12
 **Context:** `pandera` validation in `schemas.py` and `geopandas` in `stations()` are the main core blockers. Options: make pandera optional (validate only if installed), return a `pandas.DataFrame` with lon/lat columns from core and a `GeoDataFrame` only when geopandas is present.
-- [ ] T13.1 Move heavy deps out of `[project.dependencies]` into extras in `pyproject.toml`; core = `pandas`, `numpy`, `scipy`, `pyproj`, `requests`, `tqdm`.
-- [ ] T13.2 Make `schemas.py` validation optional (no-op without pandera) with tests for both paths.
-- [ ] T13.3 Make `gps_sources/base.py` work without geopandas (bbox filter in pandas; `GeoDataFrame` upgrade when available).
-- [ ] T13.4 Add CI job `core-only`: install `geepers` with no extras in a clean env; `python -c "from geepers.gps_sources import UnrGridSource, UnrSource"` and a cassette-based download test must pass.
+- [x] T13.1 Move heavy deps out of `[project.dependencies]` into extras in `pyproject.toml`; core = `pandas`, `numpy`, `scipy`, `pyproj`, `requests`, `tqdm`.
+- [x] T13.2 Make `schemas.py` validation optional (no-op without pandera) with tests for both paths.
+- [x] T13.3 Make `gps_sources/base.py` work without geopandas (bbox filter in pandas; `GeoDataFrame` upgrade when available).
+- [x] T13.4 Add CI job `core-only`: install `geepers` with no extras in a clean env; `python -c "from geepers.gps_sources import UnrGridSource, UnrSource"` and a cassette-based download test must pass. *Done 2026-10-06 on geepers `feature/extras-split` (4 commits). Also: `tests/test_core_imports.py` subprocess check; pixi `ops`/`core-test` envs; 362 tests pass with extras, 16 in the core-test env. Implemented before the T12.3 sign-off — reversible if the partition changes.*
 
 ### T14. `geepers[grid]`: GPS Imaging + Euler, with exclusion areas
 **Depends on:** T13
 **Context:** R-G5: drop UNR grid nodes inside defo/event areas and re-interpolate them from surrounding nodes with GPS Imaging (median spatial filtering). R-G6/`plate_motion`: Euler pole rotation (ITRF2020-PMM) to ENU velocity per pixel. Venti's `models/plate_motion.py` and `load_itrf.py` are deleted in T17 in favour of this.
-- [ ] T14.1 Define extra `grid = ["shapely>=2"]` (+ whatever `gps_imaging.py` needs); move `gps_imaging.py`, `euler.py` imports behind it; add `core-only` CI check that importing them without the extra gives a clear `ImportError` message.
-- [ ] T14.2 Add `gps_imaging.reinterpolate_nodes(grid_df, exclude: GeoSeries | list[Polygon], radius_km, min_neighbors) -> DataFrame` that replaces E/N/U velocity and σ at excluded nodes by the GPS-Imaging estimate from non-excluded neighbours; tests with a synthetic plane + bowl.
-- [ ] T14.3 Add `euler.plate_velocity_enu(lon, lat, plate: Literal["NA","PA","CA",...], model="ITRF2020-PMM") -> (vE, vN, vU=0)` vectorized over arrays; tests against published site velocities (reuse Venti `load_itrf.py` JSON).
-- [ ] T14.4 Add a `PLATE_BY_FRAME` loader hook (reads the frame-parameter table from T27; geepers stays frame-agnostic, just takes a plate string).
+- [x] T14.1 Define extra `grid = ["shapely>=2"]` (+ whatever `gps_imaging.py` needs); move `gps_imaging.py`, `euler.py` imports behind it; add `core-only` CI check that importing them without the extra gives a clear `ImportError` message. *Result:* `gps_imaging` and `euler` need only numpy/scipy/pyproj (core), so they stay importable without the extra; shapely is required only by `reinterpolate_nodes` via `_optional.require("shapely")`, whose message names `geepers[grid]` (tested).
+- [x] T14.2 Add `gps_imaging.reinterpolate_nodes(grid_df, exclude: GeoSeries | list[Polygon], radius_km, min_neighbors) -> DataFrame` that replaces E/N/U velocity and σ at excluded nodes by the GPS-Imaging estimate from non-excluded neighbours; tests with a synthetic plane + bowl. *Done 2026-10-06:* `gps_imaging.reinterpolate_nodes(nodes, exclude, columns=…)` (shapely via `require`, MSF estimate from the nodes outside, sigma = robust scatter, `reinterpolated` flag); synthetic plane+bowl test recovers the plane to < 1 mm/yr inside the polygon.
+- [x] T14.3 Add `euler.plate_velocity_enu(lon, lat, plate: Literal["NA","PA","CA",...], model="ITRF2020-PMM") -> (vE, vN, vU=0)` vectorized over arrays; tests against published site velocities (reuse Venti `load_itrf.py` JSON). *Done 2026-10-06:* `euler.plate_velocity_enu(lon, lat, plate, model="ITRF2020-PMM", height=None) -> (ve, vn, vu=0)` mm/yr, codes or PMM names; benchmark-site tests (Houston NA, Hilo PA, San Juan CA) and PA−NA ≈ 45–50 mm/yr across S. California.
+  - [x] T14.3a **TODO (2026-10-06): add the ITRF2020 plate table to geepers `[grid]`.** geepers has `EulerPole`/`predict_plate_motion` but no plate catalogue; port Venti's ITRF2014/2020-PMM rotation vectors (Altamimi et al. 2023; `models/load_itrf.py` + its JSON) as `geepers/data/itrf2020_pmm.json` with a loader `euler.plate_pole(plate, model="ITRF2020-PMM") -> EulerPole`; include NA, PA, CA and the other PMM plates; test the NA pole (~88 W, 5 S, 0.70 deg/Myr) and one site velocity per plate. *Done 2026-10-06:* `geepers/data/itrf2020_pmm.json` + `itrf2014_pmm.json` ported from Venti; `euler.load_plate_motion_model`, `plate_pole`, `PLATE_CODES` (NA→NOAM, PA→PCFC, CA→CARB, …). ITRF2020 NOAM pole = (−86.1°, −8.35°, 0.187 deg/Myr); ITRF2014 = (−88°, −5.2°, 0.194).
+- [x] T14.4 Add a `PLATE_BY_FRAME` loader hook (reads the frame-parameter table from T27; geepers stays frame-agnostic, just takes a plate string). *Done by design:* `plate_velocity_enu` takes a plate string; the frame→plate lookup lives in the Venti frame-parameter table (T27), geepers stays frame-agnostic.
 
 ### T15. `geepers[analysis]` and `[all]`
 **Depends on:** T13
 **Context:** MIDAS, strain, cross-validation, variability, plotting, zarr/dask workflows go here. Validation package (T21) depends on `[analysis]`.
-- [ ] T15.1 Define `analysis` (dask, zarr, xarray, rioxarray, rasterio, geopandas, pyogrio, pandera, lxml, matplotlib) and `all = ["geepers[grid,analysis,plot]"]`.
-- [ ] T15.2 CI matrix: `core`, `grid`, `analysis`, `all`; full test suite runs under `all`, subset markers under the others.
-- [ ] T15.3 Update `README.md` install matrix and `CHANGELOG.md`; open PR on the fork; (optionally) draft the upstream PR text for later.
+- [x] T15.1 Define `analysis` (dask, zarr, xarray, rioxarray, rasterio, geopandas, pyogrio, pandera, lxml, matplotlib) and `all = ["geepers[grid,analysis,plot]"]`. *Done in T13's build commit:* `analysis` and `all = ["geepers[grid,analysis,plot]"]`.
+- [x] T15.2 CI matrix: `core`, `grid`, `analysis`, `all`; full test suite runs under `all`, subset markers under the others. *Done 2026-10-06:* the pytest CI job is a matrix over pixi envs `test` (full suite) and `core-test` (core subset: `test_core_imports`, `test_plate_table`, `gps_sources`) × {ubuntu, macos}; the pip route is the separate `core-only` job. Path-based selection instead of markers — the core subset is small and explicit.
+- [x] T15.3 Update `README.md` install matrix and `CHANGELOG.md`; open PR on the fork; (optionally) draft the upstream PR text for later. *Done 2026-10-06:* README `## Installation` matrix (core / [grid] / [analysis] / [plot] / [all], pixi envs); `CHANGELOG.md` created with the Unreleased entry for the split, the seams, the plate tables and `reinterpolate_nodes`. Upstream PR text: the geepers fork PR #2 body serves as the draft.
 
 ### T16. Venti bug fixes and packaging repair
 **Depends on:** T08
 **Context:** Verified on `upstream/main` `2a7e61f` (2026-10-05): `surface.py:208` calls `correct_region_offset(input_disp=disp, mask=mask, wavelength=wavelength_m)` with the **full radar wavelength** read from the DISP product, but one LOS displacement cycle is λ/2 (2.77 cm for S1) — the corrector shifts by twice the right amount (this is why gamma ships with unwrap off); `models/load_itrf.py:110` imports `.plate_motion.euler_pole`, but `plate_motion` is a module, not a package. Earlier survey items (missing `gnss.reference`/`spatial.processor`, wrong positional arguments, missing pyproject deps) came from a stale `staging` checkout and are already fixed on `main`; re-verify each before working on it. One PR per bullet.
-- [ ] T16.1 Audit `pyproject.toml` against actual imports in a clean env (`pip install -e .`; import every module); fix what is missing; check the license path and README install instructions.
-- [ ] T16.2 Fix `load_itrf.py` import (temporary; module is deleted in T17).
-- [ ] T16.3 Make the unwrap cycle λ/2: `correct_region_offset`/`UnwrapCorrector` take `cycle_m` (documented as λ/2 for displacement, 2π for phase) and `surface.py` passes `wavelength_m / 2`; regression test with a synthetic +1-cycle region.
-- [ ] T16.4 Confirm the `unwrap_error_correction` flag is honoured end to end (default `False`) with a test.
-- [ ] T16.5 Round-trip test of cal-disp's `test_golden/configs/algorithm_parameters.yaml` through Venti's config loader.
-- [ ] T16.6 Run the full test suite and `pre-commit run -a` on `main`; fix anything red; record the baseline in `docs/development.md`.
-- [ ] T16.7 Rebase the unmerged `models`-branch tropo research into `research/tropo` on the fork (notebooks and `tropo_paper/` only; drop the 1.3 M-line logs).
+- [x] T16.1 Audit `pyproject.toml` against actual imports in a clean env (`pip install -e .`; import every module); fix what is missing; check the license path and README install instructions.
+- [x] T16.2 Fix `load_itrf.py` import (temporary; module is deleted in T17).
+- [x] T16.3 Make the unwrap cycle λ/2: `correct_region_offset`/`UnwrapCorrector` take `cycle_m` (documented as λ/2 for displacement, 2π for phase) and `surface.py` passes `wavelength_m / 2`; regression test with a synthetic +1-cycle region.
+- [x] T16.4 Confirm the `unwrap_error_correction` flag is honoured end to end (default `False`) with a test.
+- [x] T16.5 Round-trip test of cal-disp's `test_golden/configs/algorithm_parameters.yaml` through Venti's config loader.
+- [x] T16.6 Run the full test suite and `pre-commit run -a` on `main`; fix anything red; record the baseline in `docs/development.md`.
+- [~] T16.7 Rebase the unmerged `models`-branch tropo research into `research/tropo` on the fork (notebooks and `tropo_paper/` only; drop the 1.3 M-line logs). *Done so far:* local branch `research/tropo` = `upstream/models` (`399da80`). *Open:* the uncommitted research in `01_OPERA/VLM/Venti/notebooks/corrections/` (`tropo1.ipynb`, `tropo_gps1.ipynb`, `run_tropo_gps.py`, `tropo_paper/`, `scripts/_stage_static.py`) still has to be copied onto that branch and committed; the 1.3 M-line logs and the UNR zip are left behind.
 
 ### T17. Venti package layout: lean core + extras
 **Depends on:** T14, T16
@@ -232,7 +233,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 **Context:** cal-disp pins `Venti@2a7e61f`; has its own UNR code (`download/_stage_unr.py`, `product/_unr.py`) duplicating geepers; `worker_settings` unused; TODO lists `mask_file` accepted but ignored, NISAR filename unsupported. R-O6: the ops image must exclude dask, zarr, matplotlib, jupyter; CI enforces allow-list, size budget, peak memory.
 - [ ] T26.1 Pin `venti-dev[calibration]` and `geepers[grid]` by tag; `opera-utils[tropo]`; remove `[download]` extra deps not needed in ops (asf_search → optional).
 - [ ] T26.2 Replace `_stage_unr.py` / `_unr.py` with `geepers.gps_sources.UnrGridSource`; keep the CLI `cal-disp download unr` behaviour identical (tests with cassettes).
-- [ ] T26.3 Thin wrappers over `venti.core.sensor.S1Spec` in `product/_disp.py`, `_static.py`.
+- [ ] T26.3 Thin wrappers over `venti.core.sensor.S1Spec` in `product/_disp.py`, `_static.py`. When the Venti pin moves past the T16.3 fix, drop `_unwrap_cycle_length_m()` and pass the full radar wavelength to `estimate_calibration_surface` (Venti now halves internally; see Venti CHANGELOG).
 - [ ] T26.4 `scripts/check_env_budget.py`: resolve the `ops` env, fail if a forbidden package is present or the image exceeds `MAX_IMAGE_MB` (start at current size; tighten later); CI job.
 - [ ] T26.5 Peak-memory CI check on the golden pair (`/usr/bin/time -v` or `tracemalloc` wrapper) with a threshold file `budget.yaml` (start at 7 GB; target 4 GB in T47).
 - [ ] T26.6 Honour `mask_file` (TODO item) or reject it explicitly with a clear error; decide and test.

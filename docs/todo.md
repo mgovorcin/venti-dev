@@ -10,7 +10,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Phase 0: Gamma 0.3 release
 
 - [!] T01 Confirm the gamma configuration with Talib — blocked on Talib's answers
-- [ ] T02 Secure a Docker build host and build the gamma image — docker daemon is available on aurora (needs --network=host)
+- [x] T02 Secure a Docker build host and build the gamma image — done 2026-10-05: aurora has Docker; `cal-disp:0.3.0-rc` built, record on cal-disp `feature/docker-build-record`
 - [ ] T03 Rebuild the golden inside Docker and validate — depends on T01, T02
 - [ ] T04 Fix the delivery documents — depends on T01
 - [ ] T05 Confirm product URLs and version string — depends on T01
@@ -21,13 +21,13 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T07 Shared engineering-standards kit
 - [x] T08 Apply standards to Venti (`venti-dev`) — done 2026-10-05 on `feature/standards` (pre-commit.ci switch-on is a manual owner step)
 - [ ] T09 Apply standards to cal-disp — depends on T06, T07
-- [~] T10 Apply standards to geepers fork — depends on T07
+- [x] T10 Apply standards to geepers fork — done 2026-10-05 on geepers `feature/standards` (3 commits: env, kit, type fixes)
 - [ ] T11 Create the validation package repo — depends on T07
-- [ ] T12 geepers dependency audit — depends on T10
-- [ ] T13 geepers lean core — depends on T12
-- [ ] T14 `geepers[grid]`: GPS Imaging + Euler, with exclusion areas — depends on T13
-- [ ] T15 `geepers[analysis]` and `[all]` — depends on T13
-- [ ] T16 Venti bug fixes and packaging repair — depends on T08
+- [~] T12 geepers dependency audit — T12.1–T12.2 done (`docs/dependency_audit.md` on `feature/extras-split`); T12.3 owner sign-off pending
+- [x] T13 geepers lean core — done 2026-10-06 on geepers `feature/extras-split` (provisional on the T12.3 sign-off)
+- [x] T14 `geepers[grid]`: GPS Imaging + Euler, with exclusion areas — done 2026-10-06 on geepers `feature/extras-split` (reinterpolate_nodes, plate tables, plate_velocity_enu)
+- [x] T15 `geepers[analysis]` and `[all]` — done 2026-10-06 on geepers `feature/extras-split` (CI matrix per tier, README install matrix, CHANGELOG)
+- [x] T16 Venti bug fixes and packaging repair — done 2026-10-05 on `feature/venti-bugfixes` (T16.7 research-branch copy still open, see plan)
 - [ ] T17 Venti package layout: lean core + extras — depends on T14, T16
 - [ ] T18 `SensorSpec` abstraction — depends on T17
 - [ ] T19 Venti algorithm-parameters schema — depends on T17
@@ -96,3 +96,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Log
 
 - 2026-10-05 Tracker created. Phase 0 is blocked on external inputs (Talib, a Docker host); starting phase 1 at T07.
+- 2026-10-05 T07 done (`00_tools/standards`, 16 kit tests). T08 done: Venti `feature/prd-docs` → `feature/standards` (pixi fix, kit, SPDX) → `feature/docs-site` (T20) and `feature/venti-bugfixes` (T16: λ/2 cycle, ITRF import, cal-disp YAML compat; 271 tests, lint clean). T10/T12 in progress on geepers `feature/standards` (dependency audit written; `affine` 3 warning filter + mypy hook bump needed for a green dev env). T02 unblocked: Docker daemon available on aurora; gamma image build started (`cal-disp:0.3.0-rc`).
+- 2026-10-05 (cont.) geepers `feature/standards` committed (env, kit, 21 type fixes; 348 tests, lint green); `feature/extras-split` holds the T12 audit. Venti branches rebased into one linear stack (prd-docs → standards → docs-site → venti-bugfixes). Gamma image `cal-disp:0.3.0-rc` built and validated in-image at 1e-6 (cal-disp `feature/docker-build-record`). Open decisions: T12.3 partition sign-off; validation/VLM repo names (T11/T52); T01 with Talib.
+- 2026-10-06 All branches pushed; PRs open on the forks (venti-dev #1–#4, geepers #1–#2, cal-disp #1). T13 done: geepers core imports without geopandas/pandera, deps split core/[grid]/[analysis]/[plot]/[all], `core-only` CI job. Fork Actions are off until enabled in each fork's Actions tab. Next: T14 (incl. T14.3a ITRF2020 plate table), T15.
+- 2026-10-06 T14 and T15 done on geepers `feature/extras-split` (PR #2): ITRF2020/2014 plate tables + `plate_velocity_enu`, `reinterpolate_nodes`, CI matrix per tier, README/CHANGELOG. 376 tests. Phase 1 remaining: T09 (blocked on T06), T11 (repo name), T17–T19, T21–T27. Next: T17 (Venti layout) now that T14 and T16 are done.

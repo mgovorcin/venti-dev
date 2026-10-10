@@ -19,6 +19,8 @@ repos:
       - id: check-toml
       - id: check-yaml
         args: [--allow-multiple-documents]
+        # mkdocs.yml uses the !!python/name: tag for pymdownx superfences
+        exclude: '^mkdocs\.yml$'
       - id: debug-statements
         exclude: '\.ipynb$'
       - id: end-of-file-fixer
