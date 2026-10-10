@@ -203,7 +203,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/a8/eb/c51d3b54dfaa9267a687359d946dc2a1ca6a27fb4d381773e59b7bd72bf4/botocore-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d5/4e/e4691508f9477ce67da2015d8c00acd751e6287739123113a9fca6f1604e/frozenlist-1.8.0-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/6c/c0/a98505f18594f1bce828bb159cec0fcf9860562f1a2c85913409fc8f3d9e/fsspec-2026.9.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/14/2f/967ba146e6d58cf6a652da73885f52fc68001525b4197effc174321d70b4/jmespath-1.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/93/f2/e06c8e42074d0a4b8419bfe92afbd1d262190b69549ecbcd2dffa4f103c2/multidict-6.9.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/88/65/25821b8db9d08fa8a4468c091b8d7c26c9dc6c15d9ff0e17c5f04673f4e3/opera_utils-0.25.8-py3-none-any.whl
@@ -404,7 +404,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/a8/eb/c51d3b54dfaa9267a687359d946dc2a1ca6a27fb4d381773e59b7bd72bf4/botocore-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/0c/ab/6e5080ee374f875296c4243c381bbdef97a9ac39c6e3ce1d5f7d42cb78d6/frozenlist-1.8.0-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/6c/c0/a98505f18594f1bce828bb159cec0fcf9860562f1a2c85913409fc8f3d9e/fsspec-2026.9.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/14/2f/967ba146e6d58cf6a652da73885f52fc68001525b4197effc174321d70b4/jmespath-1.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/46/46/9b4c1127cece0289fb207d04aae5116382ddfcb2a4dc8e0cb49a33f3c7b3/multidict-6.9.1-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/88/65/25821b8db9d08fa8a4468c091b8d7c26c9dc6c15d9ff0e17c5f04673f4e3/opera_utils-0.25.8-py3-none-any.whl
@@ -795,7 +795,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - pypi: https://files.pythonhosted.org/packages/72/d8/a01764ffd32fbcd66c5575eb85764ae9ea7b7d03dc591592e132c43af1f5/boto3-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/c2/dcc81bfa2cc96ffad54561e36763fd8f6d0be4e85a470ce78cb11dcac9a1/dem_stitcher-3.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/88/65/25821b8db9d08fa8a4468c091b8d7c26c9dc6c15d9ff0e17c5f04673f4e3/opera_utils-0.25.8-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2a/2d/d4bf65e47cea8ff2c794a600c4fd1273a7902f268757c531e0ee9f18aa58/pooch-1.9.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bc/e7/5c595c75e9f41a44f30e526eda465ea0b4eec93470e074e4a111b253f13a/s3transfer-0.19.2-py3-none-any.whl
@@ -1122,7 +1122,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - pypi: https://files.pythonhosted.org/packages/72/d8/a01764ffd32fbcd66c5575eb85764ae9ea7b7d03dc591592e132c43af1f5/boto3-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/c2/dcc81bfa2cc96ffad54561e36763fd8f6d0be4e85a470ce78cb11dcac9a1/dem_stitcher-3.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/88/65/25821b8db9d08fa8a4468c091b8d7c26c9dc6c15d9ff0e17c5f04673f4e3/opera_utils-0.25.8-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2a/2d/d4bf65e47cea8ff2c794a600c4fd1273a7902f268757c531e0ee9f18aa58/pooch-1.9.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bc/e7/5c595c75e9f41a44f30e526eda465ea0b4eec93470e074e4a111b253f13a/s3transfer-0.19.2-py3-none-any.whl
@@ -1572,7 +1572,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - pypi: https://files.pythonhosted.org/packages/72/d8/a01764ffd32fbcd66c5575eb85764ae9ea7b7d03dc591592e132c43af1f5/boto3-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/c2/dcc81bfa2cc96ffad54561e36763fd8f6d0be4e85a470ce78cb11dcac9a1/dem_stitcher-3.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/41/63/e876e789525063c840ccfa8857febdabd6523bcef9ce7eb979b9305ea895/griffelib-2.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/28/de/a3e710469772c6a89595fc52816da05c1e164b4c866a89e3cb82fb1b67c5/mkdocs_autorefs-1.4.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b0/4d/a330cab5e055d45e924cec69da54a3d8ed37643964f8d1fa1a772b496273/mkdocs_section_index-0.3.12-py3-none-any.whl
@@ -1968,7 +1968,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - pypi: https://files.pythonhosted.org/packages/72/d8/a01764ffd32fbcd66c5575eb85764ae9ea7b7d03dc591592e132c43af1f5/boto3-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/c2/dcc81bfa2cc96ffad54561e36763fd8f6d0be4e85a470ce78cb11dcac9a1/dem_stitcher-3.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/41/63/e876e789525063c840ccfa8857febdabd6523bcef9ce7eb979b9305ea895/griffelib-2.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/28/de/a3e710469772c6a89595fc52816da05c1e164b4c866a89e3cb82fb1b67c5/mkdocs_autorefs-1.4.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b0/4d/a330cab5e055d45e924cec69da54a3d8ed37643964f8d1fa1a772b496273/mkdocs_section_index-0.3.12-py3-none-any.whl
@@ -2402,7 +2402,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - pypi: https://files.pythonhosted.org/packages/72/d8/a01764ffd32fbcd66c5575eb85764ae9ea7b7d03dc591592e132c43af1f5/boto3-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/c2/dcc81bfa2cc96ffad54561e36763fd8f6d0be4e85a470ce78cb11dcac9a1/dem_stitcher-3.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/41/63/e876e789525063c840ccfa8857febdabd6523bcef9ce7eb979b9305ea895/griffelib-2.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/28/de/a3e710469772c6a89595fc52816da05c1e164b4c866a89e3cb82fb1b67c5/mkdocs_autorefs-1.4.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b0/4d/a330cab5e055d45e924cec69da54a3d8ed37643964f8d1fa1a772b496273/mkdocs_section_index-0.3.12-py3-none-any.whl
@@ -2777,7 +2777,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - pypi: https://files.pythonhosted.org/packages/72/d8/a01764ffd32fbcd66c5575eb85764ae9ea7b7d03dc591592e132c43af1f5/boto3-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/c2/dcc81bfa2cc96ffad54561e36763fd8f6d0be4e85a470ce78cb11dcac9a1/dem_stitcher-3.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/41/63/e876e789525063c840ccfa8857febdabd6523bcef9ce7eb979b9305ea895/griffelib-2.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/28/de/a3e710469772c6a89595fc52816da05c1e164b4c866a89e3cb82fb1b67c5/mkdocs_autorefs-1.4.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b0/4d/a330cab5e055d45e924cec69da54a3d8ed37643964f8d1fa1a772b496273/mkdocs_section_index-0.3.12-py3-none-any.whl
@@ -2966,7 +2966,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/a8/eb/c51d3b54dfaa9267a687359d946dc2a1ca6a27fb4d381773e59b7bd72bf4/botocore-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d5/4e/e4691508f9477ce67da2015d8c00acd751e6287739123113a9fca6f1604e/frozenlist-1.8.0-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/6c/c0/a98505f18594f1bce828bb159cec0fcf9860562f1a2c85913409fc8f3d9e/fsspec-2026.9.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/14/2f/967ba146e6d58cf6a652da73885f52fc68001525b4197effc174321d70b4/jmespath-1.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/93/f2/e06c8e42074d0a4b8419bfe92afbd1d262190b69549ecbcd2dffa4f103c2/multidict-6.9.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/88/65/25821b8db9d08fa8a4468c091b8d7c26c9dc6c15d9ff0e17c5f04673f4e3/opera_utils-0.25.8-py3-none-any.whl
@@ -3143,7 +3143,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/a8/eb/c51d3b54dfaa9267a687359d946dc2a1ca6a27fb4d381773e59b7bd72bf4/botocore-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/0c/ab/6e5080ee374f875296c4243c381bbdef97a9ac39c6e3ce1d5f7d42cb78d6/frozenlist-1.8.0-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/6c/c0/a98505f18594f1bce828bb159cec0fcf9860562f1a2c85913409fc8f3d9e/fsspec-2026.9.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/14/2f/967ba146e6d58cf6a652da73885f52fc68001525b4197effc174321d70b4/jmespath-1.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/46/46/9b4c1127cece0289fb207d04aae5116382ddfcb2a4dc8e0cb49a33f3c7b3/multidict-6.9.1-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/88/65/25821b8db9d08fa8a4468c091b8d7c26c9dc6c15d9ff0e17c5f04673f4e3/opera_utils-0.25.8-py3-none-any.whl
@@ -3557,7 +3557,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - pypi: https://files.pythonhosted.org/packages/72/d8/a01764ffd32fbcd66c5575eb85764ae9ea7b7d03dc591592e132c43af1f5/boto3-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/c2/dcc81bfa2cc96ffad54561e36763fd8f6d0be4e85a470ce78cb11dcac9a1/dem_stitcher-3.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/88/65/25821b8db9d08fa8a4468c091b8d7c26c9dc6c15d9ff0e17c5f04673f4e3/opera_utils-0.25.8-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2a/2d/d4bf65e47cea8ff2c794a600c4fd1273a7902f268757c531e0ee9f18aa58/pooch-1.9.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bc/e7/5c595c75e9f41a44f30e526eda465ea0b4eec93470e074e4a111b253f13a/s3transfer-0.19.2-py3-none-any.whl
@@ -3907,7 +3907,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - pypi: https://files.pythonhosted.org/packages/72/d8/a01764ffd32fbcd66c5575eb85764ae9ea7b7d03dc591592e132c43af1f5/boto3-1.43.106-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/c2/dcc81bfa2cc96ffad54561e36763fd8f6d0be4e85a470ce78cb11dcac9a1/dem_stitcher-3.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+      - pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
       - pypi: https://files.pythonhosted.org/packages/88/65/25821b8db9d08fa8a4468c091b8d7c26c9dc6c15d9ff0e17c5f04673f4e3/opera_utils-0.25.8-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2a/2d/d4bf65e47cea8ff2c794a600c4fd1273a7902f268757c531e0ee9f18aa58/pooch-1.9.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bc/e7/5c595c75e9f41a44f30e526eda465ea0b4eec93470e074e4a111b253f13a/s3transfer-0.19.2-py3-none-any.whl
@@ -6303,9 +6303,9 @@ packages:
   - pkg:pypi/gdal?source=compressed-mapping
   size: 2447905
   timestamp: 1791162880343
-- pypi: git+https://github.com/mgovorcin/geepers.git?rev=677f95ddd863f9edd5f6bc5a0adca98e4297d857#677f95ddd863f9edd5f6bc5a0adca98e4297d857
+- pypi: git+https://github.com/mgovorcin/geepers.git?rev=139674118b24036858017d8916c54e35b8174a59#139674118b24036858017d8916c54e35b8174a59
   name: geepers
-  version: 0.3.0.post1.dev75+g677f95ddd
+  version: 0.3.0.post1.dev82+g139674118
   requires_dist:
   - numpy
   - pandas
@@ -13775,8 +13775,8 @@ packages:
   timestamp: 1789566710244
 - pypi: ./
   name: venti
-  version: 0.0.post1.dev98+g54f8e4878.d20261006
-  sha256: 67c36a28c796aaea788a396d5b03f7117a70a3cbfe1810f329a315a3aa1fdd74
+  version: 0.0.post1.dev201+geb9ad2132.d20261010
+  sha256: be1d1791562b93d13ea193539aabe801757b235aec4c1cb64a93d08b178ba76f
   requires_dist:
   - numpy
   - pandas
@@ -13799,7 +13799,7 @@ packages:
   - tyro>=0.9.24
   - opera-utils
   - rich
-  - geepers[grid] @ git+https://github.com/mgovorcin/geepers.git@677f95ddd863f9edd5f6bc5a0adca98e4297d857
+  - geepers[grid] @ git+https://github.com/mgovorcin/geepers.git@139674118b24036858017d8916c54e35b8174a59
   - opera-utils[asf,disp] ; extra == 'research'
   - asf-search ; extra == 'research'
   - dem-stitcher ; extra == 'research'
