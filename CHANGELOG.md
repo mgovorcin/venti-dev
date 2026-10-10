@@ -59,6 +59,14 @@ Value-changing entries say which product layers move and by how much
 
 ### Added
 
+- `algorithm_parameters` schema v2 (plan T19): nested option groups
+  `surface`, `weights`, `tropo`, `gnss`, `uncertainty`, `unwrap` under
+  `calibration_options`, the three downsampling keys cal-disp already used,
+  `schema_version` (a version-1 gamma file loads unchanged and is upgraded in
+  memory), `extra = "forbid"` so typos fail at load time. Every new default
+  reproduces the gamma behaviour. **`unwrap_error_correction` now defaults to
+  off** (PRD R-U1; the gamma file sets it explicitly). Reference:
+  `docs/algorithm_parameters.md`.
 - `venti.sensor` (plan T18, PRD R-X1): `SensorSpec` with the radar wavelength
   and λ/2 cycle, product and static-layer filename grammars, mask/quality/
   correction layer names and readers (`read_wavelength` checks the product's

@@ -9,10 +9,9 @@ The gamma 0.3 golden configuration is vendored under tests/data so a Venti
 change that breaks loading it, or silently starts ignoring a key, fails here
 before cal-disp notices.
 
-Known gap (plan T19): Venti's `CalibrationOptions` does not forbid extra keys,
-and cal-disp's downsampling keys are passed to `estimate_calibration_surface`
-as function arguments rather than modelled. The second test pins that set so
-it can only change on purpose.
+Since schema v2 (plan T19) Venti models every gamma key, including the
+downsampling keys cal-disp passes to `estimate_calibration_surface` as
+function arguments, and rejects unknown keys.
 """
 
 from __future__ import annotations
@@ -26,13 +25,8 @@ from venti.workflow.config import AlgorithmParameters, CalibrationOptions
 
 GAMMA_YAML = Path(__file__).parent / "data/caldisp_algorithm_parameters_gamma.yaml"
 
-# cal-disp keys that Venti's options model does not carry (they are arguments
-# of estimate_calibration_surface in cal-disp's call). Modelling them is T19.
-KEYS_NOT_MODELLED_BY_VENTI = {
-    "downsample_factor",
-    "downsample_method",
-    "downsample_weighted",
-}
+# Since schema v2 every gamma key is modelled.
+KEYS_NOT_MODELLED_BY_VENTI: set[str] = set()
 
 
 @pytest.fixture(scope="module")
@@ -55,6 +49,8 @@ def test_gamma_calibration_options_load(gamma_yaml):
     assert opts.weight_fit_by_gnss_uncertainty is False
     assert opts.calibration_surface_smoothing_sigma == pytest.approx(0.0)
     assert opts.residual_outlier_mad_threshold is None
+    assert opts.downsample_factor == 6
+    assert opts.downsample_method == "mean"
 
 
 def test_gamma_keys_venti_does_not_model_are_exactly_the_known_ones(gamma_yaml):
@@ -73,3 +69,10 @@ def test_gamma_file_loads_as_algorithm_parameters(tmp_path):
     params.to_yaml(out)
     again = AlgorithmParameters.from_yaml(out)
     assert again.calibration_options == params.calibration_options
+
+
+def test_unknown_calibration_key_is_rejected(gamma_yaml):
+    """extra=forbid: a typo in cal-disp's YAML fails loudly instead of being ignored."""
+    bad = dict(gamma_yaml["calibration_options"], not_a_real_option=1)
+    with pytest.raises(ValueError, match="not_a_real_option"):
+        CalibrationOptions(**bad)

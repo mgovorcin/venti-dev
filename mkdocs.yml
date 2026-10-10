@@ -29,6 +29,7 @@ nav:
   - Product requirements (PRD): specs.md
   - Implementation plan: plan.md
   - Architecture: architecture.md
+  - Algorithm parameters: algorithm_parameters.md
   - Task tracker: todo.md
   - Decisions:
       - decisions/README.md
