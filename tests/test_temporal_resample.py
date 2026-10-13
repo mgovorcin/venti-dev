@@ -191,3 +191,20 @@ def test_dataarray_wrapper_keeps_coordinates():
     dask = pytest.importorskip("dask")  # noqa: F841 - research env only
     lazy = resample_dataarray(da.chunk({"y": 5, "x": 8}), targets, 96.0)
     np.testing.assert_allclose(lazy.value.values, v)
+
+
+def test_nanmedian0_equals_numpy():
+    """The fast window median matches np.nanmedian exactly, incl. all-NaN columns."""
+    import warnings
+
+    from venti.temporal.resample import _nanmedian0
+
+    rng = np.random.default_rng(5)
+    for nt in (1, 2, 5, 16):
+        a = rng.normal(size=(nt, 500))
+        a[rng.random(a.shape) < 0.3] = np.nan
+        a[:, :3] = np.nan  # no finite value
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            expected = np.nanmedian(a, axis=0)
+        np.testing.assert_array_equal(_nanmedian0(a), expected)

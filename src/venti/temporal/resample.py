@@ -49,6 +49,20 @@ HUBER_C = 1.345
 EPS = 1e-12
 
 
+def _nanmedian0(a: np.ndarray) -> np.ndarray:
+    """NaN-ignoring median along axis 0; NaN where a column has no finite value.
+
+    Equal to ``np.nanmedian(a, axis=0)``, 5-10x faster for the short windows
+    used here: numpy routes a short axis through masked arrays.
+    """
+    s = np.sort(a, axis=0)  # NaN sorts last
+    n = np.isfinite(a).sum(0)
+    lo = np.maximum((n - 1) // 2, 0)[None]
+    hi = np.minimum(n // 2, a.shape[0] - 1)[None]
+    med = 0.5 * (np.take_along_axis(s, lo, 0)[0] + np.take_along_axis(s, hi, 0)[0])
+    return np.where(n > 0, med, np.nan)
+
+
 def _to_days(dates: Any) -> np.ndarray:
     """Convert datetimes / numpy datetime64 / numbers to float days."""
     arr = np.asarray(dates)
@@ -91,9 +105,9 @@ def _theil_sen(
         slopes = (y[j] - y[i]) / dt
     pair_ok = ok[i] & ok[j] & (np.abs(dt) > EPS)
     slopes = np.where(pair_ok, slopes, np.nan)
-    b = np.nanmedian(slopes, axis=0)
+    b = _nanmedian0(slopes)
     inter = np.where(ok, y - b[None, :] * t[:, None], np.nan)
-    a0 = np.nanmedian(inter, axis=0)
+    a0 = _nanmedian0(inter)
     return a0, b
 
 
@@ -138,10 +152,8 @@ def _fit_window_impl(
         if method == "huber_linear":
             for _ in range(2):
                 resid = np.where(ok, y0 - (a + b * (t[:, None] - t_bar)), 0.0)
-                med = np.nanmedian(np.where(ok, resid, np.nan), axis=0)
-                mad = MAD_SCALE * np.nanmedian(
-                    np.where(ok, np.abs(resid - med), np.nan), axis=0
-                )
+                med = _nanmedian0(np.where(ok, resid, np.nan))
+                mad = MAD_SCALE * _nanmedian0(np.where(ok, np.abs(resid - med), np.nan))
                 scale = np.where(mad > EPS, mad, np.nan)
                 with np.errstate(invalid="ignore", divide="ignore"):
                     z = np.abs(resid - med) / scale
