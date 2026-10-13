@@ -70,3 +70,22 @@ def test_ridgecrest_events_affect_only_spanning_pairs():
     assert after == []
     mw71 = next(e for e in db.items if e.id == "ridgecrest_2019_mw71")
     assert mw71.shape().contains(Point(-117.5993333, 35.7695))
+
+
+def test_area_db_covers_the_benchmark_areas_and_reaches_stable_ground():
+    """T41.2/T41.4: Houston, San Joaquin, Kern and Kilauea are in the DB, and
+    every drafted polygon's 10 km ring is mostly stable ground."""
+    db = load_area_db(DATA / "defo_area_db_v1.geojson")
+    ids = {a.id for a in db.items}
+    assert {
+        "houston_galveston_subsidence",
+        "san_joaquin_subsidence",
+        "kern_subsidence_north",
+        "kern_subsidence_south",
+        "kilauea",
+    } <= ids
+    drafted = [a for a in db.items if hasattr(a, "stable_ring_fraction")]
+    assert len(drafted) == 4
+    assert all(a.stable_ring_fraction >= 0.5 for a in drafted)
+    kilauea = next(a for a in db.items if a.id == "kilauea")
+    assert kilauea.shape().contains(Point(-155.28, 19.41))  # the summit caldera
