@@ -167,6 +167,36 @@ def _frame_cutoff_m(shape: tuple[int, int], pixel_m: float) -> float:
 TIE_MAX_PX = 256
 
 
+def _region_offsets(
+    surface_ds: np.ndarray,
+    residual_ds: np.ndarray,
+    labels_ds: np.ndarray,
+    usable: np.ndarray,
+    min_pixels: int,
+) -> np.ndarray:
+    """Add each non-mainland region's median misfit to the mainland surface there.
+
+    The mainland surface is extrapolated into the other regions by the gap
+    filling; each region with at least `min_pixels` usable pixels then gets
+    the median of ``residual - surface`` over them as a constant, so an
+    island's whole-cycle error (or any constant offset) is absorbed by the
+    island alone.
+    """
+    from ..unwrap.regions import largest_region
+
+    out = surface_ds.copy()
+    main = largest_region(labels_ds)
+    for lab in np.unique(labels_ds[(labels_ds > 0) & (labels_ds != main)]):
+        region = labels_ds == lab
+        use = region & usable & np.isfinite(residual_ds)
+        if use.sum() < min_pixels:
+            continue
+        offset = float(np.median(residual_ds[use] - surface_ds[use]))
+        out[region] += offset
+        logger.debug("region %d: %d px, offset %.4f", lab, int(use.sum()), offset)
+    return out
+
+
 def calibrate_pair(
     disp: np.ndarray,
     gnss_los: np.ndarray,
@@ -462,11 +492,34 @@ def calibrate_pair(
                 work -= cal_unwrap_shift
                 residual_ds = residual_ds - shift_ds
 
+        region_grids = None
+        labels_ds = None
+        if options.surface.regions == "separate":
+            from ..unwrap.regions import largest_region, segment_regions
+
+            # deforming areas are land: they must not cut a region in two
+            labels_ds = segment_regions(
+                valid_ds | exclude_ds,
+                erosion_iterations=1,
+                min_region_area=options.surface.region_min_pixels,
+            )
+            main = largest_region(labels_ds)
+            others = (labels_ds > 0) & (labels_ds != main)
+            region_grids = (valid_ds, exclude_ds | others, coh_ds, pixel_ds)
         surface_ds, coverage_ds, w_ds, filled_ds = fit(
             residual_ds,
             options.surface.cutoff_wavelength_meters,
             options.weights.robust,
+            grids=region_grids,
         )
+        if labels_ds is not None:
+            surface_ds = _region_offsets(
+                surface_ds,
+                residual_ds,
+                labels_ds,
+                valid_ds & ~exclude_ds,
+                options.surface.region_min_pixels,
+            )
         fit_ok = (w_ds > 0) & valid_ds & ~exclude_ds
         fit_std = (
             float(
