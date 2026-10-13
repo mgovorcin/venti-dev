@@ -57,8 +57,8 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Phase 3: Trade studies and benchmark data
 
 - [x] T39 TS-G1: grid fidelity and per-frame k — depends on T21, T28 (σ₀ term proposal open)
-- [~] T40 Benchmark data staging (frames 5–8) — frames chosen (T40.1); statics + UNR staged; DISP downloads running (cal_disp_e2e/t40)
-- [~] T41 Curate defo and event GeoJSON databases — tool + Ridgecrest events + Houston area done (PR #25); Central Valley, Kīlauea wait for T40 stacks
+- [x] T40 Benchmark data staging (frames 5–8) — done 2026-10-10: F07081, F36542, F16941, F23211, F35991 (full 2016–2023) + F38238 (Houston desc, 378 pairs) staged and quick-looked (cal_disp_e2e/t40)
+- [~] T41 Curate defo and event GeoJSON databases — areas: Houston, San Joaquin, Kern N/S, Kīlauea (PR #28); events: Ridgecrest Mw 7.1/6.4 (PR #25) + Kīlauea 2018 LERZ eruption with `eruption_feature` (PR #29). T41.4 (check drafts vs quick-looks) moves to the final edge-case pass
 - [x] T42 TS-U1 phase 1 — depends on T36, T38 (no-go for v0.5; 3 bugs fixed on the way)
 - [x] T43 TS-S1: DISP noise model — depends on T21, T38
 - [~] T44 TS-T1 and TS-B1 — TS-B1 done 2026-10-09 (keep p = 8); TS-T1 waits for a 0.3–1.5 km relief frame (T40)
@@ -66,7 +66,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Phase 4: cal-disp v0.5 CalVal release
 
 - [ ] T45 Populate the frame table — depends on T27, T39, T44
-- [~] T46 8-frame gate and edge cases — running 2026-10-09 (cal_disp_e2e/t46): v0.5 + 50 km GNSS buffer re-run on the 4 T38 frames; new frames gamma + v0.5 as their stacks land (`t46/progress*.log`)
+- [~] T46 8-frame gate and edge cases — 2026-10-10: all 10 frames run (gamma vs v0.5): 7 PASS (incl. Puerto Rico, Houston desc on full stacks); FAIL Central Valley, Ridgecrest, Hawaii. Remove-restore (cal-disp PR #11) turns Central Valley to PASS; Hawaii/Ridgecrest PASS under decision 0002 (disp2vlm_validation PR #6: velocity rules outside areas/events; benchmark condition gates a frame, RMSE must drop vs offset-removed raw). Houston fails that condition (in-polygon RMSE 2.42 vs raw 1.74; Galveston island cycle jumps). Edge-case maps + masks: t46/edge_case_maps.py, frames/<F>/remove_restore_mask.tif
 - [~] T47 Memory and runtime toward a small EC2 instance — v0.5 7.27 → 4.1 GB, budget 4.5 GB (cal-disp PR #8, venti-dev PR #22); EC2 measurement open
 - [~] T48 Frozen UNR grid snapshot — T48.1, T48.2, T48.4 done 2026-10-06: `unr_grid_0.3_IGS20_20261006` on `s3://opera-adt/opera-ancillary/unr-grid/` (28,492 nodes); T48.3 waits for T37
 - [ ] T49 v0.5 Docker image, golden regeneration, changelog — depends on T46, T47, T48
@@ -79,7 +79,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [x] T53 Venti `[decomposition]`: WLS and projection — done 2026-10-06 on `feature/decomposition` (`venti.decomposition`: `decompose_wls`, `project_vertical`, `decompose` with mode flag)
 - [~] T54 Temporal resampling of asc/desc — T54.1–T54.2 done 2026-10-06 on `feature/temporal-resampling` (`venti.temporal`); T54.3 benchmark waits for the T56 frame choice
 - [x] T55 GNSS E/N for VLM with provenance check — depends on T28, T37 (strict once cal-disp writes the record, T37.3)
-- [ ] T56 VLM workflow and product writer — depends on T53, T54, T55
+- [~] T56 VLM workflow and product writer — T56.2 + T56.4 (opera_vlm PR #8: per target pair, synthetic asc/desc + 128×128 regression; owner decisions: one product per pair, σ model with TS-S1 σ_disp, water mask) and T56.3 (PR #10: plate motion + GIA layers) done 2026-10-10; T56.1 Houston F08882 + F38238 running (cal_disp_e2e/t56); velocity-domain product open
 - [ ] T57 VLM validation and v0.1 release — depends on T24, T56
 
 ## Phase 6: DISP-NISAR
@@ -91,7 +91,8 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 ## Later
 
 - [ ] T61 Output packaging: component and GNSS layers — depends on T14, T51
-- [ ] T62 TS-U1 phase 2: inland unwrap errors — depends on T42
+- [~] T62 TS-U1 phase 2: inland/sub-region unwrap errors — started 2026-10-10 on Houston: Galveston (disconnected region) has whole-cycle jumps in ~24% of raw pairs (TXGA 41/173); the 50 km surface absorbs part (41→30) and smears it. Unwrap correction on: precise (only the 5 Galveston-area stations move, +3 to +6.4 mm/yr, no mainland shifts), gated velocity RMSE 5.90→5.19 (now better than gamma 5.51), but incomplete (sub-region error). Stays OFF (owner) until sub-region handling + no-surface-across-water-gaps are tested. Matagorda (TXBC/TXMG, +8.5 mm/yr) is not an island: separate item
+- [ ] Final edge-case refinement pass (owner 2026-10-10) — once cal-disp v0.5, Venti, disp2vlm_validation and opera_vlm are feature-complete: Central Valley, Hawaii, Ridgecrest, Puerto Rico, Houston asc/desc; T41.4 drafts, the 0002 gate, coastal/island surface + T62 unwrap, Matagorda, VLM on real data
 
 ## Log
 
@@ -113,3 +114,5 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-09 (later) T47: memray-guided cuts, products bit-identical: v0.5 peak 7.27 → 4.0–4.1 GB, gamma 6.0 → 3.6–4.0 GB; budget 7.0 → 4.5 GB; worker_settings cap BLAS threads; 2-core run 1 min 43 s → t3.large fits. Unwrap correction stays off until a trade study confirms it (owner; note in T62).
 - 2026-10-09 (later) Owner decisions applied: (1) σ_CAL = calibration-surface uncertainty; opt-in `uncertainty.sigma_nonsecular_meters` (default 0) + `calibration_std` text (venti-dev #23, cal-disp #9); (2) coastal = within 10 km of water bodies ≥ 500 km² (sea); (3) gate bias = median (disp2vlm_validation decision 0001, PR #4). T38 re-run: 4/4 PASS, |median bias| ≤ 1 on all four. New finding: chained v0.5 velocities spread more than gamma (NMAD 1.3 → 2.7, issue #3; relevant to VLM T56).
 - 2026-10-09 (late) Owner: VLM per pair official + optional velocity product (opera_vlm PR #7). GNSS grid buffer was not applied in cal-disp (old path, padding 0): fixed for v0.5 via sample_gnss_enu (cal-disp PR #10, buffer 50 km); UNR 0–360 longitude bug made R-G5 a no-op (venti-dev PR #26). Defo/event DB v1 drafts + tool (PR #25). T40 downloads running.
+- 2026-10-10 T46 complete on 10 frames; remove-restore (cal-disp #11) fixes Central Valley; decision 0002 accepted (owner: velocity rules on stations outside areas/events; a frame's benchmark condition gates it; thresholds from evidence: class RMSE must drop vs offset-removed raw). Hawaii's ~130 mm/yr RMSE was one co-eruptive station (ERZ4) → Kīlauea 2018 event (venti-dev #29). Houston: gamma's excess RMSE is a frame-wide +4 mm/yr bias; v0.5 removes it but its per-pair surface absorbs Galveston island cycle jumps (T62). VLM: T56.2–T56.4 (opera_vlm #8, #10), first real run T56.1 on Houston started. geepers #8: plate_velocity_enu kept 2-D shapes wrong.
+- 2026-10-10 Owner: after the repos are finished, a **final refinement pass on the edge cases** (Central Valley, Hawaii, Ridgecrest, Puerto Rico, Houston asc/desc): area/event drafts (T41.4), the 0002 gate, coastal/island surface handling and unwrap (T62), VLM on real data.
