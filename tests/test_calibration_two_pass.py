@@ -427,3 +427,16 @@ def test_inputs_are_not_modified(method):
     res.assert_closed()
     # components that are not applied share one read-only zero layer
     assert not res.cal_unwrap_shift.flags.writeable
+
+
+def test_frame_table_turns_regions_on_for_the_island_frames():
+    """T62 edge pass: surface.regions = separate only where the benchmark showed
+    island errors (Houston, Los Angeles, Puerto Rico); NYC and others keep none."""
+    from venti.frames import load_frame_table
+    from venti.workflow.config import AlgorithmParameters
+
+    table = load_frame_table()
+    for frame, expected in ((8882, "separate"), (16940, "separate"), (35991, "separate"),
+                            (8622, "none"), (8886, "none"), (99, "none")):  # fmt: skip
+        applied = table.apply(AlgorithmParameters(), frame)
+        assert applied.calibration_options.surface.regions == expected, frame
