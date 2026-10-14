@@ -410,6 +410,9 @@ def calibrate_pair(
         exclude_ds = (
             _downsample_bool(fit_exclude, factor) if factor > 1 else fit_exclude
         )
+        # island offsets are constants: estimate them on every valid pixel of
+        # the region (outside deforming areas), not only the stable ones
+        area_ds = _downsample_bool(exclude, factor) if factor > 1 else exclude
         coh_ds = (
             down(np.nan_to_num(coherence, nan=0.0)) if coherence is not None else None
         )
@@ -537,7 +540,7 @@ def calibrate_pair(
                 surface_ds,
                 residual_ds,
                 labels_ds,
-                valid_ds & ~exclude_ds,
+                valid_ds & ~area_ds,
                 options.surface.region_min_pixels,
             )
         fit_ok = (w_ds > 0) & valid_ds & ~exclude_ds

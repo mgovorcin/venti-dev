@@ -297,6 +297,26 @@ class TestLoclinEndToEnd:
                 disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M, fit_mask=valid[1:]
             )
 
+    def test_island_offset_uses_every_valid_island_pixel_under_a_fit_mask(self):
+        """T46 Houston: the fit mask shapes the mainland fit only; an island
+        whose pixels are all outside the mask still gets its own offset (from
+        every valid pixel), so its cycle stays off the product."""
+        disp, gnss, valid, _ramp, bowl_mask, island_mask, coh = scene()
+        o = opts_v05(two_pass=True)
+        o = o.model_copy(
+            update={
+                "surface": o.surface.model_copy(
+                    update={"regions": "separate", "fit_mask": "stable.tif"}
+                )
+            }
+        )
+        res = calibrate_pair(
+            disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M,
+            coherence=coh, exclude_mask=bowl_mask, fit_mask=~island_mask,
+        )  # fmt: skip
+        err_island = ((disp - res.calibration) - gnss)[island_mask]
+        assert np.sqrt(np.mean(err_island**2)) < 0.0015
+
     def test_single_pass_loclin_and_downsampling(self):
         disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
         o = opts_v05(two_pass=False)

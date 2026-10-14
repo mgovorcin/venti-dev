@@ -148,7 +148,9 @@ class SurfaceOptions(BaseModel):
             "stable; built with venti-fit-mask). Pixels outside it are left out "
             "of the fit like a remove-restore area: the surface is still "
             "evaluated there and sigma_CAL is not inflated (T62, Houston/"
-            "Matagorda). The caller reads it onto the pair's grid and passes "
+            "Matagorda). With regions='separate' the island offsets still use "
+            "every valid island pixel. The caller reads it onto the pair's grid "
+            "and passes "
             "calibrate_pair(fit_mask=...). None: every valid pixel is fit."
         ),
     )
