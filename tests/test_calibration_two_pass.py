@@ -208,6 +208,42 @@ class TestLoclinEndToEnd:
         err_far = ((disp - res.calibration) - gnss)[far]
         assert np.sqrt(np.mean(err_far**2)) < 0.0015
 
+    def test_separate_regions_keep_the_island_cycle_off_the_mainland(self):
+        """T62: with surface.regions='separate' the island's +1 cycle becomes an
+        island offset; the mainland surface matches the island-free scene and
+        the island is tied to GNSS."""
+        disp, gnss, valid, _ramp, bowl_mask, island_mask, coh = scene()
+        clean, *_ = scene(island=False)
+        clean[~valid] = np.nan
+
+        def run(d, regions):
+            o = opts_v05(two_pass=True, unwrap=False)
+            o = o.model_copy(
+                update={"surface": o.surface.model_copy(update={"regions": regions})}
+            )
+            return calibrate_pair(
+                d, gnss, valid, REF, o, PIXEL_M, CYCLE_M,
+                coherence=coh, exclude_mask=bowl_mask,
+            )  # fmt: skip
+
+        sep, ref = run(disp, "separate"), run(clean, "separate")
+        none = run(disp, "none")
+        mainland_coast = valid & ~bowl_mask & ~island_mask
+        mainland_coast[:80, :] = False  # the coast facing the island
+        mainland_coast[:, :100] = False
+        # the island's cycle does not bend the mainland surface ...
+        moved_sep = np.abs(sep.cal_gnss_surface - ref.cal_gnss_surface)
+        moved_none = np.abs(none.cal_gnss_surface - ref.cal_gnss_surface)
+        assert moved_sep[mainland_coast].max() < 0.001
+        assert moved_none[mainland_coast].max() > 3 * moved_sep[mainland_coast].max()
+        # ... and the island itself is tied to GNSS through its own offset
+        err_island = ((disp - sep.calibration) - gnss)[island_mask]
+        assert np.sqrt(np.mean(err_island**2)) < 0.0015
+        assert sep.components_applied == none.components_applied
+        np.testing.assert_allclose(
+            sep.calibration, sum(getattr(sep, c) for c in COMPONENTS), atol=1e-6
+        )
+
     def test_single_pass_loclin_and_downsampling(self):
         disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
         o = opts_v05(two_pass=False)

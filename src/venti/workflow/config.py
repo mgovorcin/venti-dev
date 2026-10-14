@@ -122,6 +122,24 @@ class SurfaceOptions(BaseModel):
             "the final surface (R-S1)"
         ),
     )
+    regions: Literal["none", "separate"] = Field(
+        "none",
+        description=(
+            "'loclin' only. 'separate': fit the final surface on the largest "
+            "connected land region (the mainland) and give each other region "
+            "(island, cut-off peninsula) its own constant offset, so a region's "
+            "unwrapping cycle jump cannot bend the mainland surface across a water "
+            "gap (T62, Houston/Galveston). 'none': one surface for every region."
+        ),
+    )
+    region_min_pixels: int = Field(
+        50,
+        ge=1,
+        description=(
+            "With regions='separate': regions smaller than this many fit-grid "
+            "pixels keep the mainland surface instead of an offset of their own."
+        ),
+    )
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 
