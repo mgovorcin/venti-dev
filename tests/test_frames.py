@@ -86,8 +86,11 @@ def test_apply_to_algorithm_parameters_from_the_bundled_table():
         table.apply(AlgorithmParameters(), 99).calibration_options.uncertainty.k_grid
         == 3.9
     )
-    # untouched groups keep their defaults; the input is not mutated
-    assert cal.surface == CalibrationOptions().surface
+    # untouched settings keep their defaults; the input is not mutated
+    assert cal.surface.regions == "separate"  # T62 edge pass (0.4-draft)
+    assert cal.surface.model_copy(update={"regions": "none"}) == (
+        CalibrationOptions().surface
+    )
     assert AlgorithmParameters().calibration_options.frame.plate == "NA"
     houston = table.apply(AlgorithmParameters(), "08882").calibration_options
     assert houston.tropo.mode == "off"

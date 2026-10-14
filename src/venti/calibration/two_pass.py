@@ -211,6 +211,7 @@ def calibrate_pair(
     tropo: np.ndarray | None = None,
     set_correction: np.ndarray | None = None,
     exclude_mask: np.ndarray | None = None,
+    fit_mask: np.ndarray | None = None,
     sigma_tropo: np.ndarray | float | None = None,
     sigma_ref: float = 0.0,
     unwrap_hook: UnwrapHook | None = None,
@@ -248,6 +249,10 @@ def calibrate_pair(
         ``cal_set``.
     exclude_mask : np.ndarray, optional
         Remove-restore mask (True = excluded from the fit).
+    fit_mask : np.ndarray, optional
+        Stable-pixel mask (True = may be fit), required when
+        ``surface.fit_mask`` names one; `venti.frames.fit_mask_path` locates
+        the file. Pixels outside it are left out of the loclin fit only.
     sigma_tropo : np.ndarray or float, optional
         Uncertainty of the tropospheric correction, same units as `disp`
         (R-E1 term; 0 until a model exists).
@@ -283,8 +288,15 @@ def calibrate_pair(
         tropo=tropo,
         set_correction=set_correction,
         exclude_mask=exclude_mask,
+        fit_mask=fit_mask,
         sigma_tropo=sigma_tropo if np.ndim(sigma_tropo) > 0 else None,
     )
+    if (options.surface.fit_mask is None) != (fit_mask is None):
+        msg = (
+            f"surface.fit_mask is {options.surface.fit_mask!r} but fit_mask was"
+            f" {'not ' if fit_mask is None else ''}given"
+        )
+        raise ValueError(msg)
     # one read-only zero layer shared by every component that is not applied
     # (a broadcast view: no full frame at all)
     zeros = np.broadcast_to(np.zeros((), dtype=disp.dtype), disp.shape)
@@ -389,7 +401,18 @@ def calibrate_pair(
             )
 
         valid_ds = _downsample_bool(valid, factor) if factor > 1 else valid
-        exclude_ds = _downsample_bool(exclude, factor) if factor > 1 else exclude
+        # unstable pixels (surface.fit_mask) leave the fit only: the surface is
+        # still evaluated there and sigma_CAL is not inflated, so they join the
+        # fit-grid exclusion but not `exclude`
+        fit_exclude = exclude
+        if fit_mask is not None:
+            fit_exclude = exclude | (~np.asarray(fit_mask, dtype=bool) & valid)
+        exclude_ds = (
+            _downsample_bool(fit_exclude, factor) if factor > 1 else fit_exclude
+        )
+        # island offsets are constants: estimate them on every valid pixel of
+        # the region (outside deforming areas), not only the stable ones
+        area_ds = _downsample_bool(exclude, factor) if factor > 1 else exclude
         coh_ds = (
             down(np.nan_to_num(coherence, nan=0.0)) if coherence is not None else None
         )
@@ -517,7 +540,7 @@ def calibrate_pair(
                 surface_ds,
                 residual_ds,
                 labels_ds,
-                valid_ds & ~exclude_ds,
+                valid_ds & ~area_ds,
                 options.surface.region_min_pixels,
             )
         fit_ok = (w_ds > 0) & valid_ds & ~exclude_ds
