@@ -389,7 +389,21 @@ def calibrate_pair(
             )
 
         valid_ds = _downsample_bool(valid, factor) if factor > 1 else valid
-        exclude_ds = _downsample_bool(exclude, factor) if factor > 1 else exclude
+        # the fit also skips incoherent pixels (surface.fit_coherence_min); the
+        # surface is still evaluated there and sigma_CAL is not inflated, so
+        # only the fit-grid exclusion carries them, not `exclude`
+        fit_exclude = exclude
+        if options.surface.fit_coherence_min is not None:
+            if coherence is None:
+                msg = "surface.fit_coherence_min is set but no coherence was given"
+                raise ValueError(msg)
+            incoherent = ~(
+                np.nan_to_num(coherence, nan=0.0) >= options.surface.fit_coherence_min
+            )
+            fit_exclude = exclude | (incoherent & valid)
+        exclude_ds = (
+            _downsample_bool(fit_exclude, factor) if factor > 1 else fit_exclude
+        )
         coh_ds = (
             down(np.nan_to_num(coherence, nan=0.0)) if coherence is not None else None
         )

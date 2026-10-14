@@ -140,6 +140,18 @@ class SurfaceOptions(BaseModel):
             "pixels keep the mainland surface instead of an offset of their own."
         ),
     )
+    fit_coherence_min: float | None = Field(
+        None,
+        ge=0,
+        le=1,
+        description=(
+            "'loclin' only. Leave pixels whose temporal_coherence is below this "
+            "out of the fit (like a remove-restore area: the surface is still "
+            "evaluated there), so a fit on stable scatterers is not pulled by "
+            "decorrelating fields (T62, Houston/Matagorda). None: every valid "
+            "pixel is fit."
+        ),
+    )
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 

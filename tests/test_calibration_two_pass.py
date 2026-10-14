@@ -244,6 +244,52 @@ class TestLoclinEndToEnd:
             sep.calibration, sum(getattr(sep, c) for c in COMPONENTS), atol=1e-6
         )
 
+    def test_fit_coherence_min_keeps_a_decorrelating_field_out_of_the_fit(self):
+        """T62 (Houston/Matagorda): a low-coherence field carrying a 3 cm bias
+        (phase bias over crops) pulls the surface unless
+        surface.fit_coherence_min leaves it out; the surface is still evaluated
+        on the field and sigma_CAL is not inflated there."""
+        disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
+        field = np.zeros_like(valid)
+        field[20:60, 120:170] = True
+        disp = disp + np.where(field, 0.03, 0.0)
+        coh = np.where(field, 0.3, coh)
+        clean, *_ = scene(island=False)
+
+        def run(d, thr):
+            o = opts_v05(two_pass=True)
+            o = o.model_copy(
+                update={
+                    "surface": o.surface.model_copy(update={"fit_coherence_min": thr})
+                }
+            )
+            return calibrate_pair(
+                d, gnss, valid, REF, o, PIXEL_M, CYCLE_M,
+                coherence=coh, exclude_mask=bowl_mask,
+            )  # fmt: skip
+
+        skip, keep, ref = run(disp, 0.45), run(disp, None), run(clean, 0.45)
+        near = valid & ~bowl_mask & ~field
+        near[:, :100] = False
+        near[90:, :] = False
+        moved_skip = np.abs(skip.cal_gnss_surface - ref.cal_gnss_surface)[near]
+        moved_keep = np.abs(keep.cal_gnss_surface - ref.cal_gnss_surface)[near]
+        assert moved_skip.max() < 0.002
+        assert moved_keep.max() > 3 * moved_skip.max()
+        # evaluated on the field (not NaN) and not counted as a deforming area
+        assert np.isfinite(skip.cal_gnss_surface[field]).all()
+        assert skip.n_excluded_pixels == keep.n_excluded_pixels
+        np.testing.assert_array_equal(
+            np.isnan(skip.sigma_cal), np.isnan(keep.sigma_cal)
+        )
+
+    def test_fit_coherence_min_needs_coherence(self):
+        disp, gnss, valid, *_ = scene(island=False)
+        o = opts_v05()
+        o.surface.fit_coherence_min = 0.7
+        with pytest.raises(ValueError, match="fit_coherence_min"):
+            calibrate_pair(disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M)
+
     def test_single_pass_loclin_and_downsampling(self):
         disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
         o = opts_v05(two_pass=False)
