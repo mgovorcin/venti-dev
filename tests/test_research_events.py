@@ -91,6 +91,19 @@ def test_area_db_covers_the_benchmark_areas_and_reaches_stable_ground():
     assert kilauea.shape().contains(Point(-155.28, 19.41))  # the summit caldera
 
 
+def test_san_joaquin_reaches_past_the_bowl_rim():
+    """1.1-draft (T46 edge pass): the San Joaquin polygon is the +15 km version,
+    so the stations on the bowl rim (the defo_area class) stay out of the fit;
+    the Kern polygons, outside F36542, keep their 10 km buffer."""
+    db = load_area_db(DATA / "defo_area_db_v1.geojson")
+    assert db.version == "1.1-draft"
+    sj = next(a for a in db.items if a.id == "san_joaquin_subsidence")
+    assert sj.area_km2 == pytest.approx(20010.9)
+    assert sj.shape().contains(Point(-119.5, 36.2))  # Corcoran, the bowl
+    kern = next(a for a in db.items if a.id == "kern_subsidence_north")
+    assert kern.stable_ring_fraction == pytest.approx(0.79)
+
+
 def test_eruption_footprint_follows_the_vents_and_overlaps_its_span():
     from venti.calibration.remove_restore import EventDB
 
