@@ -244,6 +244,59 @@ class TestLoclinEndToEnd:
             sep.calibration, sum(getattr(sep, c) for c in COMPONENTS), atol=1e-6
         )
 
+    def test_fit_mask_keeps_a_decorrelating_field_out_of_the_fit(self):
+        """T62 (Houston/Matagorda): an unstable field carrying a 3 cm bias
+        (phase bias over crops) pulls the surface unless surface.fit_mask
+        leaves it out; the surface is still evaluated on the field and
+        sigma_CAL is not inflated there."""
+        disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
+        field = np.zeros_like(valid)
+        field[20:60, 120:170] = True
+        disp = disp + np.where(field, 0.03, 0.0)
+        clean, *_ = scene(island=False)
+
+        def run(d, mask):
+            o = opts_v05(two_pass=True)
+            name = None if mask is None else "stable.tif"
+            o = o.model_copy(
+                update={"surface": o.surface.model_copy(update={"fit_mask": name})}
+            )
+            return calibrate_pair(
+                d, gnss, valid, REF, o, PIXEL_M, CYCLE_M,
+                coherence=coh, exclude_mask=bowl_mask, fit_mask=mask,
+            )  # fmt: skip
+
+        skip, keep, ref = run(disp, ~field), run(disp, None), run(clean, ~field)
+        near = valid & ~bowl_mask & ~field
+        near[:, :100] = False
+        near[90:, :] = False
+        moved_skip = np.abs(skip.cal_gnss_surface - ref.cal_gnss_surface)[near]
+        moved_keep = np.abs(keep.cal_gnss_surface - ref.cal_gnss_surface)[near]
+        assert moved_skip.max() < 0.002
+        assert moved_keep.max() > 3 * moved_skip.max()
+        # evaluated on the field (not NaN) and not counted as a deforming area
+        assert np.isfinite(skip.cal_gnss_surface[field]).all()
+        assert skip.n_excluded_pixels == keep.n_excluded_pixels
+        np.testing.assert_array_equal(
+            np.isnan(skip.sigma_cal), np.isnan(keep.sigma_cal)
+        )
+
+    def test_fit_mask_option_and_array_go_together(self):
+        disp, gnss, valid, *_ = scene(island=False)
+        o = opts_v05()
+        o.surface.fit_mask = "stable.tif"
+        with pytest.raises(ValueError, match="fit_mask"):
+            calibrate_pair(disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M)
+        with pytest.raises(ValueError, match="fit_mask"):
+            calibrate_pair(
+                disp, gnss, valid, REF, opts_v05(), PIXEL_M, CYCLE_M,
+                fit_mask=valid,
+            )  # fmt: skip
+        with pytest.raises(ValueError, match="fit_mask shape"):
+            calibrate_pair(
+                disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M, fit_mask=valid[1:]
+            )
+
     def test_single_pass_loclin_and_downsampling(self):
         disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
         o = opts_v05(two_pass=False)
@@ -440,3 +493,27 @@ def test_frame_table_turns_regions_on_for_the_island_frames():
                             (8622, "none"), (8886, "none"), (99, "none")):  # fmt: skip
         applied = table.apply(AlgorithmParameters(), frame)
         assert applied.calibration_options.surface.regions == expected, frame
+
+
+def test_frame_table_gives_houston_its_packaged_fit_mask():
+    """T62 edge pass: only F08882 fits on stable pixels, and its mask ships
+    with the package on the frame's DISP grid."""
+    import rasterio
+
+    from venti.frames import fit_mask_path, load_frame_table
+    from venti.workflow.config import AlgorithmParameters
+
+    table = load_frame_table()
+    for frame, expected in ((8882, "F08882_stable_coh07.tif"), (38238, None),
+                            (16940, None), (99, None)):  # fmt: skip
+        applied = table.apply(AlgorithmParameters(), frame)
+        assert applied.calibration_options.surface.fit_mask == expected, frame
+    with rasterio.open(fit_mask_path("F08882_stable_coh07.tif")) as src:
+        assert (src.count, src.dtypes[0], src.shape) == (1, "uint8", (7733, 9464))
+        assert src.crs.to_epsg() == 32615
+        kept = src.read(1, out_shape=(773, 946)).mean()
+    assert 0.08 < kept < 0.11
+    with pytest.raises(FileNotFoundError):
+        fit_mask_path("../frame_parameters.json")
+    with pytest.raises(FileNotFoundError):
+        fit_mask_path("F00000_missing.tif")

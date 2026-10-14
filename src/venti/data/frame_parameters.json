@@ -1,6 +1,6 @@
 {
-  "version": "0.4-draft",
-  "description": "Per-frame overrides for the DISP-CAL algorithm (Venti plan T27). plate: ITRF2020-PMM plate for the plate_motion layer (PRD D3: NA default, PA Hawaii, CA Puerto Rico; California stays NA). tropo.mode: from the trade studies (tropo_check). uncertainty.k_grid: per frame from TS-G1 (2026-10-09, disp2vlm_validation studies/TS-G1/REPORT.md: std fit of grid-vs-MIDAS LOS velocity residuals on a held-out 30% station split, UNR constant grid v0.3 IGS20); default 3.9 (the earlier F08882 placeholder) for frames without a fit. benchmark_category: PRD section 2.7 (frames 5-8 chosen 2026-10-09, plan T40.1: OPERA frame DB, DISP-S1 product and UNR station counts); 38238 is the descending partner of 08882 for VLM (T56). Values here are consumed once the T34/T35/T37 code paths land; with schema-v2 defaults they change nothing. 0.4-draft (2026-10-13): surface.regions = separate for F08882, F16940, F35991 (T62 edge pass: island cycle/offset errors; venti-dev #32).",
+  "version": "0.5-draft",
+  "description": "Per-frame overrides for the DISP-CAL algorithm (Venti plan T27). plate: ITRF2020-PMM plate for the plate_motion layer (PRD D3: NA default, PA Hawaii, CA Puerto Rico; California stays NA). tropo.mode: from the trade studies (tropo_check). uncertainty.k_grid: per frame from TS-G1 (2026-10-09, disp2vlm_validation studies/TS-G1/REPORT.md: std fit of grid-vs-MIDAS LOS velocity residuals on a held-out 30% station split, UNR constant grid v0.3 IGS20); default 3.9 (the earlier F08882 placeholder) for frames without a fit. benchmark_category: PRD section 2.7 (frames 5-8 chosen 2026-10-09, plan T40.1: OPERA frame DB, DISP-S1 product and UNR station counts); 38238 is the descending partner of 08882 for VLM (T56). Values here are consumed once the T34/T35/T37 code paths land; with schema-v2 defaults they change nothing. 0.4-draft (2026-10-13): surface.regions = separate for F08882, F16940, F35991 (T62 edge pass: island cycle/offset errors; venti-dev #32). 0.5-draft (2026-10-14): surface.fit_mask = F08882_stable_coh07.tif for F08882 (stack-mean temporal coherence >= 0.7 over the 204-product 2016-2023 stack, venti-fit-mask; T62 edge pass: Matagorda).",
   "default": {
     "calibration_options": {
       "frame": {
@@ -25,7 +25,8 @@
           "k_grid": 1.35
         },
         "surface": {
-          "regions": "separate"
+          "regions": "separate",
+          "fit_mask": "F08882_stable_coh07.tif"
         }
       }
     },

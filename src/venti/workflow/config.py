@@ -140,6 +140,18 @@ class SurfaceOptions(BaseModel):
             "pixels keep the mainland surface instead of an offset of their own."
         ),
     )
+    fit_mask: str | None = Field(
+        None,
+        description=(
+            "'loclin' only. Name of a stable-pixel mask packaged in "
+            "venti/data/fit_masks (uint8 GeoTIFF on the frame's DISP grid, 1 = "
+            "stable; built with venti-fit-mask). Pixels outside it are left out "
+            "of the fit like a remove-restore area: the surface is still "
+            "evaluated there and sigma_CAL is not inflated (T62, Houston/"
+            "Matagorda). The caller reads it onto the pair's grid and passes "
+            "calibrate_pair(fit_mask=...). None: every valid pixel is fit."
+        ),
+    )
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 

@@ -36,9 +36,34 @@ from pydantic import BaseModel, Field
 
 from .workflow.config import AlgorithmParameters
 
-__all__ = ["DEFAULT_TABLE", "FrameParameterTable", "deep_merge", "load_frame_table"]
+__all__ = [
+    "DEFAULT_TABLE",
+    "FIT_MASK_DIR",
+    "FrameParameterTable",
+    "deep_merge",
+    "fit_mask_path",
+    "load_frame_table",
+]
 
 DEFAULT_TABLE = Path(__file__).parent / "data" / "frame_parameters.json"
+#: Packaged stable-pixel masks named by ``surface.fit_mask``.
+FIT_MASK_DIR = Path(__file__).parent / "data" / "fit_masks"
+
+
+def fit_mask_path(name: str) -> Path:
+    """Path of the packaged stable-pixel mask `name` (``surface.fit_mask``).
+
+    Raises
+    ------
+    FileNotFoundError
+        No such mask in `FIT_MASK_DIR`.
+
+    """
+    path = FIT_MASK_DIR / name
+    if Path(name).name != name or not path.is_file():
+        msg = f"no packaged fit mask {name!r} in {FIT_MASK_DIR}"
+        raise FileNotFoundError(msg)
+    return path
 
 
 def deep_merge(base: Mapping[str, Any], new: Mapping[str, Any]) -> dict[str, Any]:
