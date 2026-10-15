@@ -272,6 +272,16 @@ class UncertaintyOptions(BaseModel):
         True,
         description="Grow sigma with distance inside interpolated defo/event areas",
     )
+    extrapolate_sigma: bool = Field(
+        False,
+        description=(
+            "'loclin' only. Give sigma_CAL wherever the calibration has a value: "
+            "where the kernel has too little weight for a fit term, take the "
+            "nearest fitted value and grow it with the distance (up to 3x at a "
+            "few kernel sigmas, as inside interpolated areas). False: NaN outside "
+            "the fitted, valid pixels (v0.5 before 2026-10-14)."
+        ),
+    )
     sigma_nonsecular_meters: float = Field(
         0.0,
         ge=0,

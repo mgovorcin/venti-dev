@@ -59,6 +59,14 @@ Value-changing entries say which product layers move and by how much
 
 ### Added
 
+- **`uncertainty.extrapolate_sigma` (default off).** σ_CAL follows the
+  calibration: where the loclin kernel has too little weight for a fit term
+  (low-coherence land, water, DISP-masked pixels), the fit term is the nearest
+  fitted value grown with the distance (up to 3x), and σ_CAL is NaN only where
+  the calibration is NaN. On the golden pair, σ was NaN on 12% of usable land
+  and 83% of `recommended_mask = 0` land where the calibration had a value.
+  Off reproduces the previous `calibration_std`; `calibration` never moves.
+
 - `venti.calibration` package — the v0.5 engine next to the gamma `venti.surface`:
   - `gaps.fill_gaps(data, mask, method)` (plan T29, R-S3): nearest /
     nearest+smooth (default) / biharmonic / GDAL inverse-distance fill so the
