@@ -157,3 +157,17 @@ def test_deep_merge_does_not_mutate():
 def test_table_rejects_unknown_top_level_keys():
     with pytest.raises(ValidationError):
         FrameParameterTable(version="t", frames={})
+
+
+def test_ts_t1_tropo_modes_in_the_0_3_to_1_5_km_band():
+    """TS-T1 (2026-10-14): only humid Puerto Rico gets the correction in the
+    band; New York stays off and Montana keeps the default (off)."""
+    table = load_frame_table()
+
+    def mode(frame):
+        return table.apply(AlgorithmParameters(), frame).calibration_options.tropo.mode
+
+    assert mode(35991) == "stratified"  # Puerto Rico, 0.70 km
+    assert mode(8622) == "off"  # New York, 0.42 km
+    assert mode(7081) == AlgorithmParameters().calibration_options.tropo.mode
+    assert mode(16940) == "stratified"  # Los Angeles, 1.56 km (earlier study)
