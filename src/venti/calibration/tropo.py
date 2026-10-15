@@ -528,8 +528,10 @@ def choose_tropo_mode(
         chosen: TropoMode = "stratified"
     else:
         # Below the stratified threshold the correction costs sill (tropo_check:
-        # -7 % to -10 % on < 0.3 km frames, +5-8 % sill at 0.41 km); the band
-        # up to relief_stratified_meters stays off until TS-T1 says otherwise.
+        # -7 % to -10 % on < 0.3 km frames, +5-8 % sill at 0.41 km). TS-T1
+        # (2026-10-14): in the 0.3-1.5 km band relief alone does not decide
+        # (Puerto Rico, humid, improves; New York and Montana get worse), so
+        # auto stays off and such frames set their mode in the frame table.
         chosen = "off"
     logger.info(
         "tropo mode auto: relief p5-p95 = %.0f m -> %s (off < %.0f m, "
