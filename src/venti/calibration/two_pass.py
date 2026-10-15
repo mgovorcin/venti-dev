@@ -619,8 +619,26 @@ def calibrate_pair(
                 exclude,
                 kernel_sigma_px(options.surface.cutoff_wavelength_meters, pixel_m),
             ).astype(disp.dtype)
+        grid_term = None if gnss_los_std is None else np.ma.filled(gnss_los_std, np.nan)
+        if (
+            options.uncertainty.extrapolate_sigma
+            and grid_term is not None
+            and np.isnan(grid_term).any()
+        ):
+            # the grid sigma has no value beyond the LOS raster, where the
+            # surface still has one: nearest value from the fit grid (cheap)
+            coarse = _extrapolate_sigma(
+                np.asarray(grid_term[::factor, ::factor], dtype=np.float64),
+                1.0,
+                max_factor=1.0,
+            )
+            grid_term = np.where(
+                np.isnan(grid_term),
+                _upsample_nan(coarse, disp.shape, factor, disp.dtype),
+                grid_term,
+            )
         sigma = sigma_cal(
-            None if gnss_los_std is None else np.ma.filled(gnss_los_std, np.nan),
+            grid_term,
             sigma_fit_map,
             k,
             sigma_tropo=sigma_tropo,

@@ -328,6 +328,10 @@ class TestLoclinEndToEnd:
         masked[20:35, 40:60] = True  # DISP masked on land: filled calibration
         valid = valid & ~masked
         disp = np.where(valid, disp, np.nan)
+        # the grid sigma has no value on the open-sea strip, where the
+        # (gap-filled) calibration does
+        grid_std = np.full(disp.shape, 0.001)
+        grid_std[:, :5] = np.nan
 
         def run(extrapolate):
             o = opts_v05(two_pass=True, coh_power=8.0)
@@ -340,7 +344,7 @@ class TestLoclinEndToEnd:
             )
             return calibrate_pair(
                 disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M,
-                gnss_los_std=np.full(disp.shape, 0.001), coherence=coh,
+                gnss_los_std=grid_std, coherence=coh,
                 exclude_mask=bowl_mask,
             )  # fmt: skip
 
