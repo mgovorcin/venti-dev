@@ -167,6 +167,29 @@ def _frame_cutoff_m(shape: tuple[int, int], pixel_m: float) -> float:
 TIE_MAX_PX = 256
 
 
+def _extrapolate_sigma(
+    sigma: np.ndarray, scale_px: float, max_factor: float = 3.0
+) -> np.ndarray:
+    """Fill NaN cells of a sigma map from the nearest finite cell, inflated.
+
+    The factor grows with the distance d (pixels) to that cell as
+    ``1 + (max_factor - 1) * (1 - exp(-d / scale_px))``, the shape used inside
+    interpolated areas (`sigma_inflation_inside`): far from any fitted cell
+    the surface is an extrapolation and its sigma saturates at `max_factor`.
+    All-NaN input is returned unchanged.
+    """
+    from scipy.ndimage import distance_transform_edt
+
+    sigma = np.asarray(sigma)
+    missing = ~np.isfinite(sigma)
+    if not missing.any() or missing.all():
+        return sigma
+    d, (iy, ix) = distance_transform_edt(missing, return_indices=True)
+    nearest = sigma[iy, ix]
+    factor = 1.0 + (max_factor - 1.0) * (1.0 - np.exp(-d / scale_px))
+    return np.where(missing, nearest * factor, sigma).astype(sigma.dtype, copy=False)
+
+
 def _region_offsets(
     surface_ds: np.ndarray,
     residual_ds: np.ndarray,
@@ -579,6 +602,8 @@ def calibrate_pair(
             options.surface.cutoff_wavelength_meters, pixel_ds
         )
         sigma_fit_ds, n_eff_ds = fit_sigma(filled_ds, w_ds, sigma_px_final, surface_ds)
+        if options.uncertainty.extrapolate_sigma:
+            sigma_fit_ds = _extrapolate_sigma(sigma_fit_ds, sigma_px_final)
         sigma_fit_map = _upsample_nan(sigma_fit_ds, disp.shape, factor, disp.dtype)
         n_eff = (
             _upsample_nan(n_eff_ds, disp.shape, factor, disp.dtype)
@@ -605,7 +630,15 @@ def calibrate_pair(
             ),
             inflation=inflation,
         ).astype(disp.dtype, copy=False)
-        sigma[~(valid | exclude)] = np.nan
+        if options.uncertainty.extrapolate_sigma:
+            # sigma follows the calibration: NaN only where it is NaN (the fit
+            # term is extrapolated on the fit grid above)
+            no_cal = ~np.isfinite(surface)
+            for component in (cal_tropo, cal_set):
+                no_cal |= ~np.isfinite(component)
+            sigma[no_cal] = np.nan
+        else:
+            sigma[~(valid | exclude)] = np.nan
         # log only: the fit-grid map, not a full-frame copy (nanmedian copies)
         fit_term_median = float(np.nanmedian(sigma_fit_ds))
         if not diagnostic_maps:

@@ -317,6 +317,48 @@ class TestLoclinEndToEnd:
         err_island = ((disp - res.calibration) - gnss)[island_mask]
         assert np.sqrt(np.mean(err_island**2)) < 0.0015
 
+    def test_extrapolated_sigma_follows_the_calibration(self):
+        """uncertainty.extrapolate_sigma: sigma_CAL has a value wherever the
+        calibration has one; in a decorrelated block (no fit weight) it is the
+        nearest fitted value, grown with the distance; off: NaN there."""
+        disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
+        coh = coh.copy()
+        coh[100:150, 110:170] = 0.02  # decorrelated: coh**8 leaves no weight
+        masked = np.zeros_like(valid)
+        masked[20:35, 40:60] = True  # DISP masked on land: filled calibration
+        valid = valid & ~masked
+        disp = np.where(valid, disp, np.nan)
+
+        def run(extrapolate):
+            o = opts_v05(two_pass=True, coh_power=8.0)
+            o = o.model_copy(
+                update={
+                    "uncertainty": o.uncertainty.model_copy(
+                        update={"extrapolate_sigma": extrapolate}
+                    )
+                }
+            )
+            return calibrate_pair(
+                disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M,
+                gnss_los_std=np.full(disp.shape, 0.001), coherence=coh,
+                exclude_mask=bowl_mask,
+            )  # fmt: skip
+
+        old, new = run(False), run(True)
+        cal = np.isfinite(new.calibration)
+        block = np.zeros_like(valid)
+        block[115:135, 125:155] = True
+        # before: no sigma in the decorrelated block or on the masked land
+        assert np.isnan(old.sigma_cal[block]).all()
+        assert np.isnan(old.sigma_cal[masked]).all()
+        # now: sigma exactly where the calibration is
+        np.testing.assert_array_equal(np.isfinite(new.sigma_cal), cal)
+        # unchanged where the fit had weight, larger inside the block
+        both = np.isfinite(old.sigma_cal)
+        np.testing.assert_allclose(new.sigma_cal[both], old.sigma_cal[both])
+        assert np.median(new.sigma_cal[block]) > np.median(old.sigma_cal[both])
+        np.testing.assert_allclose(new.calibration, old.calibration, equal_nan=True)
+
     def test_single_pass_loclin_and_downsampling(self):
         disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
         o = opts_v05(two_pass=False)
