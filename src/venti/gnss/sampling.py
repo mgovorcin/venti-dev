@@ -237,6 +237,46 @@ def _read_rates(cfg: GnssGridConfig, node_ids: np.ndarray) -> tuple[pd.DataFrame
     return pd.DataFrame(rows), missing
 
 
+#: Fewest nodes outside the exclusion areas to re-interpolate from: the
+#: triangulation behind `geepers.gps_imaging.reinterpolate_nodes` needs at
+#: least four that are not collinear.
+MIN_REINTERPOLATION_NODES = 4
+
+
+def _reinterpolate_or_keep(nodes, geom, inside: np.ndarray):
+    """Re-interpolate the excluded nodes, or report that it was not possible.
+
+    Returns ``(done, nodes)``. With fewer than `MIN_REINTERPOLATION_NODES`
+    nodes left outside the areas, or nodes the triangulation cannot use
+    (collinear, coincident), the excluded nodes are dropped instead, as with
+    ``reinterpolate_excluded=False``, and a warning says so.
+    """
+    from geepers.gps_imaging import reinterpolate_nodes
+    from scipy.spatial import QhullError
+
+    n_left = int((~inside).sum())
+    if n_left < MIN_REINTERPOLATION_NODES:
+        logger.warning(
+            "only %d grid nodes outside the exclusion areas (need %d to"
+            " re-interpolate): the %d excluded nodes are dropped instead",
+            n_left,
+            MIN_REINTERPOLATION_NODES,
+            int(inside.sum()),
+        )
+        return False, nodes
+    try:
+        return True, reinterpolate_nodes(
+            nodes, geom, columns=VALUE_COLUMNS, lon="lon", lat="lat"
+        )
+    except QhullError as exc:
+        logger.warning(
+            "re-interpolating the excluded grid nodes failed (%s): they are"
+            " dropped instead",
+            str(exc).splitlines()[0],
+        )
+        return False, nodes
+
+
 def sample_gnss_enu(
     cfg: GnssGridConfig,
     grid: GridLike,
@@ -322,14 +362,11 @@ def sample_gnss_enu(
         )
         n_excluded = int(inside.sum())
         nodes["excluded"] = inside
+        reinterpolated = False
         if n_excluded and cfg.reinterpolate_excluded:
-            from geepers.gps_imaging import reinterpolate_nodes
-
-            nodes = reinterpolate_nodes(
-                nodes, geom, columns=VALUE_COLUMNS, lon="lon", lat="lat"
-            )
+            reinterpolated, nodes = _reinterpolate_or_keep(nodes, geom, inside)
             n_reinterpolated = int(nodes["reinterpolated"].sum())
-        elif n_excluded:
+        if n_excluded and not reinterpolated:
             nodes = nodes[~inside].reset_index(drop=True)
         if nodes.empty:
             msg = "every grid node in bounds lies inside the exclusion areas"
