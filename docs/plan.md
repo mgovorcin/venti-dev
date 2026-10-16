@@ -1,11 +1,13 @@
 # Implementation plan: Venti, DISP-CAL, VLM, validation package
 
+*Status updated 2026-10-16: cal-disp v0.5.0 tagged (T49–T51 partly); checkboxes reflect merged work, notes give the evidence.*
+
 Companion to [specs.md](specs.md) (PRD v0.1, 2026-10-05). Requirement IDs (R-G1, R-S2, …), trade-study IDs (TS-G1, …) and milestones (M0–M6) refer to the PRD.
 
 ## How to read this plan
 
 - **Phases** follow the PRD milestones. Phases 0 and 1 run in parallel; phase 3 runs in parallel with phase 2.
-- **Tasks** are numbered `T01`–`T62`. Each lists `Depends on:` task IDs. A task may start when all its dependencies are done, unless a subtask says otherwise.
+- **Tasks** are numbered `T01`–`T63`. Each lists `Depends on:` task IDs. A task may start when all its dependencies are done, unless a subtask says otherwise.
 - **Subtasks** are checklist items. One subtask is roughly one PR or one commit under the `git-commit-pr` skill: a single concern, with tests in the same change (`unit-tests` skill).
 - **Definition of done** for every task, unless the task says otherwise:
   - tests for the new behaviour pass in `pixi run -e dev test`;
@@ -46,7 +48,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T04. Fix the delivery documents
 **Depends on:** T01
 **Context:** `gamma_release/DOCUMENT_FIXES.md` holds an H/M/L table per document. Product Spec overstates the product (unwrap, iono, event DB), calls it HDF5, and disagrees with the product on version, pixel convention, `time`, `track_number`, `auxiliary/spatial_ref`, int32 vs int64 and `software*` attrs. SAS guide says 18 GB (now 6.4 GB), has an r2/r3 URL mismatch and a wrong validate command. Sources are in `/u/aurora-r0/cabrera/opera_vlm/deliveries/gamma_delivery/documents/`; text copies in `gamma_release/docs_text/`.
-- [ ] T04.1 Apply the H items of `DOCUMENT_FIXES.md` to the Product Spec; add a section that states the algorithm parameters.
+- [ ] T04.1 Apply the H items of `DOCUMENT_FIXES.md` to the Product Spec; add a section that states the algorithm parameters. *Status 2026-10-16:* open; owner to decide whether gamma 0.3 is still delivered now that v0.5.0 is tagged (T04–T06).
 - [ ] T04.2 Apply the H items to the SAS Design / User Guide (memory, URLs, validate command).
 - [ ] T04.3 Apply the H items to the Delivery Summary (version, tar/zip name).
 - [ ] T04.4 Walk through M and L items; fix or mark "deferred to v0.5" with a reason.
@@ -62,7 +64,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T06. Release gamma 0.3
 **Depends on:** T03, T04, T05
 **Context:** Upstream `opera-adt/cal-disp` `main` is at `88c0c46`; `gamma-release` is 52 commits past it. Delivery packaging uses `addArtFile.sh` (untracked in `CAL/cal-disp`; move it into `scripts/`).
-- [ ] T06.1 Rebase or merge `gamma-release` onto upstream `main`; resolve conflicts; all 478 tests pass.
+- [ ] T06.1 Rebase or merge `gamma-release` onto upstream `main`; resolve conflicts; all 478 tests pass. *Status 2026-10-16:* fork's gamma PR to upstream is open (opera-adt/cal-disp#21, since 2026-10-03); see the T04 note.
 - [ ] T06.2 Open the upstream PR with a changelog (memory fix, unwrap off, metadata, validate depth, lock reproducibility) and the T03 validation log.
 - [ ] T06.3 Tag `v0.3.0` on the fork and upstream after merge; `pep440-version.sh` reports it.
 - [ ] T06.4 Build the delivery package (`addArtFile.sh`): image tar, docs from T04, `installed_packages`, validation log; hand over.
@@ -91,7 +93,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T09. Apply standards to cal-disp
 **Depends on:** T07 (development); T06 for the upstream PR only (ADR-0021)
 **Context:** Do this after the gamma release so the release diff stays clean. *ADR-0021 (2026-10-06):* developed now on fork branches stacked on `gamma-release`; upstream only after the gamma tag. cal-disp already has pre-commit.ci, mkdocs and pixi; align them with the kit rather than replacing them. Two pytest configs existed (structural review); keep one.
-- [ ] T09.1 Run `apply_standards.sh`; reconcile with the existing pre-commit config; one pytest config.
+- [~] T09.1 Run `apply_standards.sh`; reconcile with the existing pre-commit config; one pytest config. *Partly 2026-10-16:* pre-commit runs in CI (cal-disp #12); CI green since #20.
 - [ ] T09.2 Add `ops` pixi env mirroring the Docker image; `conda-lock` generated from it; document in `docker/README.md`.
 - [ ] T09.3 `CLAUDE.md` with Invariants: CLI and runconfig frozen (PRD §2.2), additive `algorithm_parameters.yaml`, golden policy.
 - [ ] T09.4 Add CI smoke test: `cal-disp config` + `cal-disp run` on a 64×64 synthetic input (fixture from `tests/`), no network.
@@ -231,8 +233,8 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T26. cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget
 **Depends on:** T09, T13, T17 (T06 only for the upstream PR, ADR-0021)
 **Context:** cal-disp pins `Venti@2a7e61f`; has its own UNR code (`download/_stage_unr.py`, `product/_unr.py`) duplicating geepers; `worker_settings` unused; TODO lists `mask_file` accepted but ignored, NISAR filename unsupported. R-O6: the ops image must exclude dask, zarr, matplotlib, jupyter; CI enforces allow-list, size budget, peak memory.
-- [~] T26.1 Pin `venti-dev[calibration]` and `geepers[grid]` by tag; `opera-utils[tropo]`; remove `[download]` extra deps not needed in ops (asf_search → optional). *2026-10-06:* Venti pinned to the fork stack commit `1150c52` (no tags yet), geepers[grid] comes through Venti's core; gamma golden validates at 1e-6 (cal-disp fork PR #3). `opera-utils[disp]` stays: `_find_reference_point` uses `opera_utils.disp.rebase_reference` (zarr), to resolve in T26.4.
-- [ ] T26.2 Replace `_stage_unr.py` / `_unr.py` with `geepers.gps_sources.UnrGridSource`; keep the CLI `cal-disp download unr` behaviour identical (tests with cassettes). *2026-10-07:* cal-disp's downloader is the stronger one (atomic `.part`, HTML and length checks), so it was ported into geepers first (geepers PR #4, plus the `thread_map` kwargs fix in #3). The cal-disp swap lands with the next Venti/geepers pin bump (T37 needs one anyway), keeping `cal-disp download unr` identical.
+- [~] T26.1 Pin `venti-dev[calibration]` and `geepers[grid]` by tag; `opera-utils[tropo]`; remove `[download]` extra deps not needed in ops (asf_search → optional). *2026-10-06:* Venti pinned to the fork stack commit `1150c52` (no tags yet), geepers[grid] comes through Venti's core; gamma golden validates at 1e-6 (cal-disp fork PR #3). `opera-utils[disp]` stays: `_find_reference_point` uses `opera_utils.disp.rebase_reference` (zarr), to resolve in T26.4. *Status 2026-10-16:* Venti and geepers are pinned by commit (Venti `35ec67e`, cal-disp #22), not by tag; the image drops the `download` extra (#20).
+- [x] T26.2 Replace `_stage_unr.py` / `_unr.py` with `geepers.gps_sources.UnrGridSource`; keep the CLI `cal-disp download unr` behaviour identical (tests with cassettes). *2026-10-07:* cal-disp's downloader is the stronger one (atomic `.part`, HTML and length checks), so it was ported into geepers first (geepers PR #4, plus the `thread_map` kwargs fix in #3). The cal-disp swap lands with the next Venti/geepers pin bump (T37 needs one anyway), keeping `cal-disp download unr` identical. *Done 2026-10-13 (cal-disp #14):* UNR downloads through geepers' verified downloader.
 - [~] T26.3 Thin wrappers over `venti.core.sensor.S1Spec` in `product/_disp.py`, `_static.py`. When the Venti pin moves past the T16.3 fix, drop `_unwrap_cycle_length_m()` and pass the full radar wavelength to `estimate_calibration_surface` (Venti now halves internally; see Venti CHANGELOG). *2026-10-06:* the wavelength part done (cal-disp passes λ; contract tested on both sides, PR #3); the SensorSpec wrappers remain.
 - [x] T26.4 `scripts/check_env_budget.py`: resolve the `ops` env, fail if a forbidden package is present or the image exceeds `MAX_IMAGE_MB` (start at current size; tighten later); CI job. *Done 2026-10-07* (cal-disp PR #5): `budget.yaml` + `scripts/check_env_budget.py` (`--closure cal-disp`, offline), pixi task `budget`, CI step. The core dropped `opera-utils[disp]` (reference-pixel rule ported, golden unchanged): 84 → 75 distributions, no dask/zarr. matplotlib tolerated (browse PNG, v0.5 image decision); image-size budget deferred to T49 (the image still installs the `download` extra for the golden build).
 - [x] T26.5 Peak-memory CI check on the golden pair (`/usr/bin/time -v` or `tracemalloc` wrapper) with a threshold file `budget.yaml` (start at 7 GB; target 4 GB in T47). *Done 2026-10-07:* `peak_memory_gb: 7.0` in `budget.yaml`, `--peak-memory-log` checks a golden run (5.38 GB). Not in CI: the golden data (4.9 GB) is not available to GitHub runners; it is part of the release gate run.
@@ -244,7 +246,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 - [x] T27.1 Define `frame_parameters.json` schema (`{"version": "...", "default": {...}, "frames": {"08882": {"plate": "NA", "tropo_mode": "off", "k_grid": 3.9}}}`) and a pydantic model in Venti core. *Done 2026-10-06:* `venti/frames.py` `FrameParameterTable` (`version`, `description`, `default`, `data["08882"]`) — the shape of cal-disp's overrides JSON; `calibration_options.frame` (`plate` validated against geepers' tables, `name`, `benchmark_category`).
 - [x] T27.2 Loader with precedence: algorithm_parameters defaults < frame table < explicit overrides; tests. *Done 2026-10-06:* `overrides_for`/`apply` with precedence schema defaults < `default` < frame < explicit; shorthand keys target `calibration_options`; tests.
 - [x] T27.3 Populate initial entries for F08882, F08886, F16940, F08622 from the trade studies (k = 3.9 placeholder for all; tropo: Houston off, OKC off, LA stratified, NYC off). *Done 2026-10-06:* `src/venti/data/frame_parameters.json` v0.1-draft — F08882 off, F08886 off, F16940 stratified, F08622 off; `k_grid` 3.9 in `default`; plate NA.
-- [~] T27.4 cal-disp reads the table via `algorithm_parameters_overrides_json`; metadata records `frame_parameters_version`. *Prepared:* `FrameParameterTable.write(..., materialize=True)` emits exactly what cal-disp's `_parse_algorithm_overrides` reads (`data[frame]`). *Blocked until T37:* cal-disp's own `CalibrationOptions` (`extra=forbid`) does not yet know the `tropo`/`uncertainty`/`frame` groups, so it would reject the entries; it adopts Venti's schema in T37 and records `frame_parameters_version` then.
+- [x] T27.4 cal-disp reads the table via `algorithm_parameters_overrides_json`; metadata records `frame_parameters_version`. *Prepared:* `FrameParameterTable.write(..., materialize=True)` emits exactly what cal-disp's `_parse_algorithm_overrides` reads (`data[frame]`). *Blocked until T37:* cal-disp's own `CalibrationOptions` (`extra=forbid`) does not yet know the `tropo`/`uncertainty`/`frame` groups, so it would reject the entries; it adopts Venti's schema in T37 and records `frame_parameters_version` then. *Done 2026-10-16:* the frame table reaches runs (frame-key fix, cal-disp #16) and `/metadata` records `frame_parameters_version` (cal-disp #24).
 
 ---
 
@@ -328,7 +330,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Context:** cal-disp `workflow.py::run_calibration` (831 lines) currently calls `venti.surface.estimate_calibration_surface`. Replace with `venti.workflow.calibrate_pair` via T18/T28/T33; keep the CLI and runconfig unchanged; `algorithm_parameters.yaml` with gamma defaults must reproduce the golden bit-for-bit (or within 1e-6). Metadata records flags, `schema_version`, frame table version, GNSS provenance.
 - [x] T37.1 Adapter: runconfig + algorithm params → Venti `CalibrationParams`, `GnssGridConfig`, sensor `S1Spec`; unit tests. *Done 2026-10-09* (cal-disp PR #6): schema-v2 groups in `calibration_options`, typed with Venti's models; `GnssGridConfig`/`SensorSpec` adapters wait for the GNSS-path switch (T48.3).
 - [x] T37.2 Replace the fit section of `run_calibration` with `calibrate_pair`; write `calibration`, `calibration_std` as before; keep component arrays in memory only (packaging later, T61). *Done 2026-10-09:* `calibrate_pair`, tropo modes via Venti, σ_CAL as `calibration_std` on loclin; components in memory only.
-- [ ] T37.3 `/metadata`: add `algorithm_schema_version`, `frame_parameters_version`, `gnss_provenance` (JSON string), `components_applied`; tests. *Open:* needs a deliberate golden update (validate fails on new attributes); own PR.
+- [x] T37.3 `/metadata`: add `algorithm_schema_version`, `frame_parameters_version`, `gnss_provenance` (JSON string), `components_applied`; tests. *Open:* needs a deliberate golden update (validate fails on new attributes); own PR. *Done 2026-10-16:* `gnss_provenance` (cal-disp #13), `algorithm_schema_version`, `frame_parameters_version`, `components_applied` (cal-disp #24, golden 0.5.1).
 - [x] T37.4 Golden regression with gamma defaults passes (`pixi run validate --golden-dir test_golden`). *Done 2026-10-09:* passes at 1e-6 through `calibrate_pair` (validate now compares the embedded parameters semantically).
 - [x] T37.5 Test `calibration == Σ components` on the golden pair with the v0.5 flags on. *Done 2026-10-09:* v0.5 run on the golden pair, max |calibration − Σ| = 0.0.
 - [x] T37.6 Full-frame memory and runtime measured with v0.5 flags; recorded in `docs/performance.md`. *Done 2026-10-09:* cal-disp `docs/performance.md`: gamma 6.0 GB; v0.5 55 s / 7.27 GB after two Venti memory fixes (−3 GB).
@@ -357,17 +359,17 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Depends on:** T11
 **Context:** Benchmark table in PRD §2.7: Central Valley (fast basin), Ridgecrest 2019 (coseismic), Great Basin/Montana (sparse GNSS), Hawaii (PA) and/or Puerto Rico (CA). Frame IDs via `opera_utils` frame DB. Each needs the DISP-S1 stack (200–300 epochs), DISP-S1-STATIC, tropo, UNR grid. Use `cal-disp download` and `trade studies/e2e_validation/stage_tropo.py`; long-running, `setsid nohup`, never `/tmp`.
 - [x] T40.1 Choose frame IDs (one per category; two for Hawaii/PR if both affordable); record in `frame_parameters.json` with `benchmark_category`. *Done 2026-10-09 (owner-approved):* F36542 Central Valley, F16941 Ridgecrest, F07081 Montana (sparse, 0.3 stations/1000 km²), F23211 Hawaii (PA), F35991 Puerto Rico (CA), plus F38238 (descending partner of F08882 for VLM); frame table 0.3-draft.
-- [~] T40.2 Stage DISP stacks + static layers; manifest with sizes and sha256. *Started 2026-10-09:* `/mnt/aurora-z0/govorcin/cal_disp_e2e/t40/` (`fetch_disp.sh`, `stage_inputs.sh`, `post.sh`, `quicklook.py`); statics (DISP-S1-STATIC from ASF) and UNR grid staged for all six; DISP downloads 2016-07 → 2023-12 running (~1 TB). Note: `cal-disp download unr --help` still says parquet (it writes tenv8), and the static download functions are placeholders.
-- [ ] T40.3 Stage tropo for the LA/Hawaii/Ridgecrest frames (relief); skip for flat frames.
-- [ ] T40.4 Quick-look velocities per frame (OLS) to confirm the expected signal (bowl, coseismic step, island motion).
+- [x] T40.2 Stage DISP stacks + static layers; manifest with sizes and sha256. *Started 2026-10-09:* `/mnt/aurora-z0/govorcin/cal_disp_e2e/t40/` (`fetch_disp.sh`, `stage_inputs.sh`, `post.sh`, `quicklook.py`); statics (DISP-S1-STATIC from ASF) and UNR grid staged for all six; DISP downloads 2016-07 → 2023-12 running (~1 TB). Note: `cal-disp download unr --help` still says parquet (it writes tenv8), and the static download functions are placeholders. *Done:* stacks and statics staged for all benchmark frames; `frames/<F>/manifest.csv`.
+- [x] T40.3 Stage tropo for the LA/Hawaii/Ridgecrest frames (relief); skip for flat frames. *Done 2026-10-14:* TROPO-ZENITH staged for LA, Ridgecrest, Hawaii, New York, Houston, OKC, Puerto Rico and Montana (`cal_disp_e2e/tropo_<F>`).
+- [x] T40.4 Quick-look velocities per frame (OLS) to confirm the expected signal (bowl, coseismic step, island motion). *Done:* `frames/<F>/quicklook_velocity_mm_yr.tif` (t40/quicklook.py).
 
 ### T41. Curate defo and event GeoJSON databases
 **Depends on:** T32, T40
 **Context:** D9: curated static GeoJSON, offline, versioned. Recipe (trade study rr4): areas from InSAR velocity vs regional trend + buffer, reaching stable ground; keep real GNSS points nearby. Events: Ridgecrest Mw 7.1 (2019-07-06) footprint from a scaling law + buffer; Kīlauea 2018. Start from `defo_area2.geojson` (Houston).
 - [x] T41.1 Tool `venti-defo-areas` (in `[research]`): velocity raster → candidate polygons (threshold on |v − trend|, buffer, simplify, must touch stable ground) → GeoJSON draft for human review. *Done 2026-10-09 (venti-dev PR #25):* `venti.research.defo_areas`; on Houston the draft lies 100% inside the curated polygon but covers 28% of it (calibrated input required; raw DISP unusable) — a review aid, not a replacement.
-- [~] T41.2 Review and finalize polygons for Houston/Galveston, Central Valley (San Joaquin), Kīlauea; `defo_area_db_v1.geojson`. *Started:* `defo_area_db_v1.geojson` 1.0-draft with Houston-Galveston (trade-study polygon); Central Valley and Kīlauea wait for the T40 stacks.
+- [~] T41.2 Review and finalize polygons for Houston/Galveston, Central Valley (San Joaquin), Kīlauea; `defo_area_db_v1.geojson`. *Started:* `defo_area_db_v1.geojson` 1.0-draft with Houston-Galveston (trade-study polygon); Central Valley and Kīlauea wait for the T40 stacks. *Status 2026-10-16:* area DB `1.1-draft` (Houston-Galveston, San Joaquin +15 km, Kern N/S, Kīlauea; venti-dev #34); owner review still open.
 - [x] T41.3 `event_db_v1.geojson`: Ridgecrest (t0, footprint, source USGS ComCat); schema per T32.1. *Done 2026-10-09 (venti-dev PR #25, 1.0-draft):* Mw 7.1 + Mw 6.4 from ComCat; footprint = W&C 1994 rupture along strike, buffer max(15 km, 0.75 L); to check vs the F16941 coseismic step.
-- [~] T41.4 Tests: every polygon is valid, has `id`/`version`, and reaches outside its own velocity anomaly (checked against T40.4 quick-looks).
+- [~] T41.4 Tests: every polygon is valid, has `id`/`version`, and reaches outside its own velocity anomaly (checked against T40.4 quick-looks). *Status 2026-10-16:* validity/id/version and stable-ring tests in place; the per-polygon check against the quick-looks moves to the final edge-case pass.
 
 ### T42. TS-U1 phase 1: islands with trusted GNSS
 **Depends on:** T36, T38
@@ -390,7 +392,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Context:** TS-T1: the stratified model helps LA (−15% sill) and hurts flat Houston (+17%); the 0.3–1.5 km band is untested. TS-B1: stable stations sit +2.8 mm/yr high; stations are on the most coherent pixels; candidate remedies coh⁸ vs coh¹⁶ vs threshold.
 - [x] T44.1 TS-T1: pick a frame with p5–p95 relief in 0.3–1.5 km (from T40 or an extra frame); run off/stratified/full; sill and RMSE; update the `choose_tropo_mode` rule and the frame table. *Done 2026-10-14 (disp2vlm_validation studies/TS-T1):* New York 0.42 km and Montana 1.07 km get worse with either mode (significant sill rises; Montana stratified velocity RMSE +0.79); Puerto Rico 0.70 km improves with both (velocity RMSE −0.38/−0.42, \|bias\| −0.41/−0.29 mm/yr; stratified sill −12% [−21, +2]). Rule unchanged (auto off in the band); F35991 `tropo.mode = stratified` in the frame table (0.6-draft).
 - [x] T44.2 TS-B1: on F08886 and F08882, run p ∈ {4, 8, 16} and a coherence threshold; bias at stable stations and sill; decide the default `coherence_power`. *Done 2026-10-09:* p changes bias/sill by ≤ 0.1 mm/yr / ≤ 2.2 mm² (all PASS); the gamma→v0.5 drop comes from the 50 km surface; **keep p = 8**. Threshold not run (no schema option; unlikely to differ). Stable stations defined kinematically (the class rule calls inland water 'coastal').
-- [ ] T44.3 Reports in `studies/TS-T1/` and `studies/TS-B1/`; parameter defaults updated in T19 docs if changed (behind the flags, golden unaffected until T49).
+- [x] T44.3 Reports in `studies/TS-T1/` and `studies/TS-B1/`; parameter defaults updated in T19 docs if changed (behind the flags, golden unaffected until T49). *Done:* `studies/TS-T1/REPORT.md` (incl. Hawaii addendum, disp2vlm_validation #18/#22) and `studies/TS-B1/REPORT.md`.
 
 ---
 
@@ -398,18 +400,18 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 
 ### T45. Populate the frame table for the 8 benchmark frames
 **Depends on:** T27, T39, T44
-- [ ] T45.1 Plate per frame (NA default; PA Hawaii; CA Puerto Rico; California NA).
-- [ ] T45.2 Tropo mode per frame from relief + TS-T1.
-- [ ] T45.3 k per frame from TS-G1 (fallback 3.9 flagged `k_source: default`).
-- [ ] T45.4 Tag `frame_parameters v1.0`; test that every benchmark frame resolves without defaults where a study value exists.
+- [x] T45.1 Plate per frame (NA default; PA Hawaii; CA Puerto Rico; California NA). *Done:* plate per frame in the frame table (NA default, PA Hawaii, CA Puerto Rico).
+- [x] T45.2 Tropo mode per frame from relief + TS-T1. *Done 2026-10-16:* TS-T1: stratified for LA and Puerto Rico (venti-dev #37), off elsewhere; Hawaii stays off (bias rule to revise, edge-case pass).
+- [~] T45.3 k per frame from TS-G1 (fallback 3.9 flagged `k_source: default`). *Partly:* k_grid per frame from TS-G1 for the four T38 frames; others use the default 3.9 without a `k_source` flag.
+- [ ] T45.4 Tag `frame_parameters v1.0`; test that every benchmark frame resolves without defaults where a study value exists. *Status 2026-10-16:* the table is `0.6-draft`; tag v1.0 after the owner's polygon review (T41.2).
 
 ### T46. 8-frame gate and edge cases
 **Depends on:** T38, T40, T41, T45
 **Context:** PRD §2.7 and §2.8. Category conditions: Houston subsiding stations bias < 1, RMSE < 2 mm/yr; OKC stable |bias| < 1; LA sill drops and tropo does not worsen; NYC vertical pattern vs GNSS; Central Valley surface continuous and outside stations unaffected, bowl extent kept; Ridgecrest no step in CAL for spanning pairs, non-spanning pairs identical to no-event-DB; sparse frame realistic σ and no artifacts; Hawaii/PR correct plate layer, Kīlauea excluded.
-- [ ] T46.1 Add the category conditions to `gate.yaml` as per-frame rules (T23 schema extension if needed).
-- [ ] T46.2 Run candidate (v0.5 flags) and baseline (gamma) on all 8 frames via batch; archive.
-- [ ] T46.3 Edge-case assertions as tests in the validation repo: Central Valley (max |surface change| at outside stations < 0.5 mm/yr), Ridgecrest (|CAL step across the fault| < 2 mm for spanning pairs; identical products for non-spanning pairs with/without event DB), plate boundary note for LA.
-- [ ] T46.4 Fix failures in Venti/cal-disp with the usual PR flow; rerun until all 8 pass; each fix leaves gamma golden green (flags default off until T49).
+- [x] T46.1 Add the category conditions to `gate.yaml` as per-frame rules (T23 schema extension if needed). *Done:* per-frame benchmark conditions in `gate.yaml` (Houston), decision 0002.
+- [x] T46.2 Run candidate (v0.5 flags) and baseline (gamma) on all 8 frames via batch; archive. *Done 2026-10-15:* all 10 frames on aurora (not batch); confirmation run with the release candidate through the frame table: 10/10 PASS (disp2vlm_validation #20).
+- [ ] T46.3 Edge-case assertions as tests in the validation repo: Central Valley (max |surface change| at outside stations < 0.5 mm/yr), Ridgecrest (|CAL step across the fault| < 2 mm for spanning pairs; identical products for non-spanning pairs with/without event DB), plate boundary note for LA. *Status 2026-10-16:* open; edge-case assertions as tests go with the final edge-case pass.
+- [x] T46.4 Fix failures in Venti/cal-disp with the usual PR flow; rerun until all 8 pass; each fix leaves gamma golden green (flags default off until T49). *Done:* fixes merged (regions, fit mask, San Joaquin +15 km, remove-restore); gamma golden stayed green until the deliberate T49 regeneration.
 
 ### T47. Memory and runtime toward a small EC2 instance
 **Depends on:** T37
@@ -417,36 +419,36 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 - [x] T47.1 Profile the v0.5 run (`memray`/`tracemalloc`) on the golden pair; identify the top 3 allocations. *Done 2026-10-09:* memray: LOS bands kept through the fit, decoded masks/coherence cached in the xarray dataset, unused full-res diagnostics, `np.nanmedian` copies for log lines.
 - [x] T47.2 Stream displacement/mask/coherence loads and the final subtraction in row blocks; downsampled fit arrays only in memory. *Done 2026-10-09:* masks/coherence via row-block `_load_layer`, LOS freed after the GNSS projection, `calibrate_pair(diagnostic_maps=False)`.
 - [x] T47.3 Honour `worker_settings` (threads for numba/BLAS) or remove the field from the docs (field itself stays, runconfig is frozen). *Done 2026-10-09:* BLAS/OpenMP pools capped at n_workers × threads_per_worker (threadpoolctl); `block_shape` documented as reserved.
-- [~] T47.4 Lower `budget.yaml` to the achieved value; measure on a `t3.medium`/`t3.large`-class instance and record runtime; the 72 h latency requirement is trivially met and documented. *Done 2026-10-09 (partly):* v0.5 7.27 → 4.0–4.1 GB, gamma 6.0 → 3.6–4.0 GB, products bit-identical; budget 7.0 → 4.5 GB (cal-disp PR #8, venti-dev PR #22); two-core emulation 1 min 43 s at 4.02 GB → t3.large fits, t3.medium does not. **Open:** a measurement on EC2 itself.
+- [~] T47.4 Lower `budget.yaml` to the achieved value; measure on a `t3.medium`/`t3.large`-class instance and record runtime; the 72 h latency requirement is trivially met and documented. *Done 2026-10-09 (partly):* v0.5 7.27 → 4.0–4.1 GB, gamma 6.0 → 3.6–4.0 GB, products bit-identical; budget 7.0 → 4.5 GB (cal-disp PR #8, venti-dev PR #22); two-core emulation 1 min 43 s at 4.02 GB → t3.large fits, t3.medium does not. **Open:** a measurement on EC2 itself. *Status 2026-10-16:* `budget.yaml` peak 6.0 GB (v0.5 golden 5.76 GB, owner); the small-instance measurement is open.
 
 ### T48. Frozen UNR grid snapshot
 **Depends on:** T28
 **Context:** R-G4: a versioned snapshot per release, mirrored to controlled storage (S3 bucket TBD, PRD §7.5 Q6), hash recorded in metadata; roll-forward deliberate (proposal every 6 months) and gated by e2e.
 - [x] T48.1 `scripts/snapshot_unr_grid.py` (validation or cal-disp repo): download v0.3 constant (and variable) for IGS20 via geepers, write `unr_grid_<version>_<date>/` + `MANIFEST.sha256` + `snapshot.json` (UNR version, date, node count, data span). *Done 2026-10-06 in Venti* (`venti.gnss.snapshot` + `scripts/snapshot_unr_grid.py`): Venti owns the sampler that reads the layout, so the writer lives next to it; `--bounds`, `--grid-types`, `--verify`; tests with injected fetch/download fakes.
 - [x] T48.2 Upload to S3; document the bucket layout and IAM in `docs/operations.md`. *Proposed 2026-10-06:* `s3://opera-adt/opera-ancillary/unr-grid/<snapshot_id>/` + a `CURRENT` pointer, next to the existing shared ancillary data (`docs/operations.md`, Storage). Waiting for the owner's OK; nothing uploaded. *Uploaded 2026-10-06* (location approved): `unr_grid_0.3_IGS20_20261006`, 28,492 nodes, 31 not published upstream (404), sample re-download verified; `CURRENT` waits for T46.
-- [ ] T48.3 cal-disp `download unr` can read from the snapshot path (`unr_timeseries_dir`), and metadata records `gnss_snapshot_id` + hash (through T28.4 provenance). *Waits for the cal-disp wiring (T37, behind T26/T09).*
+- [ ] T48.3 cal-disp `download unr` can read from the snapshot path (`unr_timeseries_dir`), and metadata records `gnss_snapshot_id` + hash (through T28.4 provenance). *Waits for the cal-disp wiring (T37, behind T26/T09).* *Status 2026-10-16:* open; products record `snapshot_id: null` (per-frame UNR downloads).
 - [x] T48.4 Roll-forward procedure documented: new snapshot → T46 gate → new frame-table k if needed → minor version. *Done 2026-10-06:* `docs/operations.md` (moves to cal-disp docs with T48.3).
 
 ### T49. v0.5 Docker image, golden regeneration, changelog
 **Depends on:** T46, T47, T48
 **Context:** D13 and PRD §7.3: one deliberate golden regeneration in Docker with a changelog explaining every value difference vs gamma; v0.5 defaults switch to the trade-study algorithm (`schema_version: 2` defaults) while gamma remains reproducible via flags.
-- [ ] T49.1 Flip `algorithm_parameters.yaml` defaults in `configs/` and `test_golden/configs/` to v0.5 values; add `configs/algorithm_parameters_gamma.yaml` for reproduction; test that the gamma file still reproduces the 0.3 golden.
-- [ ] T49.2 Build `cal-disp:0.5.0-rc` (docker-build skill); env budget check passes.
-- [ ] T49.3 Regenerate the golden inside the image; `run_validation.sh` passes; new `MANIFEST.sha256`.
-- [ ] T49.4 `CHANGELOG.md` v0.5.0: per component the median/max change on the golden pair vs 0.3 and which requirement motivated it (workflow-regression skill).
+- [x] T49.1 Flip `algorithm_parameters.yaml` defaults in `configs/` and `test_golden/configs/` to v0.5 values; add `configs/algorithm_parameters_gamma.yaml` for reproduction; test that the gamma file still reproduces the 0.3 golden. *Done 2026-10-15 (cal-disp #20):* defaults = v0.5; gamma via `configs/algorithm_parameters_gamma.yaml`.
+- [x] T49.2 Build `cal-disp:0.5.0-rc` (docker-build skill); env budget check passes. *Done 2026-10-15:* `cal-disp:0.5.0-rc`, then `cal-disp:0.5.0` from the tag; budget check OK (no `download` extra).
+- [x] T49.3 Regenerate the golden inside the image; `run_validation.sh` passes; new `MANIFEST.sha256`. *Done 2026-10-15:* golden rebuilt and validated in the image; `docs/golden/MANIFEST_0.5.0.sha256` (0.5.1: metadata-only rebuild, cal-disp #24).
+- [x] T49.4 `CHANGELOG.md` v0.5.0: per component the median/max change on the golden pair vs 0.3 and which requirement motivated it (workflow-regression skill). *Done 2026-10-15:* CHANGELOG `[0.5.0]` with the in-image golden-pair table.
 
 ### T50. VnV report and sign-off
 **Depends on:** T24, T46
-- [ ] T50.1 `disp-validate summary` across the 8 frames → release summary HTML/PDF with traceability (R-* → result).
-- [ ] T50.2 Add TS-G1/TS-S1/TS-U1/TS-T1/TS-B1 report links and the σ-realism section (reported, not gated).
-- [ ] T50.3 Review with Talib / OPERA CalVal; record sign-off and any waivers in `docs/decisions/0002-v0.5-calval.md`.
+- [x] T50.1 `disp-validate summary` across the 8 frames → release summary HTML/PDF with traceability (R-* → result). *Done 2026-10-15:* release summary of the confirmation run (`cal_disp_e2e/t50conf/release_summary.html`).
+- [x] T50.2 Add TS-G1/TS-S1/TS-U1/TS-T1/TS-B1 report links and the σ-realism section (reported, not gated). *Done:* study links and the σ-realism section in `docs/vnv/v0.5-calval-report.md` (+ TS-E4 extrapolated-σ addendum, disp2vlm_validation #21).
+- [~] T50.3 Review with Talib / OPERA CalVal; record sign-off and any waivers in `docs/decisions/0002-v0.5-calval.md`. *Status:* owner signed off 2026-10-15; OPERA CalVal row open.
 
 ### T51. Release cal-disp v0.5
 **Depends on:** T49, T50
-- [ ] T51.1 Update docs (quickstart, algorithm parameters, product spec deltas, performance, operations).
-- [ ] T51.2 Tag `v0.5.0` on the fork; upstream PR to `opera-adt/cal-disp` with the changelog and VnV summary; tag Venti and geepers forks with matching versions.
-- [ ] T51.3 Delivery package (image, docs, VnV report, snapshot id, frame table version).
-- [ ] T51.4 Move remaining items to `TODO.md` and open issues for phase 5/6 work.
+- [~] T51.1 Update docs (quickstart, algorithm parameters, product spec deltas, performance, operations). *Partly:* README, `docs/release_v0.5.md`, docker README updated; product-spec deltas and operations doc open.
+- [~] T51.2 Tag `v0.5.0` on the fork; upstream PR to `opera-adt/cal-disp` with the changelog and VnV summary; tag Venti and geepers forks with matching versions. *Partly:* `v0.5.0` tagged on the fork (438b84e); upstream PR, Venti and geepers tags open.
+- [ ] T51.3 Delivery package (image, docs, VnV report, snapshot id, frame table version). *Status 2026-10-16:* open; needs the image registry (owner) and the CalVal sign-off.
+- [~] T51.4 Move remaining items to `TODO.md` and open issues for phase 5/6 work. *Partly:* follow-ups in cal-disp `TODO.md` and Venti `docs/todo.md` (σ refinement, Hawaii bias rule, edge cases).
 
 ---
 
@@ -457,7 +459,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Context:** New repo under `mgovorcin/` (*2026-10-06:* named **`opera_vlm`** by the owner: one sensor-agnostic repo producing **VLM-S1** and **VLM-NI**; private `mgovorcin/opera_vlm`, tag `v0.0.0`). Depends on `venti-dev[decomposition]`, `geepers[grid]`, `opera-utils[disp]`. Mirror cal-disp structure (cli/config/product/workflow) but no frozen interface yet; design the runconfig deliberately.
 - [x] T52.1 Create with the `sas-scaffold` skill (PGE runconfig, algorithm parameters + per-frame overrides, click CLI, product writer with `/identification` and `/metadata`, golden validation, Docker, pixi, pre-commit, CI) and the standards kit; `CLAUDE.md` (Invariants: GNSS provenance must match DISP-CAL; N always from GNSS; per-pixel mode flag). *Done 2026-10-06:* rendered from a spec built on PRD §3.2 (inputs asc/desc DISP + DISP-CAL, LOS, optional UNR snapshot and GIA; algorithm groups decomposition/temporal/gnss; layers vertical, vertical_std, east, east_std, mode); install, lint, gen-configs, docs and 29 tests pass; invariants in `CLAUDE.md` (PR #1). The input/output layout and the runconfig (T52.2) are a draft until reviewed.
 - [x] T52.2 Runconfig draft (`vlm_workflow`: asc/desc DISP + CAL inputs, GNSS config, output options) with pydantic `extra=forbid`; ADR on what will later be frozen. *Done 2026-10-09 (opera_vlm PR #7):* `output_options.write_velocity_product` (owner: per-pair official, velocity optional), GNSS options mirror DISP-CAL (buffer 50 km, R-G5), ADR 0001 (frozen at v0.1 vs draft).
-- [ ] T52.3 Product spec draft: layers `vertical`, `east` (where available), `vertical_std`, `east_std`, `mode` (uint8: 0 none, 1 projected, 2 decomposed), `/metadata`, context `gia_rate`, `plate_motion_rate`.
+- [x] T52.3 Product spec draft: layers `vertical`, `east` (where available), `vertical_std`, `east_std`, `mode` (uint8: 0 none, 1 projected, 2 decomposed), `/metadata`, context `gia_rate`, `plate_motion_rate`. *Done (opera_vlm):* `vertical`, `vertical_std`, `east`, `east_std`, `mode`.
 
 ### T53. Venti `[decomposition]`: WLS and projection
 **Depends on:** T18, T35
@@ -472,7 +474,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Context:** D15: moving-window denoising + temporal interpolation to sample asc and desc on common epochs. Keep it simple for v0.1: per-pixel moving-window robust (Theil–Sen or Huber) linear fit of the calibrated time series, evaluated at the target epochs; σ from the window residuals.
 - [x] T54.1 `resample_timeseries(ts, dates, target_dates, window_days, method="huber_linear") -> (values, σ)` chunked over space (dask/xarray). *Done 2026-10-06:* `venti.temporal.resample_timeseries` (numpy, `chunk_pixels`) + `resample_dataarray` (`xarray.apply_ufunc`, dask-parallel when chunked; dask stays a research dependency).
 - [x] T54.2 Tests: noisy linear + seasonal synthetic; interpolation error vs window length; edge handling at the series ends. *Done 2026-10-06:* `tests/test_temporal_resample.py` (also sigma calibration, missing epochs, Theil–Sen vs a blundered epoch, chunking identity, the xarray wrapper).
-- [ ] T54.3 Benchmark on one asc/desc pair of frames (choose in T56) for runtime/memory. *Waits for the T56 frame choice and staged stacks.*
+- [x] T54.3 Benchmark on one asc/desc pair of frames (choose in T56) for runtime/memory. *Waits for the T56 frame choice and staged stacks.* *Done 2026-10-16:* Houston F08882 + F38238: 2 h 57 min, 12.4 GB (`cal_disp_e2e/t56/houston_final`).
 
 ### T55. GNSS E/N for VLM with provenance check
 **Depends on:** T28, T37
@@ -484,18 +486,29 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T56. VLM workflow and product writer
 **Owner decision 2026-10-09:** per-pair VLM is the official product; add an option (`output.velocity_product`) that also writes a velocity-domain product (one calibration of the chained velocity; issue #3).
 **Depends on:** T53, T54, T55
-- [ ] T56.1 Pick the first asc/desc overlap (e.g. LA F16940 with its ascending counterpart) and stage calibrated stacks (reuse T38/T46 products).
-- [ ] T56.2 `vlm run runconfig.yaml`: load → resample → GNSS → decompose/project → write NetCDF per target epoch pair with the T52.3 layers; browse image.
-- [ ] T56.3 Context layers via `venti.models.gia` (ICE-6G_D / Caron 2018) and `geepers.euler` (plate rate) sampled onto the grid.
-- [ ] T56.4 Regression fixture on a 128×128 synthetic asc/desc pair (golden for the VLM repo).
+- [x] T56.1 Pick the first asc/desc overlap (e.g. LA F16940 with its ascending counterpart) and stage calibrated stacks (reuse T38/T46 products). *Done:* LA (F16940 + F18904) and Houston (F08882 + F38238); NYC/Montana data-limited.
+- [x] T56.2 `vlm run runconfig.yaml`: load → resample → GNSS → decompose/project → write NetCDF per target epoch pair with the T52.3 layers; browse image. *Done (opera_vlm #8 ff.):* `opera-vlm run`; v0.5.0 DISP-CAL inputs need opera_vlm #17 (area-DB version).
+- [x] T56.3 Context layers via `venti.models.gia` (ICE-6G_D / Caron 2018) and `geepers.euler` (plate rate) sampled onto the grid. *Done:* plate-motion (ITRF2020-PMM) and GIA context layers.
+- [x] T56.4 Regression fixture on a 128×128 synthetic asc/desc pair (golden for the VLM repo). *Done:* 128 × 128 synthetic regression (`tests/test_regression.py`).
 
 ### T57. VLM validation and v0.1 release
 **Depends on:** T24, T56
-- [ ] T57.1 Validation package: `vertical` vs GNSS Up and `east` vs GNSS East at independent stations; per-class metrics; σ realism.
-- [ ] T57.2 Gate for VLM (`gate_vlm.yaml`): RMSE_U and |bias_U| targets to be set from the first run; recorded as baseline.
-- [ ] T57.3 Report, tag `v0.1.0`, docs; ADR on which interfaces are now frozen.
+- [x] T57.1 Validation package: `vertical` vs GNSS Up and `east` vs GNSS East at independent stations; per-class metrics; σ realism. *Done:* `disp2vlm-validate vlm` (pair residuals, station rates, σ realism).
+- [x] T57.2 Gate for VLM (`gate_vlm.yaml`): RMSE_U and |bias_U| targets to be set from the first run; recorded as baseline. *Done:* decision 0003: gate on |median| ≤ 1 and NMAD ≤ 2 mm/yr, ≥ 20 stations; RMSE reported. LA meets it; Houston not assessable (19 stations).
+- [ ] T57.3 Report, tag `v0.1.0`, docs; ADR on which interfaces are now frozen. *Status 2026-10-16:* open (tag `v0.1.0`, docs, interface ADR).
 
 ---
+
+### T63. MGRS tile database and the tiled VLM SAS
+**Depends on:** T56, T57 (T58 for NISAR frames)
+**Context (owner, 2026-10-16):** The VLM SAS produces per **MGRS tile**, not per DISP frame. A tile is covered by several DISP-S1 frames (later DISP-NISAR): ascending and descending, and adjacent tracks that overlap. The redundancy of those overlaps, all ascending and descending tracks together, constrains the vertical/east solution better than one asc/desc pair. Keep the tile database in its **own repo** (name TBD), so opera_vlm and other SAS read it as a versioned ancillary.
+- [ ] T63.1 New repo: MGRS tile ↔ frame database. For every MGRS tile, the DISP-S1 frames that overlap it (frame id, orbit direction, track, overlap fraction/geometry), from the OPERA frame geometries (opera-utils frame DB) and the MGRS grid; NISAR frames later (T58). Versioned GeoParquet/SQLite release asset; query API (tile → frames, frame → tiles); tests.
+- [ ] T63.2 opera_vlm runconfig/static ancillary: the tile id and the tile database; the SAS resolves the frame list (all asc and desc tracks overlapping the tile) instead of one asc/desc pair.
+- [ ] T63.3 Step 1, calibration: every input DISP pair calibrated with DISP-CAL (cal-disp v0.5, frame table) before use.
+- [ ] T63.4 Step 2, collection: per frame, the last N acquisitions (N = 3 for now, TBD by a trade study) onto the tile grid.
+- [ ] T63.5 Step 3, temporal denoising, then per pixel either single-geometry projection or multi-geometry decomposition (venti.decomposition), with all overlapping tracks in one weighted solve (more look vectors → better-conditioned east/up).
+- [ ] T63.6 Step 4, export per tile: `vertical` (VLM), `vertical_std`, and `east` (+ `east_std`) where ascending and descending are both available; `mode` per pixel.
+- [ ] T63.7 Trade study: gain from adjacent-track redundancy (asc + desc, all tracks) vs one asc/desc pair: condition number, σ, and VLM vs GNSS on a tile with ≥ 3 overlapping tracks; choose N (T63.4) and the denoising (T63.5).
 
 ## Phase 6: DISP-NISAR (M6, when beta data arrives)
 
@@ -567,7 +580,7 @@ flowchart LR
   end
   subgraph P5[Phase 5 VLM]
     T07 --> T52; T17 --> T52; T18 --> T53; T35 --> T53; T17 --> T54; T28 --> T55; T37 --> T55
-    T53 --> T56; T54 --> T56; T55 --> T56; T24 --> T57; T56 --> T57
+    T53 --> T56; T54 --> T56; T55 --> T56; T24 --> T57; T56 --> T57; T56 --> T63; T57 --> T63
   end
   subgraph P6[Phase 6 NISAR]
     T18 --> T58; T38 --> T59; T58 --> T59; T59 --> T60
