@@ -495,7 +495,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Depends on:** T24, T56
 - [x] T57.1 Validation package: `vertical` vs GNSS Up and `east` vs GNSS East at independent stations; per-class metrics; σ realism. *Done:* `disp2vlm-validate vlm` (pair residuals, station rates, σ realism).
 - [x] T57.2 Gate for VLM (`gate_vlm.yaml`): RMSE_U and |bias_U| targets to be set from the first run; recorded as baseline. *Done:* decision 0003: gate on |median| ≤ 1 and NMAD ≤ 2 mm/yr, ≥ 20 stations; RMSE reported. LA meets it; Houston not assessable (19 stations).
-- [ ] T57.3 Report, tag `v0.1.0`, docs; ADR on which interfaces are now frozen. *Status 2026-10-16:* open (tag `v0.1.0`, docs, interface ADR).
+- [ ] T57.3 Report, tag `v0.1.0`, docs; ADR on which interfaces are now frozen. *Status 2026-10-16:* report (disp2vlm_validation #23, `docs/vnv/vlm-v0.1-report.md`), ADR 0002 frozen interfaces, v0.5-inputs guide and CHANGELOG `[0.1.0]` (opera_vlm #18) merged; only the owner's `v0.1.0` tag remains.
 
 ---
 
