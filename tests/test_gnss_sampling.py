@@ -251,3 +251,35 @@ def test_exclusion_with_unr_0_360_longitudes(snapshot, grid):
     )
     assert out.provenance.n_excluded == n_inside > 0
     assert out.nodes["lon"].between(-180, 180).all()
+
+
+def test_too_few_nodes_to_reinterpolate_fall_back_to_dropping(snapshot, grid, caplog):
+    """Three nodes left outside the areas: no triangulation (Qhull) error, the
+    excluded nodes are dropped as with reinterpolate_excluded=False."""
+    shapely = pytest.importorskip("shapely")
+    _lookup, _station_dir, xy = snapshot
+    to_ll = Transformer.from_crs(f"EPSG:{UTM}", "EPSG:4326", always_xy=True)
+    lon, lat = to_ll.transform(xy[:, 0], xy[:, 1])
+    inner = interior_ids(xy) - 1
+    keep = [inner[0], inner[1], inner[-1]]  # three inner nodes, not collinear
+    holes = shapely.union_all(
+        [shapely.Point(lon[i], lat[i]).buffer(1e-3) for i in keep]
+    )
+    area = shapely.box(lon.min() - 1, lat.min() - 1, lon.max() + 1, lat.max() + 1)
+    area = area.difference(holes)
+    with caplog.at_level("WARNING", logger="venti.gnss.sampling"):
+        gnss = sample_gnss_enu(
+            make_cfg(
+                snapshot,
+                buffer_meters=30_000,
+                exclude_defo_nodes=True,
+                reinterpolate_excluded=True,
+            ),
+            grid,
+            exclude=area,
+        )
+    assert gnss.provenance.n_nodes == 3
+    assert gnss.provenance.n_reinterpolated == 0
+    assert gnss.provenance.n_excluded > 3
+    assert np.isfinite(gnss.vu).all()
+    assert "dropped instead" in caplog.text
