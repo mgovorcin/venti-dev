@@ -23,7 +23,7 @@ def test_bundled_table_covers_the_benchmark_and_vlm_frames():
     table = load_frame_table()
     assert DEFAULT_TABLE.exists()
     assert table.version
-    # T38 frames, T40 benchmark frames 5-8, the Houston descending VLM partner
+    # T38 frames, T40 benchmark frames 5-8, the Houston and LA descending VLM partners
     assert table.frames() == [
         7081,
         8622,
@@ -31,6 +31,7 @@ def test_bundled_table_covers_the_benchmark_and_vlm_frames():
         8886,
         16940,
         16941,
+        18904,
         23211,
         35991,
         36542,
@@ -171,3 +172,15 @@ def test_ts_t1_tropo_modes_in_the_0_3_to_1_5_km_band():
     assert mode(8622) == "off"  # New York, 0.42 km
     assert mode(7081) == AlgorithmParameters().calibration_options.tropo.mode
     assert mode(16940) == "stratified"  # Los Angeles, 1.56 km (earlier study)
+
+
+def test_la_descending_partner_mirrors_la():
+    """0.7-draft (2026-10-20): F18904, the LA descending VLM partner, carries
+    F16940's island regions and stratified tropo (T57 LA release re-run)."""
+    table = load_frame_table()
+    asc = table.apply(AlgorithmParameters(), 16940).calibration_options
+    desc = table.apply(AlgorithmParameters(), 18904).calibration_options
+    assert desc.surface.regions == asc.surface.regions == "separate"
+    assert desc.tropo.mode == asc.tropo.mode == "stratified"
+    unlisted = table.apply(AlgorithmParameters(), 99999).calibration_options
+    assert desc.uncertainty.k_grid == unlisted.uncertainty.k_grid  # no TS-G1 fit
