@@ -203,16 +203,6 @@ class TropoOptions(BaseModel):
         ge=0,
         description="'auto': at or above this relief the stratified model is used",
     )
-    stratified_evaluate: Literal["valid", "dem"] = Field(
-        "valid",
-        description=(
-            "Where the fitted stratified model is evaluated. 'valid': only on the"
-            " pixels it was fitted to (the pair's valid mask), so cal_tropo and the"
-            " calibration are NaN wherever that epoch's DISP is masked (v0.5.0-0.5.2"
-            " behaviour). 'dem': wherever the DEM and the delay are finite; the fit"
-            " still uses only valid pixels."
-        ),
-    )
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 

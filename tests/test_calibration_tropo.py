@@ -19,7 +19,6 @@ import numpy as np
 import pytest
 import rioxarray
 import xarray as xr
-from pydantic import ValidationError
 from pyproj import Transformer
 from scipy.interpolate import RegularGridInterpolator
 
@@ -247,42 +246,31 @@ class TestStratified:
         with pytest.raises(ValueError, match="do not match"):
             tropo.stratified_tropo(delay, h, x=np.arange(5), y=np.arange(NY))
 
-    def test_evaluate_on_dem_fills_masked_pixels_only(self, dem):
-        """'dem' keeps every valid pixel and fills the masked ones from the same fit."""
+    def test_model_evaluated_beyond_the_fit_mask(self, dem):
+        """Fit on valid pixels; the model exists wherever DEM and delay do."""
         h = dem.values.astype(float)
         x, y = _grid_xy()
         rng = np.random.default_rng(7)
         delay = -0.006 * h / 1e3 + 0.002 * rng.standard_normal(h.shape)
         valid = np.isfinite(h)
-        valid[40:90, 60:200] = False  # e.g. this epoch's DISP mask
-        old = tropo.stratified_delay(delay, h, valid, x=x, y=y)
-        assert np.isnan(old[~valid]).all()  # default: NaN where masked
-        new = tropo.stratified_delay(delay, h, valid, x=x, y=y, evaluate="dem")
-        np.testing.assert_array_equal(new[valid], old[valid])
+        valid[40:90, 60:200] = False  # e.g. this epoch's recommended_mask
+        out = tropo.stratified_delay(delay, h, valid, x=x, y=y)
         ok = np.isfinite(h) & np.isfinite(delay)
-        assert np.isfinite(new[ok]).all()
-        # same model: the filled pixels follow the height gradient
+        assert np.isfinite(out[ok]).all()
+        # one model: the masked block follows the same height gradient
         hole = ~valid & ok
-        resid = new[hole] - (-0.006 * h[hole] / 1e3)
+        resid = out[hole] - (-0.006 * h[hole] / 1e3)
         assert np.abs(resid - resid.mean()).max() < 5e-4
-        via_apply = tropo.apply_tropo(
-            delay.astype(np.float32),
-            "stratified",
-            dem=h,
-            valid=valid,
-            x=x,
-            y=y,
-            evaluate="dem",
+        # the fit itself ignores the masked pixels: corrupting them changes nothing
+        bad = delay.copy()
+        bad[~valid] += 1.0
+        np.testing.assert_allclose(
+            tropo.stratified_delay(bad, h, valid, x=x, y=y)[valid], out[valid]
         )
-        np.testing.assert_allclose(via_apply[ok], new[ok], rtol=1e-6, atol=1e-7)
-        with pytest.raises(ValueError, match="evaluate"):
-            tropo.stratified_delay(delay, h, valid, evaluate="all")  # type: ignore[arg-type]
-
-    def test_stratified_evaluate_option_default_keeps_v050(self):
-        assert TropoOptions().stratified_evaluate == "valid"
-        assert TropoOptions(stratified_evaluate="dem").stratified_evaluate == "dem"
-        with pytest.raises(ValidationError):
-            TropoOptions(stratified_evaluate="everywhere")
+        comp = tropo.apply_tropo(
+            delay.astype(np.float32), "stratified", dem=h, valid=valid, x=x, y=y
+        )
+        assert np.isfinite(comp[ok]).all()
 
 
 # --------------------------------------------------------------------------
