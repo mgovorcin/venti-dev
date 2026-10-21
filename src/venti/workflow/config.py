@@ -140,6 +140,25 @@ class SurfaceOptions(BaseModel):
             "pixels keep the mainland surface instead of an offset of their own."
         ),
     )
+    region_model: Literal["offset", "plane"] = Field(
+        "offset",
+        description=(
+            "With regions='separate': what each non-mainland region adds to the "
+            "mainland surface extrapolated into it. 'offset': one constant (the "
+            "median misfit). 'plane': offset + east/north tilt, robustly fitted to "
+            "the misfit, for regions of at least `region_plane_min_pixels` (smaller "
+            "ones keep the offset). The extrapolated mainland surface can tilt "
+            "across a large island far offshore (T62 edge pass, Catalina in F16940)."
+        ),
+    )
+    region_plane_min_pixels: int = Field(
+        1000,
+        ge=3,
+        description=(
+            "With region_model='plane': usable fit-grid pixels a region needs for a "
+            "plane (1000 at the 180 m v0.5 fit grid is ~32 km^2)."
+        ),
+    )
     fit_mask: str | None = Field(
         None,
         description=(

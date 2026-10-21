@@ -583,3 +583,73 @@ def test_frame_table_gives_houston_its_packaged_fit_mask():
         fit_mask_path("../frame_parameters.json")
     with pytest.raises(FileNotFoundError):
         fit_mask_path("F00000_missing.tif")
+
+
+class TestRegionPlane:
+    """T62 edge pass (Catalina, F16940): a large island far offshore receives the
+    mainland surface extrapolated across the water, which can tilt across it; a
+    constant offset then fits one end of the island only."""
+
+    @staticmethod
+    def _scene(island_shape=(40, 120), seed=3):
+        from venti.calibration.two_pass import _region_offsets  # noqa: F401
+
+        rng = np.random.default_rng(seed)
+        labels = np.zeros((200, 300), dtype=np.int32)
+        labels[:, :150] = 1  # mainland (largest)
+        r0, c0 = 80, 170
+        h, w = island_shape
+        labels[r0 : r0 + h, c0 : c0 + w] = 2
+        rows, cols = np.indices(labels.shape)
+        # extrapolated surface error on the island: offset + tilt along the island
+        truth = np.where(
+            labels == 2, 0.010 + 2e-4 * (cols - c0) - 1e-4 * (rows - r0), 0.0
+        )
+        surface = np.zeros(labels.shape)
+        residual = truth + 0.0005 * rng.standard_normal(labels.shape)
+        usable = labels > 0
+        return labels, surface, residual, usable, truth
+
+    def test_plane_recovers_the_island_tilt_and_offset_does_not(self):
+        from venti.calibration.two_pass import _region_offsets
+
+        labels, surface, residual, usable, truth = self._scene()
+        island = labels == 2
+        off = _region_offsets(surface, residual, labels, usable, 50)
+        pla = _region_offsets(
+            surface, residual, labels, usable, 50, model="plane", plane_min_pixels=1000
+        )
+        err_off = np.abs(off - truth)[island]
+        err_pla = np.abs(pla - truth)[island]
+        assert err_off.max() > 0.01  # the tilt (2.4 cm end to end) is left over
+        assert err_pla.max() < 0.0005
+        # the mainland is never touched
+        np.testing.assert_array_equal(pla[labels == 1], surface[labels == 1])
+        np.testing.assert_array_equal(off[labels == 1], surface[labels == 1])
+
+    def test_plane_is_robust_to_outliers(self):
+        from venti.calibration.two_pass import _region_offsets
+
+        labels, surface, residual, usable, truth = self._scene()
+        island = np.argwhere(labels == 2)
+        bad = island[::7]  # ~14% of the island one cycle off
+        residual[bad[:, 0], bad[:, 1]] += CYCLE_M
+        pla = _region_offsets(
+            surface, residual, labels, usable, 50, model="plane", plane_min_pixels=1000
+        )
+        assert np.abs(pla - truth)[labels == 2].max() < 0.001
+
+    def test_small_region_keeps_the_offset(self):
+        from venti.calibration.two_pass import _region_offsets
+
+        labels, surface, residual, usable, _ = self._scene(island_shape=(20, 30))
+        off = _region_offsets(surface, residual, labels, usable, 50)
+        pla = _region_offsets(
+            surface, residual, labels, usable, 50, model="plane", plane_min_pixels=1000
+        )
+        np.testing.assert_array_equal(pla, off)  # 600 px < 1000: offset only
+
+    def test_default_is_the_offset_model(self):
+        surf = CalibrationOptions().surface
+        assert surf.region_model == "offset"
+        assert surf.region_plane_min_pixels == 1000
