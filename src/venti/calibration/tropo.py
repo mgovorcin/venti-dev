@@ -473,17 +473,25 @@ def stratified_delay(
     x: np.ndarray | None = None,
     y: np.ndarray | None = None,
     subsample: int = DEFAULT_SUBSAMPLE,
+    evaluate: Literal["valid", "dem"] = "valid",
 ) -> np.ndarray:
-    """Return the stratified part of `delay` on the full grid (NaN where invalid).
+    """Return the stratified part of `delay` on the full grid.
+
+    The model is fitted on `valid` pixels. ``evaluate="valid"`` returns it on
+    those pixels only (NaN elsewhere); ``"dem"`` returns it wherever the DEM and
+    the delay are finite, so masked DISP pixels keep a tropo term.
 
     Linear in `delay`, so the stratified pair correction equals the difference
     of the per-date stratified layers whenever both dates share the valid set.
     """
+    if evaluate not in ("valid", "dem"):
+        msg = f"evaluate must be 'valid' or 'dem', got {evaluate!r}"
+        raise ValueError(msg)
     d = np.asarray(delay, dtype=np.float64)
     h = np.asarray(dem, dtype=np.float64)
     model = stratified_tropo(d, h, valid, x=x, y=y, subsample=subsample)
     ok = np.isfinite(d) & np.isfinite(h)
-    if valid is not None:
+    if valid is not None and evaluate == "valid":
         ok &= np.asarray(valid, dtype=bool)
     xx, yy = _grid_xy(d.shape, x, y)
     return model.evaluate(h, xx, yy, ok)
@@ -553,6 +561,7 @@ def apply_tropo(
     x: np.ndarray | None = None,
     y: np.ndarray | None = None,
     subsample: int = DEFAULT_SUBSAMPLE,
+    evaluate: Literal["valid", "dem"] = "valid",
 ) -> np.ndarray | None:
     """Return the ``cal_tropo`` component for a resolved mode.
 
@@ -563,8 +572,9 @@ def apply_tropo(
         tropo products were staged.
     mode : {"off", "stratified", "full"}
         A resolved mode (`choose_tropo_mode`).
-    dem, valid, x, y, subsample
-        Passed to `stratified_delay` for ``stratified``.
+    dem, valid, x, y, subsample, evaluate
+        Passed to `stratified_delay` for ``stratified``
+        (`TropoOptions.stratified_evaluate`).
 
     Returns
     -------
@@ -595,7 +605,9 @@ def apply_tropo(
         if dem is None:
             msg = "tropo mode 'stratified' needs the DEM"
             raise ValueError(msg)
-        strat = stratified_delay(corr, dem, valid, x=x, y=y, subsample=subsample)
+        strat = stratified_delay(
+            corr, dem, valid, x=x, y=y, subsample=subsample, evaluate=evaluate
+        )
         return strat.astype(corr.dtype, copy=False)
     msg = f"unknown tropo mode {mode!r}"
     raise ValueError(msg)
