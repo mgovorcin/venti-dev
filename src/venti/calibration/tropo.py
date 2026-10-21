@@ -474,7 +474,12 @@ def stratified_delay(
     y: np.ndarray | None = None,
     subsample: int = DEFAULT_SUBSAMPLE,
 ) -> np.ndarray:
-    """Return the stratified part of `delay` on the full grid (NaN where invalid).
+    """Return the stratified part of `delay` on the full grid.
+
+    The model is fitted on the `valid` pixels only, and evaluated wherever the
+    DEM and the delay are finite: it is a model of the atmosphere, not of the
+    DISP pixel, so masked DISP pixels (e.g. ``recommended_mask = 0``) keep a
+    tropo term, as they keep the GNSS surface.
 
     Linear in `delay`, so the stratified pair correction equals the difference
     of the per-date stratified layers whenever both dates share the valid set.
@@ -483,8 +488,6 @@ def stratified_delay(
     h = np.asarray(dem, dtype=np.float64)
     model = stratified_tropo(d, h, valid, x=x, y=y, subsample=subsample)
     ok = np.isfinite(d) & np.isfinite(h)
-    if valid is not None:
-        ok &= np.asarray(valid, dtype=bool)
     xx, yy = _grid_xy(d.shape, x, y)
     return model.evaluate(h, xx, yy, ok)
 
@@ -564,7 +567,8 @@ def apply_tropo(
     mode : {"off", "stratified", "full"}
         A resolved mode (`choose_tropo_mode`).
     dem, valid, x, y, subsample
-        Passed to `stratified_delay` for ``stratified``.
+        Passed to `stratified_delay` for ``stratified`` (`valid` selects the
+        fit pixels; the model is returned wherever DEM and delay are finite).
 
     Returns
     -------

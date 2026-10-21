@@ -246,6 +246,32 @@ class TestStratified:
         with pytest.raises(ValueError, match="do not match"):
             tropo.stratified_tropo(delay, h, x=np.arange(5), y=np.arange(NY))
 
+    def test_model_evaluated_beyond_the_fit_mask(self, dem):
+        """Fit on valid pixels; the model exists wherever DEM and delay do."""
+        h = dem.values.astype(float)
+        x, y = _grid_xy()
+        rng = np.random.default_rng(7)
+        delay = -0.006 * h / 1e3 + 0.002 * rng.standard_normal(h.shape)
+        valid = np.isfinite(h)
+        valid[40:90, 60:200] = False  # e.g. this epoch's recommended_mask
+        out = tropo.stratified_delay(delay, h, valid, x=x, y=y)
+        ok = np.isfinite(h) & np.isfinite(delay)
+        assert np.isfinite(out[ok]).all()
+        # one model: the masked block follows the same height gradient
+        hole = ~valid & ok
+        resid = out[hole] - (-0.006 * h[hole] / 1e3)
+        assert np.abs(resid - resid.mean()).max() < 5e-4
+        # the fit itself ignores the masked pixels: corrupting them changes nothing
+        bad = delay.copy()
+        bad[~valid] += 1.0
+        np.testing.assert_allclose(
+            tropo.stratified_delay(bad, h, valid, x=x, y=y)[valid], out[valid]
+        )
+        comp = tropo.apply_tropo(
+            delay.astype(np.float32), "stratified", dem=h, valid=valid, x=x, y=y
+        )
+        assert np.isfinite(comp[ok]).all()
+
 
 # --------------------------------------------------------------------------
 # mode selection
