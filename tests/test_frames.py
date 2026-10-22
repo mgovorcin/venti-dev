@@ -184,3 +184,12 @@ def test_la_descending_partner_mirrors_la():
     assert desc.tropo.mode == asc.tropo.mode == "stratified"
     unlisted = table.apply(AlgorithmParameters(), 99999).calibration_options
     assert desc.uncertainty.k_grid == unlisted.uncertainty.k_grid  # no TS-G1 fit
+
+
+def test_hawaii_takes_stratified_tropo():
+    """0.8-draft (2026-10-21): Hawaii (1.62 km) gets stratified tropo; the bias
+    rise that failed it is not significant (disp2vlm_validation decision 0004)."""
+    table = load_frame_table()
+    opts = table.apply(AlgorithmParameters(), 23211).calibration_options
+    assert opts.tropo.mode == "stratified"
+    assert opts.frame.plate == "PA"
