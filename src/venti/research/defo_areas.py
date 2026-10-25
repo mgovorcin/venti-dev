@@ -38,6 +38,8 @@ from typing import Any
 
 import numpy as np
 
+from venti.research._geometry import reproject as _reproject
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["DraftOptions", "draft_areas", "main", "regional_plane"]
@@ -94,7 +96,6 @@ def draft_areas(
     from rasterio.features import shapes
     from scipy import ndimage
     from shapely.geometry import mapping, shape
-    from shapely.ops import transform as shp_transform
     from shapely.ops import unary_union
 
     o = options or DraftOptions()
@@ -164,7 +165,7 @@ def draft_areas(
                     "reaches_stable_ground": frac >= o.min_stable_fraction,
                     "review": "draft: check extent, GNSS stations, buffer",
                 },
-                "geometry": mapping(shp_transform(to_ll, poly)),
+                "geometry": mapping(_reproject(to_ll, poly)),
             }
         )
     return {
