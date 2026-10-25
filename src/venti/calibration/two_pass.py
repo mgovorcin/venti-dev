@@ -311,9 +311,11 @@ def calibrate_pair(
     exclude_mask : np.ndarray, optional
         Remove-restore mask (True = excluded from the fit).
     fit_mask : np.ndarray, optional
-        Stable-pixel mask (True = may be fit), required when
-        ``surface.fit_mask`` names one; `venti.frames.fit_mask_path` locates
-        the file. Pixels outside it are left out of the loclin fit only.
+        Stable-pixel mask (True = may be fit). Required when
+        ``surface.fit_mask`` names a packaged one (`venti.frames.fit_mask_path`
+        locates the file); may also be given without a name, for a mask the
+        caller reads from its own input (e.g. a runconfig file). Pixels
+        outside it are left out of the loclin fit only.
     sigma_tropo : np.ndarray or float, optional
         Uncertainty of the tropospheric correction, same units as `disp`
         (R-E1 term; 0 until a model exists).
@@ -352,10 +354,10 @@ def calibrate_pair(
         fit_mask=fit_mask,
         sigma_tropo=sigma_tropo if np.ndim(sigma_tropo) > 0 else None,
     )
-    if (options.surface.fit_mask is None) != (fit_mask is None):
+    if options.surface.fit_mask is not None and fit_mask is None:
         msg = (
             f"surface.fit_mask is {options.surface.fit_mask!r} but fit_mask was"
-            f" {'not ' if fit_mask is None else ''}given"
+            " not given"
         )
         raise ValueError(msg)
     # one read-only zero layer shared by every component that is not applied

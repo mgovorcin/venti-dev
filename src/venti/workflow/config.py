@@ -170,7 +170,8 @@ class SurfaceOptions(BaseModel):
             "Matagorda). With regions='separate' the island offsets still use "
             "every valid island pixel. The caller reads it onto the pair's grid "
             "and passes "
-            "calibrate_pair(fit_mask=...). None: every valid pixel is fit."
+            "calibrate_pair(fit_mask=...). None: every valid pixel is fit, unless "
+            "the caller passes a mask of its own (a file from its runconfig)."
         ),
     )
 

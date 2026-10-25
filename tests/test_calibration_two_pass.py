@@ -281,21 +281,35 @@ class TestLoclinEndToEnd:
             np.isnan(skip.sigma_cal), np.isnan(keep.sigma_cal)
         )
 
-    def test_fit_mask_option_and_array_go_together(self):
+    def test_named_fit_mask_needs_the_array(self):
         disp, gnss, valid, *_ = scene(island=False)
         o = opts_v05()
         o.surface.fit_mask = "stable.tif"
         with pytest.raises(ValueError, match="fit_mask"):
             calibrate_pair(disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M)
-        with pytest.raises(ValueError, match="fit_mask"):
-            calibrate_pair(
-                disp, gnss, valid, REF, opts_v05(), PIXEL_M, CYCLE_M,
-                fit_mask=valid,
-            )  # fmt: skip
         with pytest.raises(ValueError, match="fit_mask shape"):
             calibrate_pair(
                 disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M, fit_mask=valid[1:]
             )
+
+    def test_caller_fit_mask_without_a_name_acts_like_a_named_one(self):
+        """A mask the caller reads from its own input (cal-disp runconfig file)
+        needs no packaged name and fits exactly like the same mask by name."""
+        disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
+        field = np.zeros_like(valid)
+        field[20:60, 120:170] = True
+        disp = disp + np.where(field, 0.03, 0.0)
+        named = opts_v05(two_pass=True)
+        named = named.model_copy(
+            update={"surface": named.surface.model_copy(update={"fit_mask": "s.tif"})}
+        )
+        kw = {"coherence": coh, "exclude_mask": bowl_mask, "fit_mask": ~field}
+        by_name = calibrate_pair(disp, gnss, valid, REF, named, PIXEL_M, CYCLE_M, **kw)
+        by_caller = calibrate_pair(
+            disp, gnss, valid, REF, opts_v05(two_pass=True), PIXEL_M, CYCLE_M, **kw
+        )
+        np.testing.assert_array_equal(by_caller.calibration, by_name.calibration)
+        np.testing.assert_array_equal(by_caller.sigma_cal, by_name.sigma_cal)
 
     def test_island_offset_uses_every_valid_island_pixel_under_a_fit_mask(self):
         """T46 Houston: the fit mask shapes the mainland fit only; an island
