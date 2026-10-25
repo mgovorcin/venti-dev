@@ -22,6 +22,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from venti.research._geometry import reproject as _reproject
+
 __all__ = ["eruption_feature", "event_feature", "rupture_length_km"]
 
 
@@ -47,7 +49,6 @@ def event_feature(
     """Return the GeoJSON Feature of one event (`remove_restore.Event` schema)."""
     from pyproj import Geod
     from shapely.geometry import LineString, mapping
-    from shapely.ops import transform
 
     length = rupture_length_km(magnitude)
     buffer_km = max(min_buffer_km, buffer_factor * length)
@@ -61,7 +62,7 @@ def event_feature(
     aeqd = f"+proj=aeqd +lat_0={lat} +lon_0={lon} +units=m +datum=WGS84"
     fwd = Transformer.from_crs("EPSG:4326", aeqd, always_xy=True).transform
     inv = Transformer.from_crs(aeqd, "EPSG:4326", always_xy=True).transform
-    footprint = transform(fwd, LineString(ends)).buffer(
+    footprint = _reproject(fwd, LineString(ends)).buffer(
         buffer_km * 1000.0, quad_segs=16
     )
     return {
@@ -83,7 +84,7 @@ def event_feature(
                 f" {buffer_factor:g} L)"
             ),
         },
-        "geometry": mapping(transform(inv, footprint)),
+        "geometry": mapping(_reproject(inv, footprint)),
     }
 
 
@@ -104,7 +105,6 @@ def eruption_feature(
     """
     from pyproj import Transformer
     from shapely.geometry import LineString, Point, mapping
-    from shapely.ops import transform
 
     if not vents:
         msg = "an eruption needs at least one vent"
@@ -118,7 +118,7 @@ def eruption_feature(
     fwd = Transformer.from_crs("EPSG:4326", aeqd, always_xy=True).transform
     inv = Transformer.from_crs(aeqd, "EPSG:4326", always_xy=True).transform
     trace = LineString(vents) if len(vents) > 1 else Point(vents[0])
-    footprint = transform(fwd, trace).buffer(buffer_km * 1000.0, quad_segs=16)
+    footprint = _reproject(fwd, trace).buffer(buffer_km * 1000.0, quad_segs=16)
     return {
         "type": "Feature",
         "properties": {
@@ -131,5 +131,5 @@ def eruption_feature(
             "buffer_km": buffer_km,
             "footprint_rule": f"line through the vents, buffered by {buffer_km:g} km",
         },
-        "geometry": mapping(transform(inv, footprint)),
+        "geometry": mapping(_reproject(inv, footprint)),
     }
