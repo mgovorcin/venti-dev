@@ -25,6 +25,8 @@ def test_bundled_table_covers_the_benchmark_and_vlm_frames():
     assert table.version
     # T38 frames, T40 benchmark frames 5-8, the Houston and LA descending VLM partners
     assert table.frames() == [
+        831,
+        834,
         7081,
         8622,
         8882,
@@ -34,6 +36,7 @@ def test_bundled_table_covers_the_benchmark_and_vlm_frames():
         18904,
         23211,
         35991,
+        36008,
         36542,
         38238,
     ]
@@ -193,3 +196,12 @@ def test_hawaii_takes_stratified_tropo():
     opts = table.apply(AlgorithmParameters(), 23211).calibration_options
     assert opts.tropo.mode == "stratified"
     assert opts.frame.plate == "PA"
+
+
+def test_coastal_campaign_frames_get_separate_regions():
+    """0.9-draft (2026-10-25): Gulf/East campaign frames whose GNSS validation
+    improved with surface.regions = separate."""
+    table = load_frame_table()
+    for frame in (831, 834, 36008):
+        opts = table.apply(AlgorithmParameters(), frame).calibration_options
+        assert opts.surface.regions == "separate", frame
