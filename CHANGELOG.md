@@ -7,6 +7,19 @@ Value-changing entries say which product layers move and by how much
 
 ## [Unreleased]
 
+### Fixed
+
+- **Invalid pixels no longer dilute the v0.5 fit.** `calibrate_pair` (loclin)
+  zero-filled invalid pixels before the block mean of the fit grid, so a block
+  60% valid showed the fit 60% of its signal relative to the reference point
+  and the surface missed the rest. Value-changing: `calibration` moves wherever
+  the mask is speckled, and `calibration_std` follows. In 17 gulf-east frames, a
+  velocity-domain test moved the median overlap offset from 3.41 to 0.23 mm/yr;
+  three frames of per-pair runs moved RMSE against GNSS from 5.40 to 1.05
+  (F18359), 2.20 to 1.46 (F37958) and 5.25 to 2.32 mm/yr (F44055). Measured with
+  a run-time patch of the same change (cal-vlm-batch
+  `campaigns/gulf_east/validate/RESULTS.md`). The gamma path is unchanged.
+
 ### Changed
 
 - **Dependency tiers (plan T17, ADR-0020).** `pip install venti` is now the

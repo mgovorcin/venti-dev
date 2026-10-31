@@ -377,6 +377,23 @@ class TestLoclinEndToEnd:
         assert np.median(new.sigma_cal[block]) > np.median(old.sigma_cal[both])
         np.testing.assert_allclose(new.calibration, old.calibration, equal_nan=True)
 
+    def test_invalid_pixels_do_not_dilute_the_fit_blocks(self):
+        """A block 70% valid must show the fit its signal, not 70% of it."""
+        disp, gnss, valid, _, _, _, coh = scene(island=False, bowl=False)
+        rng = np.random.default_rng(1)
+        ref = (40, 100)
+        valid = valid & (rng.uniform(size=valid.shape) < 0.7)
+        valid[ref] = True
+        field = np.where(valid, disp, np.nan)
+        o = opts_v05(two_pass=False)
+        o.downsample_factor = 6
+        res = calibrate_pair(
+            field, gnss, valid, ref, o, PIXEL_M, CYCLE_M, coherence=coh
+        )
+        err = (field - res.calibration - gnss)[valid]
+        # the ramp spans 10 mm; zero-filled blocks leave about 30% of it
+        assert np.sqrt(np.mean((err - np.median(err)) ** 2)) < 0.0007
+
     def test_single_pass_loclin_and_downsampling(self):
         disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
         o = opts_v05(two_pass=False)
