@@ -537,7 +537,8 @@ def calibrate_pair(
             tie_coarse = fit(coarse, cutoff, robust=True, grids=grids)[0]
             return upsample_array(tie_coarse, residual_ds.shape)
 
-        work_ds = down(np.where(valid, work, 0.0))
+        # invalid pixels stay NaN: a zero would pull each block toward the reference
+        work_ds = down(np.where(valid, work, np.nan))
         residual_ds = work_ds - gnss_ds
         passes = 1
         if options.surface.two_pass:
