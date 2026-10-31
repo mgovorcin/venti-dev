@@ -576,23 +576,28 @@ def test_frame_table_turns_regions_on_for_the_island_frames():
 
 
 def test_frame_table_gives_houston_its_packaged_fit_mask():
-    """T62 edge pass: only F08882 fits on stable pixels, and its mask ships
-    with the package on the frame's DISP grid."""
+    """Only the Houston pair fits on stable pixels (table 0.10-draft), and each
+    mask ships with the package on its frame's DISP grid."""
     import rasterio
 
     from venti.frames import fit_mask_path, load_frame_table
     from venti.workflow.config import AlgorithmParameters
 
     table = load_frame_table()
-    for frame, expected in ((8882, "F08882_stable_coh07.tif"), (38238, None),
+    masks = {
+        8882: ("F08882_stable_g085_06.tif", (7733, 9464)),
+        38238: ("F38238_stable_g085_06.tif", (7244, 9832)),
+    }
+    for frame, expected in (*((f, m[0]) for f, m in masks.items()),
                             (16940, None), (99, None)):  # fmt: skip
         applied = table.apply(AlgorithmParameters(), frame)
         assert applied.calibration_options.surface.fit_mask == expected, frame
-    with rasterio.open(fit_mask_path("F08882_stable_coh07.tif")) as src:
-        assert (src.count, src.dtypes[0], src.shape) == (1, "uint8", (7733, 9464))
-        assert src.crs.to_epsg() == 32615
-        kept = src.read(1, out_shape=(773, 946)).mean()
-    assert 0.08 < kept < 0.11
+    for name, shape in masks.values():
+        with rasterio.open(fit_mask_path(name)) as src:
+            assert (src.count, src.dtypes[0], src.shape) == (1, "uint8", shape)
+            assert src.crs.to_epsg() == 32615
+            kept = src.read(1, out_shape=(shape[0] // 10, shape[1] // 10)).mean()
+        assert 0.07 < kept < 0.11, name
     with pytest.raises(FileNotFoundError):
         fit_mask_path("../frame_parameters.json")
     with pytest.raises(FileNotFoundError):
