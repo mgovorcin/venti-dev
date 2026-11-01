@@ -133,6 +133,7 @@ def loclin_surface(
     *,
     fallback: np.ndarray | None = None,
     coverage_blend: tuple[float, float] = (0.05, 0.3),
+    data_mask: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Calibration surface with a half-response cutoff; continuous everywhere.
 
@@ -154,6 +155,12 @@ def loclin_surface(
         Coverage range over which the local-linear estimate is blended into
         the fallback with a smoothstep, so the surface stays continuous
         without letting empty regions feed back onto the data.
+    data_mask : np.ndarray, optional
+        True where `field` holds real data. Coverage then measures how much
+        data the kernel sees, whatever its weights: coherence^p weights are
+        far below 1 in a dark frame and would otherwise put the whole frame
+        below `coverage_blend` and the surface on the fallback. By default
+        coverage comes from `weights`.
 
     Returns
     -------
@@ -163,6 +170,10 @@ def loclin_surface(
     """
     sigma = kernel_sigma_px(cutoff_wavelength_m, pixel_m)
     level, coverage = local_linear_surface(field, weights, sigma)
+    if data_mask is not None:
+        coverage = gaussian_filter(
+            np.asarray(data_mask, dtype=np.float64), sigma, mode="constant", cval=0.0
+        )
     if fallback is None:
         fallback = gaussian_filter(
             np.asarray(field, dtype=np.float64), sigma, mode="nearest"

@@ -9,6 +9,15 @@ Value-changing entries say which product layers move and by how much
 
 ### Fixed
 
+- **Coverage no longer switches off the local-linear fit in dark frames.**
+  `loclin_surface` blended to its fallback by coverage built from the final
+  weights, and coherence^8 keeps those below the blend range across a dark
+  frame, so the surface there was a plain Gaussian of the gap-filled field. It
+  overshot at frame edges and made the weights ineffective. `calibrate_pair`
+  now passes the valid fit cells as `data_mask`, with a blend range for that
+  coverage of (0.005, 0.05). Value-changing: `calibration`
+  moves in dark frames, and `coherence_power` now takes effect there.
+
 - **Invalid pixels no longer dilute the v0.5 fit.** `calibrate_pair` (loclin)
   zero-filled invalid pixels before the block mean of the fit grid, so a block
   60% valid showed the fit 60% of its signal relative to the reference point
