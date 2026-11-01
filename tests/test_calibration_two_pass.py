@@ -394,6 +394,30 @@ class TestLoclinEndToEnd:
         # the ramp spans 10 mm; zero-filled blocks leave about 30% of it
         assert np.sqrt(np.mean((err - np.median(err)) ** 2)) < 0.0007
 
+    def test_dark_frame_keeps_the_local_linear_surface(self):
+        """Low coherence must not send the whole frame to the coverage fallback."""
+        rng = np.random.default_rng(2)
+        _, xx = np.mgrid[0:NY, 0:NX].astype(float)
+        field = 0.10 * xx / NX + 0.0002 * rng.standard_normal((NY, NX))
+        valid = np.zeros((NY, NX), bool)
+        valid[:, 60:] = True  # data ends at a frame edge on the west
+        field = np.where(valid, field, np.nan)
+        coh = np.full((NY, NX), 0.45)
+        o = opts_v05(two_pass=False, coh_power=8.0)
+        o.weights.robust = False
+        res = calibrate_pair(
+            field,
+            np.zeros((NY, NX)),
+            valid,
+            (80, 150),
+            o,
+            PIXEL_M,
+            CYCLE_M,
+            coherence=coh,
+        )
+        # the fallback misses the ramp by 2.5 mm at the edge; the level by under 0.5
+        assert abs(np.nanmedian((field - res.calibration)[:, 60])) < 0.001
+
     def test_single_pass_loclin_and_downsampling(self):
         disp, gnss, valid, _ramp, bowl_mask, _, coh = scene(island=False)
         o = opts_v05(two_pass=False)

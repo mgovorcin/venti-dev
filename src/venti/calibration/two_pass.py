@@ -53,6 +53,9 @@ __all__ = ["CalibrationResult", "UnwrapHook", "calibrate_pair"]
 # `decisions` anything the hook wants recorded (plan T36 provides it).
 UnwrapHook = Callable[[np.ndarray, np.ndarray, float], tuple[np.ndarray, Any]]
 
+#: Blend range for coverage of real data cells: a speckled frame sits near 0.1, and
+#: it must stay on the local-linear level wherever land has data.
+DATA_COVERAGE_BLEND = (0.005, 0.05)
 COMPONENTS = (
     "cal_gnss_surface",
     "cal_reference_offset",
@@ -515,7 +518,14 @@ def calibrate_pair(
                 coherence_power=options.weights.coherence_power,
                 robust=robust,
             )
-            surface_ds, cov = loclin_surface(filled, w, f_pixel, cutoff_m)
+            surface_ds, cov = loclin_surface(
+                filled,
+                w,
+                f_pixel,
+                cutoff_m,
+                data_mask=fit_valid,
+                coverage_blend=DATA_COVERAGE_BLEND,
+            )
             return surface_ds, cov, w, filled
 
         def tie(residual_ds: np.ndarray) -> np.ndarray:
