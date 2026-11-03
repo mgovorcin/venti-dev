@@ -102,3 +102,40 @@ def test_robust_weights_respect_zero_base_weight_and_validate():
         robust_weights(field, base[:10], SIGMA)
     with pytest.raises(ValueError, match="iterations"):
         robust_weights(field, base, SIGMA, iterations=0)
+
+
+def _sparse_data_in_filled_grid():
+    """A small data block far above a large, smooth gap-filled grid (one piece of a frame)."""
+    rng = np.random.default_rng(3)
+    # filling continues the data level smoothly, so filled cells sit on the local level
+    yy, xx = np.mgrid[0:200, 0:300]
+    field = 0.010 + 1e-6 * (xx + yy) / 500
+    base = np.full(field.shape, 0.02)  # gap-filled cells
+    field[20:50, 20:50] += 0.0005 * rng.standard_normal((30, 30))
+    base[20:50, 20:50] = 1.0
+    return field, base
+
+
+def test_robust_weights_keep_sparse_data_against_filled_cells():
+    field, base = _sparse_data_in_filled_grid()
+    data = base >= 1.0
+    # every pixel's statistics: the filled cells set a tiny MAD and reject all the data
+    assert not np.any(robust_weights(field, base, SIGMA)[data] > 0)
+    w = fit_weights(field, base, SIGMA, robust=True)
+    assert np.mean(w[data] > 0) > 0.9
+    surface, _ = local_linear_surface(field, w, SIGMA)
+    assert np.median(surface[data]) == pytest.approx(0.010, abs=0.001)
+
+
+def test_fit_weights_unchanged_when_data_survive():
+    field, _ = _field_with_outlier(100.0)
+    base = np.ones_like(field)
+    base[:, :30] = 0.02
+    w = fit_weights(field, base, SIGMA, robust=True)
+    np.testing.assert_array_equal(w, base * robust_weights(field, base, SIGMA))
+
+
+def test_robust_weights_stats_mask():
+    field, base = _sparse_data_in_filled_grid()
+    rw = robust_weights(field, base, SIGMA, stats_mask=base >= 1.0)
+    assert np.mean(rw[base >= 1.0] > 0) > 0.9
