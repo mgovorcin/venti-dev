@@ -73,6 +73,7 @@ def robust_weights(
     threshold: float = 4.0,
     huber_c: float = 1.345,
     iterations: int = 2,
+    stats_mask: np.ndarray | None = None,
 ) -> np.ndarray:
     """Down-weight pixels that disagree with their local low-pass level.
 
@@ -95,6 +96,9 @@ def robust_weights(
         Huber tuning constant (1.345 = 95 % efficiency at the normal).
     iterations : int
         Re-estimate the local level with the updated weights this many times.
+    stats_mask : np.ndarray, optional
+        Pixels the median and MAD of the local residual are taken from. By
+        default every pixel with a positive weight, gap-filled ones included.
 
     Returns
     -------
@@ -116,10 +120,11 @@ def robust_weights(
         level = _local_level(f, w, sigma_px)
         d = f - level
         ok = np.isfinite(d) & (w > 0)
-        if ok.sum() < 10:
+        stats = ok if stats_mask is None else ok & stats_mask
+        if stats.sum() < 10:
             break
-        med = float(np.median(d[ok]))
-        mad = MAD_SCALE * float(np.median(np.abs(d[ok] - med)))
+        med = float(np.median(d[stats]))
+        mad = MAD_SCALE * float(np.median(np.abs(d[stats] - med)))
         if mad <= 0:
             break
         z = np.abs(d - med) / mad
@@ -157,11 +162,18 @@ def fit_weights(
     With ``coherence_power=0`` and ``robust=False`` this returns `base`
     unchanged, which is what the gamma-equivalent defaults in
     `calibration_options.weights` select.
+
+    Pixels with ``base >= 1`` are data; smaller positive weights are gap-filled
+    cells (`venti.calibration.gaps.base_weights`). When the data cover a small
+    part of the grid, the filled cells sit on the local level and set a MAD so
+    small that every data pixel is rejected; the surface would then be the
+    fallback alone (zero). Only in that case the robust statistics are taken
+    from the data pixels.
     """
     base = np.asarray(base, dtype=np.float64)
     w = base * coherence_weights(coherence, coherence_power, base.shape)
     if robust:
-        w = w * robust_weights(
+        rw = robust_weights(
             field,
             w,
             sigma_px,
@@ -169,4 +181,21 @@ def fit_weights(
             threshold=robust_threshold,
             iterations=iterations,
         )
+        data = base >= 1.0
+        if data.sum() >= 10 and not np.any((w * rw > 0) & data):
+            logger.warning(
+                "robust weights rejected all %d data pixels; robust statistics "
+                "taken from the data pixels only",
+                int(data.sum()),
+            )
+            rw = robust_weights(
+                field,
+                w,
+                sigma_px,
+                method=robust_method,
+                threshold=robust_threshold,
+                iterations=iterations,
+                stats_mask=data,
+            )
+        w = w * rw
     return w
