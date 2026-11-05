@@ -71,7 +71,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [~] T48 Frozen UNR grid snapshot — T48.1, T48.2, T48.4 done 2026-10-06: `unr_grid_0.3_IGS20_20261006` on `s3://opera-adt/opera-ancillary/unr-grid/` (28,492 nodes); T48.3 waits for T37
 - [x] T49 v0.5 Docker image, golden regeneration, changelog — done 2026-10-15 (cal-disp #20, `cal-disp:0.5.0`, CHANGELOG `[0.5.0]`)
 - [~] T50 VnV report and sign-off — release summary + CalVal report done; owner signed off 2026-10-15; OPERA CalVal row open
-- [~] T51 Release cal-disp v0.5 — v0.5.0 tagged on the fork (through v0.5.7, 2026-10-29); upstream PR, delivery package (image registry) and product-spec deltas open
+- [~] T51 Release cal-disp v0.5 — tagged on the fork through v0.5.8 (2026-11-02; three benchmark failures accepted, disp2vlm_validation decision 0007); upstream PR, delivery package (image registry) and product-spec deltas open
 
 ## Phase 5: VLM v0.1
 
@@ -88,9 +88,15 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] T59 TS-N1: ionosphere — depends on T38, T58
 - [ ] T60 NISAR benchmark and cal-disp v2 — depends on T59
 
+## Post-v0.5 calibration
+
+- [~] T64 TS-NA: coherence power and fit mask across North America — depends on T51. Frames and local prototypes done 2026-11-01 (`cal_disp_e2e/ts_na/PLAN.md`); Batch pilot needs owner approval
+- [ ] T65 Follow-ups from the v0.5.8 benchmark — depends on T51. Hawaii (#55), Oklahoma City (#57 spread), F08882 #55-only run, per-pair roughness
+- [~] T66 Next cal-disp release (0.5.9) — depends on T51, T65. venti-dev #58 merged 2026-11-03; breaklines wait for the 17-frame confirmation
+
 ## Later
 
-- [~] T61 Output packaging: component and GNSS layers — depends on T14, T51. `plate_motion` group (T61.2) done in cal-disp v0.5.5 (2026-10-22); component layers (`cal_*`), GNSS velocities and the `calibration == Σ cal_*` test open
+- [~] T61 Output packaging: component and GNSS layers — depends on T14, T51. `plate_motion` (T61.2) and GNSS displacement in `/auxiliary` done in cal-disp v0.5.5 (2026-10-22); component layers (`cal_*`), GNSS velocities, the `calibration == Σ cal_*` test and the size budget open
 - [~] T62 TS-U1 phase 2: inland/sub-region unwrap errors — started 2026-10-10 on Houston: Galveston (disconnected region) has whole-cycle jumps in ~24% of raw pairs (TXGA 41/173); the 50 km surface absorbs part (41→30) and smears it. Unwrap correction on: precise (only the 5 Galveston-area stations move, +3 to +6.4 mm/yr, no mainland shifts), gated velocity RMSE 5.90→5.19 (now better than gamma 5.51), but incomplete (sub-region error). Stays OFF (owner) until sub-region handling + no-surface-across-water-gaps are tested. Matagorda (TXBC/TXMG, +8.5 mm/yr) is not an island: separate item. 2026-10-14: regions + fit mask make Houston pass; still open: TXGA sub-region error (−17 mm/yr) and Matagorda (+6.5: its own region, whose offset uses all valid pixels incl. crop fields — from stable pixels Galveston breaks)
 - [ ] Refine σ_CAL extrapolation (owner 2026-10-14) — `uncertainty.extrapolate_sigma` (nearest fitted value × distance growth up to 3x) is a first cut so `calibration_std` covers every pixel `calibration` does. Revisit: check the extrapolated σ with TS-E4 on held-out stations in low-coherence/masked areas, tune the growth scale/cap, consider a coverage- or n_eff-based inflation instead of distance alone, and document in the product spec
 - [ ] Final edge-case refinement pass (owner 2026-10-10) — once cal-disp v0.5, Venti, disp2vlm_validation and opera_vlm are feature-complete: Central Valley, Hawaii, Ridgecrest, Puerto Rico, Houston asc/desc; T41.4 drafts, the 0002 gate, coastal/island surface + T62 unwrap, Matagorda, VLM on real data. 2026-10-13/14 done: Central Valley (SJ +15 km, #34), Ridgecrest (footprints kept), Houston (PASS, #35). Left: Puerto Rico tropo (TS-T1, needs a relief frame), TXGA/Matagorda residuals (T62)
@@ -126,3 +132,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - 2026-10-14 TS-T1 (T44.1) done: tropo at 0.3–1.5 km relief helps only humid Puerto Rico (stratified in the frame table, 0.6-draft); New York and Montana stay off; auto rule unchanged.
 - 2026-10-14 σ_CAL follows the calibration (`uncertainty.extrapolate_sigma`, on in cal-disp's v0.5 set): before, σ was NaN where the fit had too little weight (12% of usable land on the F08882 golden pair, most low-quality land, water). Now the nearest fitted value, inflated up to 3× with distance (kernel scale); the grid term is filled from the fit grid beyond the LOS raster.
 - [ ] **Refine extrapolated σ_CAL** (owner 2026-10-14: come back to it): the nearest-value + distance inflation is a placeholder. Calibrate the inflation against held-out stations (TS-E4 coverage on filled pixels only), consider a coverage-based factor instead of distance, and decide whether low-quality pixels (recommended_mask = 0) should carry a separate flag.
+- 2026-11-04 Plan revised: cal-disp v0.5.8 tagged 2026-11-02 (decision 0007); T61.2 marked done (v0.5.5); T64 (TS-NA), T65 (0.5.8 follow-ups), T66 (0.5.9) added.
