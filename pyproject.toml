@@ -110,6 +110,7 @@ Changelog = "https://github.com/opera-adt/Venti/releases"
 venti = "venti.__main__:main"
 venti-defo-areas = "venti.research.defo_areas:main"
 venti-fit-mask = "venti.research.fit_mask:main"
+venti-land-pieces = "venti.research.land_pieces:main"
 
 
 [tool.pixi.project]

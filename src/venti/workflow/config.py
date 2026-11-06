@@ -122,14 +122,27 @@ class SurfaceOptions(BaseModel):
             "the final surface (R-S1)"
         ),
     )
-    regions: Literal["none", "separate"] = Field(
+    regions: Literal["none", "separate", "pieces"] = Field(
         "none",
         description=(
             "'loclin' only. 'separate': fit the final surface on the largest "
             "connected land region (the mainland) and give each other region "
             "(island, cut-off peninsula) its own constant offset, so a region's "
             "unwrapping cycle jump cannot bend the mainland surface across a water "
-            "gap (T62, Houston/Galveston). 'none': one surface for every region."
+            "gap (T62, Houston/Galveston). 'pieces': breaklines; each land piece "
+            "of a fixed per-frame label map (calibrate_pair(land_pieces=...), built "
+            "with venti-land-pieces) of at least piece_min_pixels fit cells gets a "
+            "surface of its own, fitted on that piece alone, so a step between "
+            "pieces cannot leak across the gap; smaller pieces keep the main "
+            "surface and no constant. 'none': one surface for every region."
+        ),
+    )
+    piece_min_pixels: int = Field(
+        3000,
+        ge=1,
+        description=(
+            "With regions='pieces': fit-grid cells a land piece needs for a surface "
+            "of its own (3000 at the 180 m v0.5 fit grid is ~97 km^2)."
         ),
     )
     region_min_pixels: int = Field(

@@ -708,3 +708,84 @@ class TestRegionPlane:
         surf = CalibrationOptions().surface
         assert surf.region_model == "offset"
         assert surf.region_plane_min_pixels == 1000
+
+
+def _pieces_opts(min_pixels):
+    o = opts_v05(two_pass=True, unwrap=False)
+    return o.model_copy(
+        update={
+            "surface": o.surface.model_copy(
+                update={"regions": "pieces", "piece_min_pixels": min_pixels}
+            )
+        }
+    )
+
+
+class TestLandPieces:
+    """Breaklines (surface.regions='pieces'): one surface per large land piece."""
+
+    def _labels(self, valid, island_mask):
+        labels = np.where(valid, 1, 0).astype(np.uint16)
+        labels[island_mask] = 2
+        return labels
+
+    def test_island_step_stays_off_the_mainland_and_the_island_is_tied(self):
+        disp, gnss, valid, _ramp, bowl_mask, island_mask, coh = scene()
+        clean, *_ = scene(island=False)
+        clean[~valid] = np.nan
+        labels = self._labels(valid, island_mask)
+
+        def run(d, regions):
+            o = _pieces_opts(500)
+            o = o.model_copy(
+                update={"surface": o.surface.model_copy(update={"regions": regions})}
+            )
+            return calibrate_pair(
+                d, gnss, valid, REF, o, PIXEL_M, CYCLE_M, coherence=coh,
+                exclude_mask=bowl_mask, land_pieces=labels,
+            )  # fmt: skip
+
+        pieces, ref, none = run(disp, "pieces"), run(clean, "none"), run(disp, "none")
+        coast = valid & ~bowl_mask & ~island_mask
+        coast[:80, :] = False
+        coast[:, :100] = False
+        moved = np.abs(pieces.cal_gnss_surface - ref.cal_gnss_surface)[coast]
+        moved_none = np.abs(none.cal_gnss_surface - ref.cal_gnss_surface)[coast]
+        assert moved.max() < 0.001
+        assert moved_none.max() > 3 * moved.max()
+        err_island = ((disp - pieces.calibration) - gnss)[island_mask]
+        assert np.sqrt(np.mean(err_island**2)) < 0.0015
+        pieces.assert_closed()
+
+    def test_small_pieces_keep_the_frame_surface(self):
+        disp, gnss, valid, _ramp, bowl_mask, island_mask, coh = scene()
+        labels = self._labels(valid, island_mask)
+        kw = {"coherence": coh, "exclude_mask": bowl_mask}
+        pieces = calibrate_pair(
+            disp, gnss, valid, REF, _pieces_opts(10**6), PIXEL_M, CYCLE_M,
+            land_pieces=labels, **kw,
+        )  # fmt: skip
+        o = opts_v05(two_pass=True, unwrap=False)
+        none = calibrate_pair(disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M, **kw)
+        np.testing.assert_allclose(pieces.calibration, none.calibration, atol=1e-9)
+
+    def test_pieces_need_the_label_map(self):
+        disp, gnss, valid, *_ = scene()
+        with pytest.raises(ValueError, match="land_pieces"):
+            calibrate_pair(disp, gnss, valid, REF, _pieces_opts(500), PIXEL_M, CYCLE_M)
+
+
+def test_land_piece_labels_bridge_narrow_gaps_only():
+    from venti.research.land_pieces import land_piece_labels
+
+    valid = np.zeros((300, 300), bool)
+    valid[:, :120] = True
+    valid[:, 126:200] = True  # 6 px = one fit block apart: bridged
+    valid[:, 260:] = True  # 60 px = 10 blocks apart: a piece of its own
+    labels = land_piece_labels(valid, factor=6, close_iterations=2, min_region_area=10)
+    assert labels.shape == valid.shape
+    assert labels.dtype == np.uint16
+    assert labels[150, 60] == labels[150, 150] > 0
+    assert labels[150, 280] > 0
+    assert labels[150, 280] != labels[150, 60]
+    assert labels[150, 230] == 0

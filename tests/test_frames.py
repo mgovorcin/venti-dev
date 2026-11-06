@@ -205,3 +205,11 @@ def test_coastal_campaign_frames_get_separate_regions():
     for frame in (831, 834, 36008):
         opts = table.apply(AlgorithmParameters(), frame).calibration_options
         assert opts.surface.regions == "separate", frame
+
+
+def test_pieces_mode_options():
+    surface = CalibrationOptions(
+        surface={"method": "loclin", "regions": "pieces"}
+    ).surface
+    assert surface.regions == "pieces"
+    assert surface.piece_min_pixels == 3000
