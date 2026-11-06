@@ -1,0 +1,2789 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="GNSS calibration of OPERA DISP and projection to vertical land motion">
+      
+      
+      
+        <link rel="canonical" href="https://mgovorcin.github.io/venti-dev/specs/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../plan/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Product requirements (PRD) - Venti</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#venti-disp-cal-and-vlm-prd" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Venti" class="md-header__button md-logo" aria-label="Venti" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Venti
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Product requirements (PRD)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mgovorcin/venti-dev" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mgovorcin/venti-dev
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Venti" class="md-nav__button md-logo" aria-label="Venti" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Venti
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mgovorcin/venti-dev" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mgovorcin/venti-dev
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Product requirements (PRD)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Product requirements (PRD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-project-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Project overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Project overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-solution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Solution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-current-state-2026-10-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Current state (2026-10-05)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 Goals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-non-goals-for-now" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Non-goals (for now)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-core-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Core requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Core requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-product-assumptions-must-appear-in-the-product-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Product assumptions (must appear in the product spec)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-interface-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Interface requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-gnss-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 GNSS requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-algorithm-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Algorithm requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-uncertainty-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Uncertainty requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-operational-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Operational requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-validation-requirements-release-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 Validation requirements (release gate)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28-edge-cases-each-needs-a-test-or-a-benchmark-frame" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.8 Edge cases (each needs a test or a benchmark frame)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-core-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Core features
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Core features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-disp-cal-product" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 DISP-CAL product
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-vlm-product" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 VLM product
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-calibration-engine-venti" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Calibration engine (Venti)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-validation-and-vnv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Validation and VnV
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Core components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Core components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-repository-map-and-dependency-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Repository map and dependency chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-ownership-of-shared-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Ownership of shared logic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-key-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Key interfaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-packaging-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Packaging rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-reusable-prototype-code-vlmdisp_caltrade-studies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Reusable prototype code (VLM/DISP_CAL/trade studies/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-appuser-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. App/user flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. App/user flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-operational-disp-cal-run-one-granule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Operational DISP-CAL run (one granule)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-end-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 End user
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-vlm-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 VLM run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-developer-flow-any-value-changing-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Developer flow (any value-changing change)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-techstack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Techstack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Implementation plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Implementation plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-milestones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Milestones
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-trade-studies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Trade studies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-release-and-golden-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Release and golden policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-risks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Risks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#75-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 Open questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-decision-log-prd-interview-2026-10-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix: decision log (PRD interview, 2026-10-05)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithm_parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Algorithm parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations (UNR snapshot)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Task tracker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notebooks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Notebooks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/calibration_workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Calibration workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/vertical_land_motion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vertical land motion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-project-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Project overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Project overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-solution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Solution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-current-state-2026-10-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Current state (2026-10-05)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 Goals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-non-goals-for-now" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Non-goals (for now)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-core-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Core requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Core requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-product-assumptions-must-appear-in-the-product-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Product assumptions (must appear in the product spec)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-interface-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Interface requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-gnss-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 GNSS requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-algorithm-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Algorithm requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-uncertainty-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Uncertainty requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-operational-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Operational requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-validation-requirements-release-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 Validation requirements (release gate)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28-edge-cases-each-needs-a-test-or-a-benchmark-frame" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.8 Edge cases (each needs a test or a benchmark frame)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-core-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Core features
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Core features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-disp-cal-product" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 DISP-CAL product
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-vlm-product" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 VLM product
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-calibration-engine-venti" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Calibration engine (Venti)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-validation-and-vnv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Validation and VnV
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Core components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Core components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-repository-map-and-dependency-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Repository map and dependency chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-ownership-of-shared-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Ownership of shared logic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-key-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Key interfaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-packaging-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Packaging rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-reusable-prototype-code-vlmdisp_caltrade-studies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Reusable prototype code (VLM/DISP_CAL/trade studies/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-appuser-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. App/user flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. App/user flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-operational-disp-cal-run-one-granule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Operational DISP-CAL run (one granule)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-end-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 End user
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-vlm-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 VLM run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-developer-flow-any-value-changing-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Developer flow (any value-changing change)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-techstack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Techstack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Implementation plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Implementation plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-milestones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Milestones
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-trade-studies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Trade studies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-release-and-golden-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Release and golden policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-risks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Risks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#75-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 Open questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-decision-log-prd-interview-2026-10-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix: decision log (PRD interview, 2026-10-05)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="venti-disp-cal-and-vlm-prd">Venti, DISP-CAL and VLM: PRD<a class="headerlink" href="#venti-disp-cal-and-vlm-prd" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Status</strong></td>
+<td>Draft v0.1, 2026-10-05</td>
+</tr>
+<tr>
+<td><strong>Owner</strong></td>
+<td>Marin Govorcin</td>
+</tr>
+<tr>
+<td><strong>Delivery sign-off (cal-disp)</strong></td>
+<td>Talib (assumed; to confirm)</td>
+</tr>
+<tr>
+<td><strong>Development repos</strong></td>
+<td><code>mgovorcin/venti-dev</code>, <code>mgovorcin/cal-disp</code>, <code>mgovorcin/geepers</code>, new <code>mgovorcin/&lt;validation&gt;</code>, new <code>mgovorcin/&lt;vlm&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Upstream</strong></td>
+<td><code>opera-adt/*</code>; PRs only at milestone boundaries</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-project-overview">1. Project overview<a class="headerlink" href="#1-project-overview" title="Permanent link">&para;</a></h2>
+<h3 id="11-problem">1.1 Problem<a class="headerlink" href="#11-problem" title="Permanent link">&para;</a></h3>
+<p>OPERA DISP-S1 is <em>relative</em> displacement. Long-wavelength signal (plate motion, GIA, regional tectonics) is poorly constrained by InSAR and is contaminated by residual tropo, orbit and reference effects. Users who need absolute motion, or vertical land motion (VLM), must tie DISP to GNSS themselves.</p>
+<h3 id="12-solution">1.2 Solution<a class="headerlink" href="#12-solution" title="Permanent link">&para;</a></h3>
+<p>Calibrate DISP against an interpolated GNSS grid:</p>
+<ul>
+<li><strong>GNSS constrains signal at wavelengths longer than 50 km.</strong></li>
+<li><strong>InSAR keeps its high resolution at shorter wavelengths.</strong></li>
+<li>Local fast deformation (subsiding basins, coseismic, volcanic) is handled by remove-restore, so InSAR resolves its full spatial extent.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Deliverable</th>
+<th>Kind</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Venti</strong></td>
+<td>Science library</td>
+<td>Sensor-agnostic InSAR–GNSS fusion: GNSS→LOS sampling, calibration surface, unwrap correction, tropo modes, remove-restore, LOS decomposition and projection</td>
+</tr>
+<tr>
+<td><strong>DISP-CAL (<code>cal-disp</code>)</strong></td>
+<td>Operational SAS + product</td>
+<td>One calibration product per DISP-S1 granule: a per-pair surface the user subtracts from DISP. The CLI and the runconfig are frozen.</td>
+</tr>
+<tr>
+<td><strong>VLM</strong></td>
+<td>Operational SAS + product (new repo)</td>
+<td>Per-pair vertical (and east, where possible) displacement from calibrated DISP plus GNSS E/N</td>
+</tr>
+<tr>
+<td><strong>Validation package</strong></td>
+<td>VnV tool (new repo)</td>
+<td>Independent e2e GNSS validation, release gates and VnV reports for DISP-CAL and VLM</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-current-state-2026-10-05">1.3 Current state (2026-10-05)<a class="headerlink" href="#13-current-state-2026-10-05" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>cal-disp <code>gamma-release</code></strong> (<code>VLM/DISP_CAL/gamma_release/cal-disp</code>, 52 commits past upstream <code>main</code>):</li>
+<li>The only end-to-end path that works: a windowed bilinear plane against the UNR grid, optional tropo and SET, NetCDF output with <code>calibration</code> and <code>calibration_std</code>.</li>
+<li>478 tests and the golden F08882 (2022-01-11→07-22). Peak memory is 6.35 GB.</li>
+<li>Venti is pinned at <code>2a7e61f</code>.</li>
+<li>The checkout in <code>CAL/cal-disp</code> is a stale stub that writes zeros.</li>
+<li><strong>Venti</strong> (<code>upstream/main</code> = <code>2a7e61f</code>, PR #18 "modular"; the exact commit cal-disp pins; fork <code>mgovorcin/venti-dev</code>, clone <code>00_tools/src/Venti</code>):</li>
+<li>Working modules: <code>gnss/</code> (reference grid → LOS, UNR), <code>spatial/</code> (gap filling, interpolation, resample), <code>filtering/</code> (moving-window plane), <code>surface.py</code> (the calibration surface cal-disp calls), <code>unwrap/</code>, <code>models/</code> (ITRF PMM, GIA), <code>io/</code>, <code>workflow/</code>. 13 test files.</li>
+<li>Verified bugs on <code>main</code>: the unwrap corrector receives the full radar wavelength λ from <code>surface.py</code> (<code>correct_region_offset(..., wavelength=wavelength_m)</code>), but one LOS cycle is λ/2; <code>models/load_itrf.py:110</code> imports <code>.plate_motion.euler_pole</code> from a module that is not a package.</li>
+<li>Decomposition is a stub; there is no LOS→vertical step; PMM/GIA are not wired into the workflow.</li>
+<li>The tropo research lives on the unmerged <code>models</code> branch (22 commits behind <code>main</code>). The checkouts in <code>01_OPERA/VLM/Venti</code> and <code>Venti_work/Venti</code> are stale snapshots.</li>
+<li><strong>Trade studies</strong> (<code>VLM/DISP_CAL/trade studies/</code>) validated an improved algorithm on F08882, F08886, F16940 and F08622:</li>
+<li>two-pass, then a local-linear surface with a 50 km cutoff, weighted by coh⁸;</li>
+<li>F08882: DD sill 257→81 mm², velocity RMSE 5.07→3.28 mm/yr.</li>
+<li><strong>Docs:</strong> no ATBD. The Product Spec doesn't match the delivered product (<code>gamma_release/DOCUMENT_FIXES.md</code>).</li>
+</ul>
+<h3 id="14-goals">1.4 Goals<a class="headerlink" href="#14-goals" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>G1.</strong> Ship gamma 0.3 now: frozen algorithm, golden rebuilt in Docker.</li>
+<li><strong>G2.</strong> Move the validated trade-study science into Venti behind flags, then ship <strong>cal-disp v0.5 (CalVal)</strong> after it passes the 8-frame e2e gate and the edge cases.</li>
+<li><strong>G3.</strong> Make Venti sensor-agnostic, so DISP-NISAR (cal-disp v2) is a new <code>SensorSpec</code>, not a rewrite.</li>
+<li><strong>G4.</strong> Build VLM on Venti, with GNSS realization consistent with DISP-CAL.</li>
+<li><strong>G5.</strong> Keep the operational image small: lean cores and optional extras.</li>
+<li><strong>G6.</strong> Make every value change provable: e2e gate, deliberate golden regeneration, a VnV report.</li>
+</ol>
+<h3 id="15-non-goals-for-now">1.5 Non-goals (for now)<a class="headerlink" href="#15-non-goals-for-now" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Changing the DISP-CAL CLI or runconfig schema.</li>
+<li>Calibrating seasonal, transient or coseismic signal with GNSS. The operational grid type is <code>constant</code> (secular).</li>
+<li>Unwrap correction inland. TS-U1 phase 2 comes later.</li>
+<li>Fixing any plate other than the per-frame lookup (no PA in California).</li>
+<li>Deriving remove-restore areas at run time. They are curated offline.</li>
+</ul>
+<hr />
+<h2 id="2-core-requirements">2. Core requirements<a class="headerlink" href="#2-core-requirements" title="Permanent link">&para;</a></h2>
+<h3 id="21-product-assumptions-must-appear-in-the-product-spec">2.1 Product assumptions (must appear in the product spec)<a class="headerlink" href="#21-product-assumptions-must-appear-in-the-product-spec" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Assumption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1</td>
+<td><strong>Wavelength split.</strong> The calibration contains GNSS-constrained signal at wavelengths longer than about 50 km. Shorter-wavelength InSAR signal is not modified, except by the explicit correction components (§3.1).</td>
+</tr>
+<tr>
+<td>A2</td>
+<td><strong>Secular GNSS.</strong> The operational constraint is the UNR <strong>constant-velocity</strong> grid × Δt. Seasonal, postseismic, coseismic and instrumental signal stays in calibrated DISP. Extrapolation past the end of the grid's data span is supported.</td>
+</tr>
+<tr>
+<td>A3</td>
+<td><strong>Long-wavelength geophysics</strong> (plate motion, GIA, regional tectonics) reaches the product through the GNSS grid. It is not modelled separately in the calibration.</td>
+</tr>
+<tr>
+<td>A4</td>
+<td><strong>Grid resolution.</strong> The UNR v0.3 grid uses GPS-Imaging median filtering with 25 km spacing, so it doesn't resolve wavelengths shorter than about 50 km. Grid σ is trusted as the weight, with the per-frame inflation k.</td>
+</tr>
+<tr>
+<td>A5</td>
+<td><strong>Remove-restore.</strong> Defo and event areas are excluded from the fit. InSAR keeps their full extent.</td>
+</tr>
+<tr>
+<td>A6</td>
+<td><strong>Frame.</strong> After calibration DISP is absolute in <strong>IGS20 (ITRF2020)</strong>, with no plate fixed.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="22-interface-requirements">2.2 Interface requirements<a class="headerlink" href="#22-interface-requirements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLI (<code>cal-disp config/run/validate/validate-golden/download</code>, <code>opera_cal-disp</code>)</td>
+<td><strong>Frozen</strong></td>
+</tr>
+<tr>
+<td>Runconfig (<code>cal_disp_workflow</code>, <code>extra=forbid</code>)</td>
+<td><strong>Frozen, byte-compatible with gamma</strong></td>
+</tr>
+<tr>
+<td><code>algorithm_parameters.yaml</code></td>
+<td>New fields only: additive, versioned, with defaults that reproduce gamma behaviour</td>
+</tr>
+<tr>
+<td>Product</td>
+<td>Additive only. Existing names, dtypes and filename are unchanged. New layers come through output packaging.</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Remove-restore uses the existing <code>static_ancillary_group.defo_area_db_json</code> and <code>event_db_json</code>.</li>
+</ul>
+<h3 id="23-gnss-requirements">2.3 GNSS requirements<a class="headerlink" href="#23-gnss-requirements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R-G1</td>
+<td>Grid input is UNR v0.3, IGS20, through geepers. <code>constant</code> is the default. <code>variable</code> is experimental and allowed <strong>only in reprocessing</strong>, because it contains coseismic, postseismic, hydrological and instrumental signal.</td>
+</tr>
+<tr>
+<td>R-G2</td>
+<td>GNSS buffer of 50 km outside the frame, with LOS extrapolated for nodes outside the swath</td>
+</tr>
+<tr>
+<td>R-G3</td>
+<td>E/N/U→LOS projection with DISP-S1-STATIC LOS ENU</td>
+</tr>
+<tr>
+<td>R-G4</td>
+<td>A <strong>frozen grid snapshot</strong> per release, mirrored to controlled storage. Its version and hash are recorded in the runconfig ancillary paths and the product metadata. Roll-forward is deliberate and gated by e2e.</td>
+</tr>
+<tr>
+<td>R-G5</td>
+<td>GNSS-side remove-restore: drop grid nodes inside defo/event areas and re-interpolate them from surrounding nodes with GPS Imaging</td>
+</tr>
+<tr>
+<td>R-G6</td>
+<td>Plate lookup per frame: <strong>NA</strong> default, <strong>PA</strong> Hawaii, <strong>CA</strong> (Caribbean) Puerto Rico. California stays NA.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="24-algorithm-requirements">2.4 Algorithm requirements<a class="headerlink" href="#24-algorithm-requirements" title="Permanent link">&para;</a></h3>
+<p>All are behind <code>algorithm_parameters.yaml</code> flags. Gamma behaviour stays reproducible.</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R-S1</td>
+<td><strong>Two-pass:</strong> (1) robust frame-wide tie; (2) unwrap correction on DISP − CAL₁, shifts applied to raw DISP (if enabled); (3) final surface</td>
+</tr>
+<tr>
+<td>R-S2</td>
+<td>Local-linear kernel with a physical <strong>half-response cutoff</strong> <code>cutoff_wavelength_meters</code> (default 50 km), not a window size</td>
+</tr>
+<tr>
+<td>R-S3</td>
+<td><strong>Fill gaps first.</strong> The surface is continuous everywhere and never 0 on masked cells.</td>
+</tr>
+<tr>
+<td>R-S4</td>
+<td>No global quantile outlier mask. Use local robust weights × <strong>coherence^p</strong> (p = 8; filled pixels weight 0.02).</td>
+</tr>
+<tr>
+<td>R-S5</td>
+<td>Exclude InSAR pixels inside defo/event GeoJSON areas</td>
+</tr>
+<tr>
+<td>R-T1</td>
+<td>Tropo mode <code>off \| stratified \| full</code> per frame, gated by DEM relief p5–p95: off below about 0.3 km, stratified at about 1.5 km or more, 0.3–1.5 km untested</td>
+</tr>
+<tr>
+<td>R-T2</td>
+<td>SET from DISP <code>/corrections</code></td>
+</tr>
+<tr>
+<td>R-U1</td>
+<td>Unwrap correction <strong>off</strong> and <code>cal_unwrap_shift = 0</code> until TS-U1 phase 1 passes</td>
+</tr>
+<tr>
+<td>R-X1</td>
+<td><code>SensorSpec</code> carries λ, the product reader, filename parsing, available corrections and static-layer readers</td>
+</tr>
+</tbody>
+</table>
+<h3 id="25-uncertainty-requirements">2.5 Uncertainty requirements<a class="headerlink" href="#25-uncertainty-requirements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R-E1</td>
+<td>σ_CAL² = (k·σ_grid)² + σ_fit² + σ_tropo² + σ_ref². <strong>k is per frame</strong>, from TS-G1, fitted on a station split held out from validation stations. σ_CAL grows inside interpolated defo/event areas. Unwrap shifts are treated as exact. σ_CAL is the uncertainty of the calibration surface (owner, 2026-10-09); per-pair non-secular station motion (TS-G1: 2.6–4.9 mm) is documented and available as the opt-in <code>uncertainty.sigma_nonsecular_meters</code>.</td>
+</tr>
+<tr>
+<td>R-E2</td>
+<td>The product documents that σ_CAL covers only the calibration term. Users add DISP noise at wavelengths shorter than 50 km; the placeholder is about 10 mm until TS-S1 finishes.</td>
+</tr>
+<tr>
+<td>R-E3</td>
+<td>VLM σ_U and σ_E are propagated through the WLS, including σ_CAL, σ_DISP, σ_N and the temporal-interpolation σ</td>
+</tr>
+<tr>
+<td>R-E4</td>
+<td>σ realism (std(z) ∈ [0.8, 1.25], 95% coverage between 90% and 98%) is <strong>reported</strong> in v0.5, not gated</td>
+</tr>
+</tbody>
+</table>
+<h3 id="26-operational-requirements">2.6 Operational requirements<a class="headerlink" href="#26-operational-requirements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R-O1</td>
+<td>Trigger: one DISP-CAL per DISP-S1 granule (forward processing), plus bulk reprocessing</td>
+</tr>
+<tr>
+<td>R-O2</td>
+<td>Latency ≤ 72 h after all inputs are available</td>
+</tr>
+<tr>
+<td>R-O3</td>
+<td>Runs on a <strong>small EC2 instance</strong>. No compute budget yet; the target is ≤ 4 GB peak, to be confirmed.</td>
+</tr>
+<tr>
+<td>R-O4</td>
+<td>Deterministic: the same inputs, snapshot and config give the same product. Golden tolerance is 1e-6.</td>
+</tr>
+<tr>
+<td>R-O5</td>
+<td>The golden is built <strong>inside the Docker image</strong> (tropo reprojection depends on the GDAL version)</td>
+</tr>
+<tr>
+<td>R-O6</td>
+<td>The image excludes dask, zarr, matplotlib and jupyter. CI enforces an allow-list, a size budget and a peak-memory check.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="27-validation-requirements-release-gate">2.7 Validation requirements (release gate)<a class="headerlink" href="#27-validation-requirements-release-gate" title="Permanent link">&para;</a></h3>
+<p>A run FAILS if any of these holds:</p>
+<ul>
+<li>the calibrated DD sill is not below raw;</li>
+<li>the sill rises more than 5% vs baseline and the rise is significant;</li>
+<li>velocity RMSE or |bias| rises more than 0.2 mm/yr;</li>
+<li>the golden-epoch check fails.</li>
+</ul>
+<p>The release target is |bias| ≤ 1 mm/yr per frame. Validation uses <strong>only independent GNSS</strong> (UNR daily stations + MIDAS), never the calibration grid.</p>
+<p><strong>CalVal v0.5 benchmark:</strong></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Category</th>
+<th>Frame</th>
+<th>Category-specific condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Coastal subsidence + islands</td>
+<td>F08882 Houston</td>
+<td>subsiding stations: bias &lt; 1, RMSE &lt; 2 mm/yr</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Stable inland</td>
+<td>F08886 Oklahoma City</td>
+<td>stable stations: |bias| &lt; 1 mm/yr</td>
+</tr>
+<tr>
+<td>3</td>
+<td>High relief + islands</td>
+<td>F16940 Los Angeles</td>
+<td>sill drops; tropo mode doesn't make it worse</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Northeast / GIA</td>
+<td>F08622 New York</td>
+<td>vertical pattern vs GNSS</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Fast basin (defo area)</td>
+<td>Central Valley (TBD)</td>
+<td>continuous surface; stations outside unaffected; full extent of the bowl kept</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Coseismic event</td>
+<td>Ridgecrest 2019 (TBD)</td>
+<td>no step leaks into CAL</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Sparse GNSS</td>
+<td>Great Basin or Montana (TBD)</td>
+<td>realistic σ; no artifacts</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Non-NA plate</td>
+<td>Hawaii (PA) / Puerto Rico (CA) (TBD)</td>
+<td>correct plate layer; Kīlauea as a defo area</td>
+</tr>
+</tbody>
+</table>
+<h3 id="28-edge-cases-each-needs-a-test-or-a-benchmark-frame">2.8 Edge cases (each needs a test or a benchmark frame)<a class="headerlink" href="#28-edge-cases-each-needs-a-test-or-a-benchmark-frame" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Edge case</th>
+<th>Expected behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fast-subsiding basin</td>
+<td>InSAR and GNSS nodes inside the area are excluded; the surface is interpolated through from stable ground</td>
+</tr>
+<tr>
+<td>Coseismic event inside the pair</td>
+<td>The step never leaks into CAL. Pairs that don't span the event behave as if there were no event DB.</td>
+</tr>
+<tr>
+<td>Islands and cut-off peninsulas</td>
+<td>Water-mask regions. Shifts are applied only after TS-U1. Free offsets can also remove real motion.</td>
+</tr>
+<tr>
+<td>Plate boundary</td>
+<td>NA-fixed DISP shows relative plate motion (about 40–50 mm/yr in California). This is expected.</td>
+</tr>
+<tr>
+<td>Sparse GNSS</td>
+<td>σ_CAL grows; no artifacts fitted on the interpolated grid</td>
+</tr>
+<tr>
+<td>Masked or water cells</td>
+<td>Surface is continuous, never 0</td>
+</tr>
+<tr>
+<td>Secondary date past the grid's data span</td>
+<td>Constant-velocity extrapolation, recorded in metadata</td>
+</tr>
+<tr>
+<td>Relief of 0.3–1.5 km</td>
+<td>Tropo mode from the frame table; a risk until tested</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-core-features">3. Core features<a class="headerlink" href="#3-core-features" title="Permanent link">&para;</a></h2>
+<h3 id="31-disp-cal-product">3.1 DISP-CAL product<a class="headerlink" href="#31-disp-cal-product" title="Permanent link">&para;</a></h3>
+<p>Users apply it as <strong><code>DISP_cal = DISP − calibration</code></strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Content</th>
+<th>Release</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>calibration</code></td>
+<td><strong>Exact sum of all applied components</strong></td>
+<td>gamma (frozen name and meaning)</td>
+</tr>
+<tr>
+<td><code>calibration_std</code></td>
+<td>σ_CAL (R-E1)</td>
+<td>gamma (meaning upgraded in v0.5)</td>
+</tr>
+<tr>
+<td><code>cal_gnss_surface</code></td>
+<td>GNSS surface longer than 50 km, incl. reference-point tie</td>
+<td>packaging</td>
+</tr>
+<tr>
+<td><code>cal_tropo</code></td>
+<td>tropo term, if applied</td>
+<td>packaging</td>
+</tr>
+<tr>
+<td><code>cal_set</code></td>
+<td>solid Earth tide, if applied</td>
+<td>packaging</td>
+</tr>
+<tr>
+<td><code>cal_unwrap_shift</code></td>
+<td>int cycles × λ/2; 0 until TS-U1 passes</td>
+<td>packaging</td>
+</tr>
+<tr>
+<td><code>cal_reference_offset</code></td>
+<td>constant</td>
+<td>packaging</td>
+</tr>
+<tr>
+<td><code>defo_area_mask</code></td>
+<td>remove-restore and event areas</td>
+<td>packaging</td>
+</tr>
+<tr>
+<td><code>plate_motion</code></td>
+<td>rigid plate rotation (ITRF2020-PMM) → LOS × Δt; subtract it to get a plate-fixed product</td>
+<td>packaging</td>
+</tr>
+<tr>
+<td><code>gnss_ve</code>, <code>gnss_vn</code> (+ σ)</td>
+<td>GNSS <strong>velocities</strong> on the DISP grid, for VLM</td>
+<td>packaging</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Invariant:</strong> <code>calibration == Σ cal_*</code>, enforced by a test.</li>
+<li><code>/metadata</code> records the flags for applied components, the algorithm parameters and the GNSS provenance (§4.3).</li>
+</ul>
+<h3 id="32-vlm-product">3.2 VLM product<a class="headerlink" href="#32-vlm-product" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Output</td>
+<td><strong>Per-pair</strong> vertical (and east, where asc+desc exist) displacement, with σ and a per-pixel mode flag</td>
+</tr>
+<tr>
+<td>Asc+desc overlap</td>
+<td>WLS for [E, U], with <strong>N fixed from the GNSS grid</strong></td>
+</tr>
+<tr>
+<td>Single geometry</td>
+<td><code>U = (LOS − e·E_gnss − n·N_gnss) / u</code>, flagged as valid only for long-wavelength horizontal motion</td>
+</tr>
+<tr>
+<td>Temporal alignment</td>
+<td>Moving-window denoising and temporal interpolation resample asc and desc onto common epochs</td>
+</tr>
+<tr>
+<td>GNSS E/N</td>
+<td><strong>Both options:</strong> DISP-CAL <code>gnss_ve/vn</code> when present, otherwise the Venti <code>sample_gnss_enu</code>. The provenance hash must match, or the run fails.</td>
+</tr>
+<tr>
+<td>Context</td>
+<td>GIA (ICE-6G_D, Caron 2018) and PMM as context layers, not as corrections</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-calibration-engine-venti">3.3 Calibration engine (Venti)<a class="headerlink" href="#33-calibration-engine-venti" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Two-pass surface with a physical cutoff, gap filling and coherence-weighted robust fitting.</li>
+<li>GNSS buffer, LOS extrapolation and grid-node exclusion with GPS Imaging re-interpolation.</li>
+<li>Per-frame tropo modes and SET.</li>
+<li>Unwrap correction (gated): water-mask watershed regions, jumps measured against the anchored neighbour across water, a GNSS-direction veto, whole λ/2 cycles, and a per-region decisions CSV.</li>
+<li>σ_CAL with per-frame k.</li>
+<li>Sensor abstraction (S1 now, NISAR next).</li>
+</ul>
+<h3 id="34-validation-and-vnv">3.4 Validation and VnV<a class="headerlink" href="#34-validation-and-vnv" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Metrics:</li>
+<li>DD semivariogram sill (pairs ≥ 50 km, station-bootstrap CI);</li>
+<li>velocity RMSE, bias and correlation vs MIDAS per station class (stable / subsiding / coastal / defo area / near event);</li>
+<li>golden-epoch check;</li>
+<li>VLM U vs GNSS Up and E vs GNSS East;</li>
+<li>σ realism.</li>
+<li>Modes: candidate vs raw; candidate vs baseline; across frames.</li>
+<li>Outputs:</li>
+<li><code>metrics.json</code> and <code>stations.csv</code>;</li>
+<li>an HTML/PDF VnV report per frame plus a release summary;</li>
+<li>a requirements traceability table.</li>
+<li>Audience: internal team plus the OPERA CalVal review.</li>
+</ul>
+<hr />
+<h2 id="4-core-components">4. Core components<a class="headerlink" href="#4-core-components" title="Permanent link">&para;</a></h2>
+<h3 id="41-repository-map-and-dependency-chain">4.1 Repository map and dependency chain<a class="headerlink" href="#41-repository-map-and-dependency-chain" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>geepers                       opera-utils          Venti                            cal-disp / VLM             validation pkg
+core:      UNR grid/stations  [disp] [tropo]       core: io, geometry, GNSS→LOS,    frozen CLI/runconfig,      e2e DD sill, MIDAS,
+[grid]:    GPS Imaging, Euler                      config, SensorSpec               product I/O, packaging,    VnV reports,
+[analysis]: MIDAS, stats,                          [calibration] [decomposition]    staging, golden            uses geepers[analysis]
+            dask, zarr, pandera                    [models] [research] [all]
+[all]
+</code></pre></div>
+<h3 id="42-ownership-of-shared-logic">4.2 Ownership of shared logic<a class="headerlink" href="#42-ownership-of-shared-logic" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Single home</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UNR grid and station access</td>
+<td>geepers core</td>
+<td>remove the duplicates in Venti <code>gnss/unr.py</code> and cal-disp <code>_stage_unr.py</code>/<code>_unr.py</code></td>
+</tr>
+<tr>
+<td>Plate motion (Euler, ITRF2020-PMM)</td>
+<td>geepers <code>[grid]</code></td>
+<td>delete Venti <code>models/plate_motion.py</code></td>
+</tr>
+<tr>
+<td>GPS Imaging re-interpolation</td>
+<td>geepers <code>[grid]</code></td>
+<td>add an exclusion-area option</td>
+</tr>
+<tr>
+<td>Tropo</td>
+<td>cal-disp, copied into Venti</td>
+<td>parity test keeps them identical; data via opera-utils <code>[tropo]</code></td>
+</tr>
+<tr>
+<td>Calibration, unwrap, remove-restore, decomposition</td>
+<td>Venti</td>
+<td>port from the trade studies</td>
+</tr>
+<tr>
+<td>e2e validation</td>
+<td>validation package</td>
+<td>build from <code>validate_stack.py</code></td>
+</tr>
+<tr>
+<td>GIA / PMM rate models</td>
+<td>Venti <code>[models]</code></td>
+<td>context layers for VLM</td>
+</tr>
+</tbody>
+</table>
+<h3 id="43-key-interfaces">4.3 Key interfaces<a class="headerlink" href="#43-key-interfaces" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>sample_gnss_enu(grid_cfg, defo_db, geometry) → (vE, vN, vU, σ)</code></strong> is the only code path for sampling the grid. DISP-CAL and VLM both call it.</li>
+<li><strong>GNSS provenance in DISP-CAL <code>/metadata</code>:</strong> grid version, type and snapshot hash; defo/event DB versions; the buffer; a hash of the sampled field.</li>
+<li><strong><code>SensorSpec</code>:</strong> λ, reader, filename parser, correction layers, static layers.</li>
+<li><strong>Frame-parameter table</strong> (versioned): frame → plate, tropo mode, k, benchmark category.</li>
+<li><strong>Defo/event DB:</strong> curated, versioned GeoJSON shipped as ancillary files.</li>
+</ul>
+<h3 id="44-packaging-rules">4.4 Packaging rules<a class="headerlink" href="#44-packaging-rules" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>At most about 4 extras per package</strong>, each tied to a real consumer, plus <code>[all]</code>.</li>
+<li><strong>Operational image:</strong> <code>venti[calibration]</code> + <code>geepers</code> (core + <code>[grid]</code>) + <code>opera-utils[tropo]</code>.</li>
+</ul>
+<h3 id="45-reusable-prototype-code-vlmdisp_caltrade-studies">4.5 Reusable prototype code (<code>VLM/DISP_CAL/trade studies/</code>)<a class="headerlink" href="#45-reusable-prototype-code-vlmdisp_caltrade-studies" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>surface_fitting/continuous_surface/improved/surface_v2.py</code></td>
+<td><code>loclin_v2</code>, <code>loclin_w</code></td>
+</tr>
+<tr>
+<td><code>surface_fitting/continuous_surface/gnss_extend.py</code></td>
+<td>buffer and LOS extrapolation</td>
+</tr>
+<tr>
+<td><code>surface_fitting/continuous_surface/defo_area.py</code></td>
+<td>remove-restore areas</td>
+</tr>
+<tr>
+<td><code>two_pass/estimator_c.py</code>, <code>unwrap_step.py</code>, <code>tropo_mode.py</code></td>
+<td>two-pass chain</td>
+</tr>
+<tr>
+<td><code>e2e_validation/validate_stack.py</code>, <code>calibrate_stack.py</code>, <code>stage_tropo.py</code></td>
+<td>e2e validation</td>
+</tr>
+<tr>
+<td><code>unwrap_error_correction/unwrap_prototype/harness.py</code>, <code>score.py</code>, <code>truth.csv</code></td>
+<td>unwrap estimator test bench</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-appuser-flow">5. App/user flow<a class="headerlink" href="#5-appuser-flow" title="Permanent link">&para;</a></h2>
+<h3 id="51-operational-disp-cal-run-one-granule">5.1 Operational DISP-CAL run (one granule)<a class="headerlink" href="#51-operational-disp-cal-run-one-granule" title="Permanent link">&para;</a></h3>
+<ol>
+<li>A new DISP-S1 granule arrives. PCM stages the inputs:</li>
+<li>DISP NetCDF;</li>
+<li>DISP-S1-STATIC LOS ENU and DEM;</li>
+<li>the frozen UNR grid snapshot;</li>
+<li>OPERA TROPO (if the frame's tropo mode is not off);</li>
+<li>defo/event GeoJSON;</li>
+<li>the frame-parameter table.</li>
+<li><code>cal-disp run runconfig.yaml</code> (frozen interface) loads <code>algorithm_parameters.yaml</code>.</li>
+<li>Venti:</li>
+<li>samples the GNSS grid (buffer, exclusion, GPS Imaging re-interpolation) and projects it to LOS;</li>
+<li>loads DISP and masks it (NaN, recommended, water, defo/event);</li>
+<li>removes tropo and SET.</li>
+<li>Pass 1: the robust frame-wide tie gives CAL₁.</li>
+<li>(When enabled after TS-U1) unwrap correction runs on DISP − CAL₁, and the shifts are applied.</li>
+<li>Pass 2: local-linear surface with the 50 km cutoff and coh^p weights, gaps filled. This produces <code>cal_gnss_surface</code> and σ_CAL.</li>
+<li>Assemble <code>calibration = Σ components</code> and write the NetCDF, the browse PNG, metadata and provenance.</li>
+<li>Deliver within ≤ 72 h of the inputs becoming available.</li>
+</ol>
+<h3 id="52-end-user">5.2 End user<a class="headerlink" href="#52-end-user" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Download a DISP-S1 granule and the matching DISP-CAL product.</li>
+<li>Compute <code>DISP_cal = DISP − calibration</code>, which is absolute in IGS20.</li>
+<li>Optionally subtract <code>plate_motion</code> to get a plate-fixed product, and inspect or undo components (<code>cal_tropo</code>, …).</li>
+<li>Use <code>calibration_std</code> plus DISP's own noise at wavelengths shorter than 50 km for error budgets.</li>
+<li>Treat <code>defo_area_mask</code> regions as InSAR-resolved, with the surface interpolated through them.</li>
+</ol>
+<h3 id="53-vlm-run">5.3 VLM run<a class="headerlink" href="#53-vlm-run" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Inputs: calibrated asc and desc DISP stacks plus DISP-CAL products.</li>
+<li>Moving-window denoising and temporal interpolation resample them onto common epochs.</li>
+<li>GNSS E/N come from DISP-CAL layers or <code>sample_gnss_enu</code>, with the provenance check.</li>
+<li>Per pixel:</li>
+<li>asc+desc gives a WLS solve for [E, U] with N fixed;</li>
+<li>a single geometry gives a projection to U.</li>
+<li>Write per-pair U (E), σ, the mode flag and GIA/PMM context.</li>
+</ol>
+<h3 id="54-developer-flow-any-value-changing-change">5.4 Developer flow (any value-changing change)<a class="headerlink" href="#54-developer-flow-any-value-changing-change" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Open an issue (feature / bug / science) and create a branch on the fork.</li>
+<li>Implement in Venti behind a flag, with tests in the same commit.</li>
+<li>Run <code>pixi run test</code> and the golden. If values changed, run <code>pixi run e2e</code> on the benchmark frames through the validation package.</li>
+<li>Open a small single-concern PR with the VnV summary attached. The owner reviews.</li>
+<li>For a release, regenerate the golden on purpose in Docker, with a changelog. Bump the version; open the upstream PR to <code>opera-adt</code> at the milestone.</li>
+</ol>
+<hr />
+<h2 id="6-techstack">6. Techstack<a class="headerlink" href="#6-techstack" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Language</td>
+<td>Python ≥ 3.11</td>
+</tr>
+<tr>
+<td>Numerics</td>
+<td>numpy, scipy, numba, scikit-image (watershed)</td>
+</tr>
+<tr>
+<td>Geo / raster</td>
+<td>rasterio, rioxarray, xarray, pyproj, shapely, geopandas (kept out of the core where possible)</td>
+</tr>
+<tr>
+<td>Config</td>
+<td>pydantic (frozen runconfig with <code>extra=forbid</code>), YAML</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td>tyro</td>
+</tr>
+<tr>
+<td>Product I/O</td>
+<td>NetCDF4/CF (h5netcdf), GeoTIFF</td>
+</tr>
+<tr>
+<td>GNSS</td>
+<td>geepers (UNR grid/stations, GPS Imaging, Euler, MIDAS)</td>
+</tr>
+<tr>
+<td>OPERA data</td>
+<td>opera-utils (<code>[disp]</code>, <code>[tropo]</code>, frame DB)</td>
+</tr>
+<tr>
+<td>Environments</td>
+<td>pixi (<code>default</code>, <code>dev</code>, <code>ops</code>); conda-lock for Docker</td>
+</tr>
+<tr>
+<td>Containers</td>
+<td>Docker BuildKit, multi-stage, non-root, reproducible</td>
+</tr>
+<tr>
+<td>Compute</td>
+<td>AWS EC2 (small instance) for operations; AWS Batch via batchkit for benchmark and VnV runs</td>
+</tr>
+<tr>
+<td>Quality</td>
+<td>pre-commit (ruff, mypy, nbstripout, SPDX/Apache-2.0 + NOTICE), pre-commit.ci, pytest</td>
+</tr>
+<tr>
+<td>Docs</td>
+<td>mkdocs (material, mkdocstrings, mkdocs-jupyter)</td>
+</tr>
+<tr>
+<td>Process</td>
+<td>GitHub issue/PR templates, conventional commits, the <code>00_tools</code> skills (<code>git-commit-pr</code>, <code>unit-tests</code>, <code>workflow-regression</code>, <code>docker-build</code>), a <code>CLAUDE.md</code> per repo, Claude Code as implementer with owner review</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-implementation-plan">7. Implementation plan<a class="headerlink" href="#7-implementation-plan" title="Permanent link">&para;</a></h2>
+<h3 id="71-milestones">7.1 Milestones<a class="headerlink" href="#71-milestones" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Window</th>
+<th>Content</th>
+<th>Done when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>M0: Gamma 0.3</strong></td>
+<td>week 1</td>
+<td>Config confirmed with Talib; golden rebuilt in Docker (needs a build host); URLs; document fixes; upstream PR; tag; <code>addArtFile.sh</code> package</td>
+<td>tag + delivery package</td>
+</tr>
+<tr>
+<td><strong>M1: Foundations</strong></td>
+<td>weeks 1–2</td>
+<td>geepers core/<code>[grid]</code>/<code>[analysis]</code>/<code>[all]</code>; Venti lean core + extras, packaging fixes, <code>SensorSpec</code>, bug fixes (λ/2, broken imports, arguments); validation package skeleton; pre-commit/pixi/templates/<code>CLAUDE.md</code> in all repos</td>
+<td>CI green everywhere</td>
+</tr>
+<tr>
+<td><strong>M2: Science port</strong></td>
+<td>weeks 2–3</td>
+<td>R-G2…R-G6, R-S1…R-S5, R-T1, R-E1, <code>sample_gnss_enu</code> + provenance in Venti behind flags; cal-disp wired to it</td>
+<td>e2e gate passes on F08882, F08886, F16940, F08622</td>
+</tr>
+<tr>
+<td><strong>M3: Trade studies</strong></td>
+<td>weeks 2–6</td>
+<td>TS-G1 first, TS-U1 phase 1, TS-S1; benchmark staging (4 new stacks, defo/event GeoJSONs)</td>
+<td>§7.2 exit criteria</td>
+</tr>
+<tr>
+<td><strong>M4: cal-disp v0.5 CalVal</strong></td>
+<td>~6–8 weeks</td>
+<td>8-frame gate + edge cases; Docker golden; VnV report; small-EC2 target</td>
+<td>VnV report signed off</td>
+</tr>
+<tr>
+<td><strong>M5: VLM v0.1</strong></td>
+<td>~3–4 weeks after M4</td>
+<td>new repo; decomposition/projection; temporal resampling; E/N with provenance</td>
+<td>VLM e2e vs GNSS Up/East</td>
+</tr>
+<tr>
+<td><strong>M6: cal-disp v2 NISAR</strong></td>
+<td>when beta DISP-NISAR arrives</td>
+<td>NISAR <code>SensorSpec</code>; TS-N1; NISAR benchmark</td>
+<td>e2e gate on NISAR frames</td>
+</tr>
+<tr>
+<td>Later</td>
+<td>—</td>
+<td>TS-U1 phase 2; output-packaging layers; σ realism as a gate; <code>variable</code> grid evaluation</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="72-trade-studies">7.2 Trade studies<a class="headerlink" href="#72-trade-studies" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Question</th>
+<th>Truth / method</th>
+<th>Exit criterion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TS-G1</strong> Grid fidelity</td>
+<td>How well does the interpolated grid match individual sites? What is k per frame?</td>
+<td>Interpolate the grid onto the DISP grid (step 1 only) and compare with independent stations by station density; start from geepers <code>cross_validation</code></td>
+<td>per-frame k table; grid bias/RMSE map</td>
+</tr>
+<tr>
+<td><strong>TS-S1</strong> DISP noise</td>
+<td>What is σ_DISP at wavelengths shorter than 50 km?</td>
+<td>Structure function of DISP − GNSS; temporal coherence and inversion residuals as proxies</td>
+<td>per-frame noise model replaces the 10 mm placeholder</td>
+</tr>
+<tr>
+<td><strong>TS-U1</strong> Unwrap, phase 1</td>
+<td>Does whole-cycle correction work?</td>
+<td><strong>Islands and cut-off peninsulas with trusted GNSS</strong>, water-mask regions</td>
+<td>shift = GNSS offset on every truth island; no shifts on decoys; sill doesn't rise</td>
+</tr>
+<tr>
+<td><strong>TS-U1</strong> Unwrap, phase 2</td>
+<td>Can inland errors be detected?</td>
+<td>DISP <code>timeseries_inversion_residuals</code></td>
+<td>defined after phase 1</td>
+</tr>
+<tr>
+<td><strong>TS-N1</strong> NISAR iono</td>
+<td>Does GNSS + our iono handling beat the delivered correction?</td>
+<td>Undo and redo the correction with the phase-screen layer in the cube; calibrate with and without it</td>
+<td>same e2e gate</td>
+</tr>
+<tr>
+<td>TS-T1 Tropo</td>
+<td>Mode at 0.3–1.5 km relief</td>
+<td>extend <code>tropo_check</code></td>
+<td>refined frame table</td>
+</tr>
+<tr>
+<td>TS-B1 Stable bias</td>
+<td>+2.8 mm/yr: site effect or real? coh⁸ vs coh¹⁶ vs a threshold?</td>
+<td>extend <code>stable_bias</code></td>
+<td>weighting confirmed</td>
+</tr>
+</tbody>
+</table>
+<h3 id="73-release-and-golden-policy">7.3 Release and golden policy<a class="headerlink" href="#73-release-and-golden-policy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Gamma 0.3 line:</strong> algorithm and golden frozen; fixes only.</li>
+<li><strong>v0.5 CalVal:</strong> one deliberate golden regeneration in Docker, with a changelog explaining every value difference vs gamma.</li>
+<li><strong>After v0.5:</strong> every value change needs the e2e gate + a new golden + a minor version bump.</li>
+<li>All development on <code>mgovorcin/*</code>. Upstream PRs to <code>opera-adt/*</code> happen at milestones.</li>
+</ul>
+<h3 id="74-risks">7.4 Risks<a class="headerlink" href="#74-risks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Impact</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unwrap estimator validated on only 14 cases</td>
+<td>a wrong shift costs 2.8 cm</td>
+<td>off until TS-U1; whole cycles only; GNSS veto</td>
+</tr>
+<tr>
+<td>Free offsets remove real island motion or tropo across water</td>
+<td>biased islands</td>
+<td>not in v0.5; part of TS-U1</td>
+</tr>
+<tr>
+<td>Grid can't resolve 50 km where GNSS is sparse</td>
+<td>artifacts</td>
+<td>TS-G1; per-frame k; σ_CAL grows</td>
+</tr>
+<tr>
+<td>Velocity bias vs MIDAS (+3.7 mm/yr; input DISP / DOLPHIN chaining?)</td>
+<td>bias gate fails</td>
+<td>investigate in M2; report upstream if confirmed</td>
+</tr>
+<tr>
+<td>Stable-site bias (+2.8 mm/yr)</td>
+<td>coherence weighting may be masking real signal</td>
+<td>TS-B1</td>
+</tr>
+<tr>
+<td>Tropo at 0.3–1.5 km relief untested</td>
+<td>tropo may make things worse</td>
+<td>TS-T1; default to off in that range</td>
+</tr>
+<tr>
+<td>No Docker build host</td>
+<td>M0 and M4 blocked</td>
+<td>secure a build host in week 1</td>
+</tr>
+<tr>
+<td>NISAR ionosphere in the band longer than 50 km</td>
+<td>GNSS surface absorbs iono</td>
+<td>TS-N1</td>
+</tr>
+<tr>
+<td>2–3 week window</td>
+<td>over-commitment</td>
+<td>window covers only M0–M2 + TS-G1; CalVal at 6–8 weeks</td>
+</tr>
+</tbody>
+</table>
+<h3 id="75-open-questions">7.5 Open questions<a class="headerlink" href="#75-open-questions" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Owners and sign-off for geepers changes, the VLM gate and the UNR grid snapshot (assumed: Marin; Talib for cal-disp delivery).</li>
+<li>Benchmark frame IDs for categories 5–8.</li>
+<li>Compute budget and instance type; final memory target.</li>
+<li>Names for the validation and VLM repos.</li>
+<li>Product version string (v0.1 vs v1.0) and <code>reference_document</code> (unresolved from the gamma documents).</li>
+<li>Snapshot mirror location (S3) and roll-forward cadence (proposal: every 6 months).</li>
+<li>Does the OPERA CalVal plan require specific sites beyond the 8-frame set?</li>
+</ol>
+<hr />
+<h2 id="appendix-decision-log-prd-interview-2026-10-05">Appendix: decision log (PRD interview, 2026-10-05)<a class="headerlink" href="#appendix-decision-log-prd-interview-2026-10-05" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>Venti = general science library; DISP-CAL = operational product.</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>DISP-CAL delivers a per-pair surface the user subtracts; VLM is a separate operational repo.</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>IGS20 calibration frame; plate lookup NA, PA for Hawaii, CA for Puerto Rico, no PA in California.</td>
+</tr>
+<tr>
+<td>D4</td>
+<td><code>constant</code> grid operational; <code>variable</code> experimental, reprocessing only.</td>
+</tr>
+<tr>
+<td>D5</td>
+<td>The UNR interpolated grid is the calibration input; trust its σ; TS-G1 checks it against sites; no separate support layer.</td>
+</tr>
+<tr>
+<td>D6</td>
+<td><code>calibration</code> = Σ components, with component layers.</td>
+</tr>
+<tr>
+<td>D7</td>
+<td>Unwrap correction gated on TS-U1 (islands with GNSS first, inversion residuals inland later).</td>
+</tr>
+<tr>
+<td>D8</td>
+<td>CLI and runconfig frozen; new layers through output packaging.</td>
+</tr>
+<tr>
+<td>D9</td>
+<td>Defo and event areas: curated static GeoJSON; InSAR and GNSS nodes excluded; GPS Imaging re-interpolation planned.</td>
+</tr>
+<tr>
+<td>D10</td>
+<td>geepers is the single source for UNR access, plate motion (Euler) and GPS Imaging; tropo stays in cal-disp and is copied into Venti; separate validation package.</td>
+</tr>
+<tr>
+<td>D11</td>
+<td>Extras-based packaging with <code>[all]</code>; avoid over-segmenting.</td>
+</tr>
+<tr>
+<td>D12</td>
+<td>Sensor-agnostic Venti; S1 first; NISAR = cal-disp v2 with TS-N1.</td>
+</tr>
+<tr>
+<td>D13</td>
+<td>Gamma frozen; v0.5 = CalVal release adopting the trade-study algorithm behind flags.</td>
+</tr>
+<tr>
+<td>D14</td>
+<td>8-frame CalVal benchmark.</td>
+</tr>
+<tr>
+<td>D15</td>
+<td>VLM: per-pair; asc+desc WLS with N from GNSS, projection otherwise; moving-window temporal resampling; E/N from DISP-CAL or the grid, with a provenance check. <strong>Owner, 2026-10-09:</strong> the official product stays per pair; an option produces a velocity-domain product as well (calibrate the chained velocity once: the chained per-pair calibration spreads station residuals, NMAD 1.5 → 2.9 mm/yr on F08882, velocity-domain 2.2; disp2vlm_validation issue #3).</td>
+</tr>
+<tr>
+<td>D16</td>
+<td>One run per granule; ≤ 72 h latency; small-EC2 goal; frozen grid snapshot.</td>
+</tr>
+<tr>
+<td>D17</td>
+<td>k per frame; σ_DISP from TS-S1; σ realism reported, not gated.</td>
+</tr>
+<tr>
+<td>D18</td>
+<td>Engineering standards; Claude Code in the workflow; all development on the fork.</td>
+</tr>
+<tr>
+<td>D19</td>
+<td>PRD lives as Markdown in Venti <code>docs/specs.md</code>.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.indexes", "content.code.copy", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
