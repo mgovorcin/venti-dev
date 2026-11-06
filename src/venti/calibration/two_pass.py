@@ -29,6 +29,7 @@ the unwrap shift is what was removed from DISP, so the calibrated product is
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -261,6 +262,71 @@ def _region_offsets(
     return out
 
 
+def _calibrate_pieces(
+    disp: np.ndarray,
+    gnss_los: np.ndarray,
+    mask: np.ndarray,
+    ref_point: tuple[int, int],
+    options: CalibrationOptions,
+    pixel_m: float,
+    cycle_m: float,
+    *,
+    land_pieces: np.ndarray,
+    coherence: np.ndarray | None = None,
+    **kwargs: Any,
+) -> CalibrationResult:
+    """Breaklines: one surface for the frame, then one per large land piece.
+
+    Pieces of at least ``surface.piece_min_pixels`` fit cells (other than the
+    largest) are calibrated each on its own pixels (reference: the piece's
+    most coherent pixel) and left out of the frame fit (``regions='none'``),
+    so a step between pieces bends neither side. Smaller pieces and unlabelled
+    pixels keep the frame surface. A piece with no fit cell left keeps the
+    frame surface. Every other output (sigma, diagnostics) is the frame run's.
+    """
+    opts = options.model_copy(deep=True)
+    opts.surface.regions = "none"
+    cells = max(1, int(options.downsample_factor)) ** 2
+    ids, counts = np.unique(land_pieces[land_pieces > 0], return_counts=True)
+    big = [
+        int(k)
+        for k, n in zip(ids, counts, strict=False)
+        if k != ids[counts.argmax()] and n / cells >= options.surface.piece_min_pixels
+    ]
+    usable = np.asarray(mask, dtype=bool) & np.isfinite(disp)
+    # the large pieces stay out of the frame fit, so their steps cannot bend it
+    frame_mask = usable & ~np.isin(land_pieces, big) if big else usable
+    frame = calibrate_pair(
+        disp, gnss_los, frame_mask, ref_point, opts, pixel_m, cycle_m,
+        coherence=coherence, **kwargs,
+    )  # fmt: skip
+    total = np.array(frame.calibration, dtype=np.float64)
+    own = []
+    for k in big:
+        piece = land_pieces == k
+        piece_mask = usable & piece
+        if piece_mask.sum() < cells * options.surface.piece_min_pixels / 10:
+            continue
+        quality = np.nan_to_num(coherence) if coherence is not None else 1.0
+        score = np.where(piece_mask, quality, -1.0)
+        ref = np.unravel_index(int(np.argmax(score)), score.shape)
+        try:
+            alone = calibrate_pair(
+                disp, gnss_los, piece_mask, (int(ref[0]), int(ref[1])), opts,
+                pixel_m, cycle_m, coherence=coherence, **kwargs,
+            )  # fmt: skip
+        except ValueError as err:  # no fit cell left on the piece
+            logger.warning("land piece %d keeps the frame surface: %s", k, err)
+            continue
+        total[piece] = alone.calibration[piece]
+        own.append(k)
+    logger.info("breaklines: land pieces with a surface of their own: %s", own)
+    for name in COMPONENTS[1:]:
+        total -= getattr(frame, name)
+    surface = total.astype(frame.cal_gnss_surface.dtype)
+    return dataclasses.replace(frame, cal_gnss_surface=surface)
+
+
 def calibrate_pair(
     disp: np.ndarray,
     gnss_los: np.ndarray,
@@ -276,6 +342,7 @@ def calibrate_pair(
     set_correction: np.ndarray | None = None,
     exclude_mask: np.ndarray | None = None,
     fit_mask: np.ndarray | None = None,
+    land_pieces: np.ndarray | None = None,
     sigma_tropo: np.ndarray | float | None = None,
     sigma_ref: float = 0.0,
     unwrap_hook: UnwrapHook | None = None,
@@ -319,6 +386,10 @@ def calibrate_pair(
         locates the file); may also be given without a name, for a mask the
         caller reads from its own input (e.g. a runconfig file). Pixels
         outside it are left out of the loclin fit only.
+    land_pieces : np.ndarray, optional
+        Integer land-piece labels on the pair's grid (0 = no piece), one fixed
+        map per frame (`venti.research.land_pieces`). Required when
+        ``surface.regions`` is ``'pieces'``.
     sigma_tropo : np.ndarray or float, optional
         Uncertainty of the tropospheric correction, same units as `disp`
         (R-E1 term; 0 until a model exists).
@@ -355,6 +426,7 @@ def calibrate_pair(
         set_correction=set_correction,
         exclude_mask=exclude_mask,
         fit_mask=fit_mask,
+        land_pieces=land_pieces,
         sigma_tropo=sigma_tropo if np.ndim(sigma_tropo) > 0 else None,
     )
     if options.surface.fit_mask is not None and fit_mask is None:
@@ -363,6 +435,32 @@ def calibrate_pair(
             " not given"
         )
         raise ValueError(msg)
+    if options.surface.regions == "pieces":
+        if land_pieces is None:
+            msg = "surface.regions is 'pieces' but land_pieces was not given"
+            raise ValueError(msg)
+        return _calibrate_pieces(
+            disp,
+            gnss_los,
+            mask,
+            ref_point,
+            options,
+            pixel_m,
+            cycle_m,
+            land_pieces=np.asarray(land_pieces),
+            gnss_los_std=gnss_los_std,
+            coherence=coherence,
+            tropo=tropo,
+            set_correction=set_correction,
+            exclude_mask=exclude_mask,
+            fit_mask=fit_mask,
+            sigma_tropo=sigma_tropo,
+            sigma_ref=sigma_ref,
+            unwrap_hook=unwrap_hook,
+            n_jobs=n_jobs,
+            fit_lock=fit_lock,
+            diagnostic_maps=diagnostic_maps,
+        )
     # one read-only zero layer shared by every component that is not applied
     # (a broadcast view: no full frame at all)
     zeros = np.broadcast_to(np.zeros((), dtype=disp.dtype), disp.shape)
