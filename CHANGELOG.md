@@ -7,6 +7,18 @@ Value-changing entries say which product layers move and by how much
 
 ## [Unreleased]
 
+### Changed
+
+- **Land pieces never bridge across water.** `venti-land-pieces` closed gaps
+  of up to about twice `--close-iterations` fit blocks whatever lay in them,
+  so a channel under ~3 km joined two pieces and a step on one leaked into the
+  other through the shared surface (NA coast baseline study, F01383).
+  `land_piece_labels` takes the land mask (`land=`) and bridges only blocks
+  that are mostly land; `land_pieces_from_products` passes the `water_mask`
+  layer. Value-changing for label maps built from now on (more, smaller
+  pieces along channels); maps already written and `calibration` with an
+  unchanged map do not move.
+
 ### Fixed
 
 - **Coverage no longer switches off the local-linear fit in dark frames.**
