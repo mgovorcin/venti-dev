@@ -7,6 +7,17 @@ Value-changing entries say which product layers move and by how much
 
 ## [Unreleased]
 
+### Added
+
+- **Island pass for breaklines** (`surface.small_pieces='offset'`, default
+  `'frame'` = unchanged). With `surface.regions='pieces'`, a labelled piece
+  under `piece_min_pixels` used to keep the frame surface and take part in its
+  fit, so an island's unwrapping step bent the surface it shared. With
+  `'offset'` such a piece is left out of the frame fit and then gets the frame
+  surface plus one constant, the median of its own misfit. NA coast baseline
+  study (velocity level, 22 frames): median MIDAS LOS RMS 1.72 -> 1.25 mm/yr
+  against the cal-disp 0.5.8 velocity. Not value-changing at the default.
+
 ### Fixed
 
 - **Coverage no longer switches off the local-linear fit in dark frames.**
