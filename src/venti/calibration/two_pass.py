@@ -283,6 +283,12 @@ def _calibrate_pieces(
     so a step between pieces bends neither side. Smaller pieces and unlabelled
     pixels keep the frame surface. A piece with no fit cell left keeps the
     frame surface. Every other output (sigma, diagnostics) is the frame run's.
+
+    With ``surface.small_pieces='offset'`` (island pass) the smaller labelled
+    pieces are left out of the frame fit as well, and each then gets the frame
+    surface plus the median of its own misfit ``disp - calibration - gnss``:
+    an island too small for a surface is set onto the GNSS field by a constant
+    instead of bending the surface it shares.
     """
     opts = options.model_copy(deep=True)
     opts.surface.regions = "none"
@@ -293,9 +299,15 @@ def _calibrate_pieces(
         for k, n in zip(ids, counts, strict=False)
         if k != ids[counts.argmax()] and n / cells >= options.surface.piece_min_pixels
     ]
+    small = (
+        [int(k) for k in ids if k != ids[counts.argmax()] and int(k) not in big]
+        if options.surface.small_pieces == "offset"
+        else []
+    )
     usable = np.asarray(mask, dtype=bool) & np.isfinite(disp)
-    # the large pieces stay out of the frame fit, so their steps cannot bend it
-    frame_mask = usable & ~np.isin(land_pieces, big) if big else usable
+    # these pieces stay out of the frame fit, so their steps cannot bend it
+    apart = big + small
+    frame_mask = usable & ~np.isin(land_pieces, apart) if apart else usable
     frame = calibrate_pair(
         disp, gnss_los, frame_mask, ref_point, opts, pixel_m, cycle_m,
         coherence=coherence, **kwargs,
@@ -321,6 +333,16 @@ def _calibrate_pieces(
         total[piece] = alone.calibration[piece]
         own.append(k)
     logger.info("breaklines: land pieces with a surface of their own: %s", own)
+    shifted = 0
+    for k in small:
+        piece = land_pieces == k
+        use = usable & piece & np.isfinite(gnss_los)
+        if not use.any():
+            continue
+        total[piece] += float(np.median((disp - total - gnss_los)[use]))
+        shifted += 1
+    if small:
+        logger.info("island pass: %d small pieces set by a constant", shifted)
     for name in COMPONENTS[1:]:
         total -= getattr(frame, name)
     surface = total.astype(frame.cal_gnss_surface.dtype)

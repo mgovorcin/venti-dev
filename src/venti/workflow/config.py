@@ -145,6 +145,17 @@ class SurfaceOptions(BaseModel):
             "of its own (3000 at the 180 m v0.5 fit grid is ~97 km^2)."
         ),
     )
+    small_pieces: Literal["frame", "offset"] = Field(
+        "frame",
+        description=(
+            "With regions='pieces': what a labelled piece under piece_min_pixels "
+            "gets. 'frame': the frame surface, and the piece takes part in its fit "
+            "(the behaviour before this option). 'offset' (island pass): the piece "
+            "is left out of the frame fit, so its step cannot bend the surface, and "
+            "then gets the frame surface plus one constant, the median of its own "
+            "misfit, which sets it onto the GNSS field."
+        ),
+    )
     region_min_pixels: int = Field(
         50,
         ge=1,

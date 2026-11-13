@@ -769,6 +769,36 @@ class TestLandPieces:
         none = calibrate_pair(disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M, **kw)
         np.testing.assert_allclose(pieces.calibration, none.calibration, atol=1e-9)
 
+    def test_island_pass_sets_a_small_piece_by_a_constant(self):
+        """small_pieces='offset': the island leaves the fit and lands on GNSS."""
+        disp, gnss, valid, _ramp, bowl_mask, island_mask, coh = scene()
+        clean, *_ = scene(island=False)
+        clean[~valid] = np.nan
+        labels = self._labels(valid, island_mask)
+        o = _pieces_opts(10**6)  # the island is under piece_min_pixels
+        offset = o.model_copy(
+            update={"surface": o.surface.model_copy(update={"small_pieces": "offset"})}
+        )
+        kw = {"coherence": coh, "exclude_mask": bowl_mask, "land_pieces": labels}
+        run = lambda d, opt: calibrate_pair(  # noqa: E731
+            d, gnss, valid, REF, opt, PIXEL_M, CYCLE_M, **kw
+        )
+        island, frame, ref = run(disp, offset), run(disp, o), run(clean, o)
+        err = ((disp - island.calibration) - gnss)[island_mask]
+        err_frame = ((disp - frame.calibration) - gnss)[island_mask]
+        rms, rms_frame = np.sqrt(np.mean(err**2)), np.sqrt(np.mean(err_frame**2))
+        assert abs(np.median(err)) < 0.0005
+        assert rms < 0.0015
+        assert rms_frame > 3 * rms
+        coast = valid & ~bowl_mask & ~island_mask
+        coast[:80, :] = False
+        coast[:, :100] = False
+        moved = np.abs(island.cal_gnss_surface - ref.cal_gnss_surface)[coast]
+        moved_frame = np.abs(frame.cal_gnss_surface - ref.cal_gnss_surface)[coast]
+        assert moved.max() < 0.001
+        assert moved_frame.max() > 3 * moved.max()
+        island.assert_closed()
+
     def test_pieces_need_the_label_map(self):
         disp, gnss, valid, *_ = scene()
         with pytest.raises(ValueError, match="land_pieces"):
