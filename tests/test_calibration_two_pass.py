@@ -819,3 +819,19 @@ def test_land_piece_labels_bridge_narrow_gaps_only():
     assert labels[150, 280] > 0
     assert labels[150, 280] != labels[150, 60]
     assert labels[150, 230] == 0
+
+
+def test_land_piece_labels_never_bridge_across_water():
+    """A 6 px gap of land without data is bridged; the same gap of water is not."""
+    from venti.research.land_pieces import land_piece_labels
+
+    land = np.ones((300, 300), bool)
+    land[:, 200:206] = False  # a channel one fit block wide
+    valid = land.copy()
+    valid[:, 120:126] = False  # land without data, one fit block wide
+    kw = {"factor": 6, "close_iterations": 2, "min_region_area": 10}
+    labels = land_piece_labels(valid, land=land, **kw)
+    assert labels[150, 60] == labels[150, 150] > 0
+    assert labels[150, 250] not in (0, labels[150, 150])
+    # without the land mask the channel is bridged like any other gap
+    assert len(np.unique(land_piece_labels(valid, **kw))) == 2

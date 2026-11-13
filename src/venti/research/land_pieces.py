@@ -13,7 +13,9 @@ Recipe (the per-pair trade study, cal-vlm-batch gulf_east validate): pixels
 that are land in the ``water_mask`` layer and have a stack-mean temporal
 coherence of at least `--min-coherence`; blocks of `--factor` x `--factor`
 pixels (the fit grid) more than half valid; gaps narrower than about twice
-`--close-iterations` blocks bridged; connected pieces labelled
+`--close-iterations` blocks bridged **over land only** (a block that is mostly
+water in the ``water_mask`` layer is never bridged, so a channel a few hundred
+meters wide still separates two pieces); connected pieces labelled
 (`venti.unwrap.regions.segment_regions`). The labels are written at full
 resolution on the frame's DISP grid.
 
@@ -38,25 +40,54 @@ __all__ = ["land_piece_labels", "land_pieces_from_products", "write_land_pieces"
 logger = logging.getLogger(__name__)
 
 
+def _majority_blocks(mask: np.ndarray, factor: int) -> np.ndarray:
+    h, w = mask.shape[0] // factor, mask.shape[1] // factor
+    return (
+        mask[: h * factor, : w * factor].reshape(h, factor, w, factor).mean(axis=(1, 3))
+        > 0.5
+    )
+
+
 def land_piece_labels(
     valid: np.ndarray,
     *,
+    land: np.ndarray | None = None,
     factor: int = 6,
     close_iterations: int = 8,
     min_region_area: int = 50,
 ) -> np.ndarray:
-    """Full-resolution piece labels (0 = no piece) from a full-resolution mask."""
+    """Label the land pieces of a full-resolution mask (0 = no piece).
+
+    Parameters
+    ----------
+    valid : np.ndarray
+        Pixels that carry data (land with enough coherence).
+    land : np.ndarray, optional
+        True on land, with or without data. Gaps are then bridged over land
+        only: a water block never joins two pieces. Without it every gap
+        narrower than about twice `close_iterations` blocks is bridged.
+    factor : int
+        Fit-grid block size in pixels.
+    close_iterations : int
+        Closing iterations on the block grid.
+    min_region_area : int
+        Pieces smaller than this many blocks are dropped.
+
+    Returns
+    -------
+    np.ndarray
+        uint16 labels at full resolution.
+
+    """
     valid = np.asarray(valid, dtype=bool)
     h, w = valid.shape[0] // factor, valid.shape[1] // factor
-    blocks = (
-        valid[: h * factor, : w * factor]
-        .reshape(h, factor, w, factor)
-        .mean(axis=(1, 3))
-        > 0.5
-    )
+    blocks = _majority_blocks(valid, factor)
     bridged = ndimage.binary_closing(
         blocks, np.ones((3, 3), bool), iterations=close_iterations
     )
+    if land is not None:
+        # water keeps pieces apart, however narrow the channel
+        bridged &= _majority_blocks(np.asarray(land, dtype=bool), factor) | blocks
     labels_ds = segment_regions(
         bridged, erosion_iterations=1, min_region_area=min_region_area
     )
@@ -79,10 +110,14 @@ def land_pieces_from_products(
 
     coherence = mean_coherence(paths)
     valid = np.nan_to_num(coherence, nan=0.0) >= min_coherence
+    land = None
     with h5py.File(paths[0], "r") as f:
         if "water_mask" in f:
-            valid &= np.asarray(f["water_mask"][()], dtype=bool)
-    return land_piece_labels(valid, factor=factor, close_iterations=close_iterations)
+            land = np.asarray(f["water_mask"][()], dtype=bool)
+            valid &= land
+    return land_piece_labels(
+        valid, land=land, factor=factor, close_iterations=close_iterations
+    )
 
 
 def write_land_pieces(
