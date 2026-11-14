@@ -1,13 +1,13 @@
 # Implementation plan: Venti, DISP-CAL, VLM, validation package
 
-*Status updated 2026-10-16: cal-disp v0.5.0 tagged (T49–T51 partly); checkboxes reflect merged work, notes give the evidence.*
+*Status updated 2026-11-04: cal-disp tagged through v0.5.8 (2026-11-02, three benchmark failures accepted, disp2vlm_validation decision 0007); VLM v0.1 released; T64–T66 added for the post-v0.5 calibration work. Checkboxes reflect merged work, notes give the evidence.*
 
 Companion to [specs.md](specs.md) (PRD v0.1, 2026-10-05). Requirement IDs (R-G1, R-S2, …), trade-study IDs (TS-G1, …) and milestones (M0–M6) refer to the PRD.
 
 ## How to read this plan
 
 - **Phases** follow the PRD milestones. Phases 0 and 1 run in parallel; phase 3 runs in parallel with phase 2.
-- **Tasks** are numbered `T01`–`T63`. Each lists `Depends on:` task IDs. A task may start when all its dependencies are done, unless a subtask says otherwise.
+- **Tasks** are numbered `T01`–`T66`. Each lists `Depends on:` task IDs. A task may start when all its dependencies are done, unless a subtask says otherwise.
 - **Subtasks** are checklist items. One subtask is roughly one PR or one commit under the `git-commit-pr` skill: a single concern, with tests in the same change (`unit-tests` skill).
 - **Definition of done** for every task, unless the task says otherwise:
   - tests for the new behaviour pass in `pixi run -e dev test`;
@@ -15,7 +15,7 @@ Companion to [specs.md](specs.md) (PRD v0.1, 2026-10-05). Requirement IDs (R-G1,
   - the golden test is green, or was regenerated on purpose with the diff explained (`workflow-regression` skill);
   - the PR was reviewed by the owner and merged into the fork's `main` (or the release branch named in the task).
 - **Repos:** `venti-dev` (Venti), `cal-disp`, `geepers`, `<validation>` (name TBD, T11), `<vlm>` (name TBD, T52). All work happens on `mgovorcin/*`. Upstream PRs happen only in T06 and T51.
-- No orphan tasks: T01, T02 and T07 are the only tasks with no dependencies, and every task is a dependency of at least one other task or is a release task (T06, T51, T57, T60, T61, T62).
+- No orphan tasks: T01, T02 and T07 are the only tasks with no dependencies, and every task is a dependency of at least one other task or is a release task (T06, T51, T57, T60, T61, T62, T64, T66).
 
 ---
 
@@ -233,7 +233,7 @@ Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/
 ### T26. cal-disp foundations: pin Venti/geepers, drop duplicates, dependency budget
 **Depends on:** T09, T13, T17 (T06 only for the upstream PR, ADR-0021)
 **Context:** cal-disp pins `Venti@2a7e61f`; has its own UNR code (`download/_stage_unr.py`, `product/_unr.py`) duplicating geepers; `worker_settings` unused; TODO lists `mask_file` accepted but ignored, NISAR filename unsupported. R-O6: the ops image must exclude dask, zarr, matplotlib, jupyter; CI enforces allow-list, size budget, peak memory.
-- [~] T26.1 Pin `venti-dev[calibration]` and `geepers[grid]` by tag; `opera-utils[tropo]`; remove `[download]` extra deps not needed in ops (asf_search → optional). *2026-10-06:* Venti pinned to the fork stack commit `1150c52` (no tags yet), geepers[grid] comes through Venti's core; gamma golden validates at 1e-6 (cal-disp fork PR #3). `opera-utils[disp]` stays: `_find_reference_point` uses `opera_utils.disp.rebase_reference` (zarr), to resolve in T26.4. *Status 2026-10-16:* Venti and geepers are pinned by commit (Venti `35ec67e`, cal-disp #22), not by tag; the image drops the `download` extra (#20).
+- [~] T26.1 Pin `venti-dev[calibration]` and `geepers[grid]` by tag; `opera-utils[tropo]`; remove `[download]` extra deps not needed in ops (asf_search → optional). *2026-10-06:* Venti pinned to the fork stack commit `1150c52` (no tags yet), geepers[grid] comes through Venti's core; gamma golden validates at 1e-6 (cal-disp fork PR #3). `opera-utils[disp]` stays: `_find_reference_point` uses `opera_utils.disp.rebase_reference` (zarr), to resolve in T26.4. *Status 2026-10-16:* Venti and geepers are pinned by commit (Venti `35ec67e`, cal-disp #22), not by tag; the image drops the `download` extra (#20). *Status 2026-11-04:* still pinned by commit (Venti `fc8c8f1` in cal-disp v0.5.8); no Venti or geepers tags.
 - [x] T26.2 Replace `_stage_unr.py` / `_unr.py` with `geepers.gps_sources.UnrGridSource`; keep the CLI `cal-disp download unr` behaviour identical (tests with cassettes). *2026-10-07:* cal-disp's downloader is the stronger one (atomic `.part`, HTML and length checks), so it was ported into geepers first (geepers PR #4, plus the `thread_map` kwargs fix in #3). The cal-disp swap lands with the next Venti/geepers pin bump (T37 needs one anyway), keeping `cal-disp download unr` identical. *Done 2026-10-13 (cal-disp #14):* UNR downloads through geepers' verified downloader.
 - [~] T26.3 Thin wrappers over `venti.core.sensor.S1Spec` in `product/_disp.py`, `_static.py`. When the Venti pin moves past the T16.3 fix, drop `_unwrap_cycle_length_m()` and pass the full radar wavelength to `estimate_calibration_surface` (Venti now halves internally; see Venti CHANGELOG). *2026-10-06:* the wavelength part done (cal-disp passes λ; contract tested on both sides, PR #3); the SensorSpec wrappers remain.
 - [x] T26.4 `scripts/check_env_budget.py`: resolve the `ops` env, fail if a forbidden package is present or the image exceeds `MAX_IMAGE_MB` (start at current size; tighten later); CI job. *Done 2026-10-07* (cal-disp PR #5): `budget.yaml` + `scripts/check_env_budget.py` (`--closure cal-disp`, offline), pixi task `budget`, CI step. The core dropped `opera-utils[disp]` (reference-pixel rule ported, golden unchanged): 84 → 75 distributions, no dask/zarr. matplotlib tolerated (browse PNG, v0.5 image decision); image-size budget deferred to T49 (the image still installs the `download` extra for the golden build).
@@ -403,7 +403,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 - [x] T45.1 Plate per frame (NA default; PA Hawaii; CA Puerto Rico; California NA). *Done:* plate per frame in the frame table (NA default, PA Hawaii, CA Puerto Rico).
 - [x] T45.2 Tropo mode per frame from relief + TS-T1. *Done 2026-10-16:* TS-T1: stratified for LA and Puerto Rico (venti-dev #37), off elsewhere; Hawaii stays off (bias rule to revise, edge-case pass).
 - [~] T45.3 k per frame from TS-G1 (fallback 3.9 flagged `k_source: default`). *Partly:* k_grid per frame from TS-G1 for the four T38 frames; others use the default 3.9 without a `k_source` flag.
-- [ ] T45.4 Tag `frame_parameters v1.0`; test that every benchmark frame resolves without defaults where a study value exists. *Status 2026-10-16:* the table is `0.6-draft`; tag v1.0 after the owner's polygon review (T41.2).
+- [ ] T45.4 Tag `frame_parameters v1.0`; test that every benchmark frame resolves without defaults where a study value exists. *Status 2026-10-16:* the table is `0.6-draft`; tag v1.0 after the owner's polygon review (T41.2). *Status 2026-11-04:* the table is `0.9-draft` (14 frames); v1.0 still waits for T41.2.
 
 ### T46. 8-frame gate and edge cases
 **Depends on:** T38, T40, T41, T45
@@ -441,13 +441,13 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Depends on:** T24, T46
 - [x] T50.1 `disp-validate summary` across the 8 frames → release summary HTML/PDF with traceability (R-* → result). *Done 2026-10-15:* release summary of the confirmation run (`cal_disp_e2e/t50conf/release_summary.html`).
 - [x] T50.2 Add TS-G1/TS-S1/TS-U1/TS-T1/TS-B1 report links and the σ-realism section (reported, not gated). *Done:* study links and the σ-realism section in `docs/vnv/v0.5-calval-report.md` (+ TS-E4 extrapolated-σ addendum, disp2vlm_validation #21).
-- [~] T50.3 Review with Talib / OPERA CalVal; record sign-off and any waivers in `docs/decisions/0002-v0.5-calval.md`. *Status:* owner signed off 2026-10-15; OPERA CalVal row open.
+- [~] T50.3 Review with Talib / OPERA CalVal; record sign-off and any waivers in `docs/decisions/0002-v0.5-calval.md`. *Status:* owner signed off 2026-10-15; OPERA CalVal row open. Later waivers are in disp2vlm_validation: decision 0006 (F08882 subsiding class, v0.5) and decision 0007 (cal-disp 0.5.8 ships with F08882, F08886 and F23211 failing, owner 2026-11-02).
 
 ### T51. Release cal-disp v0.5
 **Depends on:** T49, T50
 - [~] T51.1 Update docs (quickstart, algorithm parameters, product spec deltas, performance, operations). *Partly:* README, `docs/release_v0.5.md`, docker README updated; product-spec deltas and operations doc open.
-- [~] T51.2 Tag `v0.5.0` on the fork; upstream PR to `opera-adt/cal-disp` with the changelog and VnV summary; tag Venti and geepers forks with matching versions. *Partly:* `v0.5.0` tagged on the fork (438b84e); upstream PR, Venti and geepers tags open.
-- [ ] T51.3 Delivery package (image, docs, VnV report, snapshot id, frame table version). *Status 2026-10-16:* open; needs the image registry (owner) and the CalVal sign-off.
+- [~] T51.2 Tag `v0.5.0` on the fork; upstream PR to `opera-adt/cal-disp` with the changelog and VnV summary; tag Venti and geepers forks with matching versions. *Partly:* `v0.5.0` tagged on the fork (438b84e); upstream PR, Venti and geepers tags open. *Status 2026-11-04:* fork tags through `v0.5.8` (`cc86e0b`); the upstream PR for v0.5 is not opened (the gamma PR opera-adt/cal-disp#21 is still open); Venti and geepers tags open.
+- [ ] T51.3 Delivery package (image, docs, VnV report, snapshot id, frame table version). *Status 2026-10-16:* open; needs the image registry (owner) and the CalVal sign-off. *Status 2026-11-04:* image `cal-disp:0.5.8` built from the tag and validated, local only.
 - [~] T51.4 Move remaining items to `TODO.md` and open issues for phase 5/6 work. *Partly:* follow-ups in cal-disp `TODO.md` and Venti `docs/todo.md` (σ refinement, Hawaii bias rule, edge cases).
 
 ---
@@ -532,15 +532,41 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 
 ---
 
+## Post-v0.5 calibration (from 2026-11)
+
+### T64. TS-NA: coherence power and fit mask across North America
+**Depends on:** T51
+**Context:** owner 2026-11-01: parameters must work across North American land cover and over time, so v0.5.8 keeps power 8 and no new fit masks until this study decides. Plan, frames and decision rule are approved and frozen in `cal_disp_e2e/ts_na/PLAN.md`; handoff in `ts_na/HANDOFF.md`.
+- [x] T64.1 Draw the frames: 39 frames in 13 land-cover strata, seed 20261101 (`out/frames_ts_na.csv`). *Done 2026-11-01.*
+- [x] T64.2 Local prototypes on the ten benchmark frames: mask arm `cap10_cov` (seed at min(0.85, frame p90 coherence) plus tile coverage) and a station hold-out with 30 km (score) and 60 km (sensitivity) radii. *Done 2026-11-01:* masks mostly move the median; F08882 RMSE worsens with any mask.
+- [ ] T64.3 One pilot frame on Batch to measure cost (owner approval first); a Batch version of the prototypes and the overlap-offset score.
+- [ ] T64.4 Velocity-domain screen: 8 arms (power 0/2/4/8 × no mask / `cap10_cov`) on 39 frames.
+- [ ] T64.5 Full per-pair stacks for at most 3 arms on 39 frames.
+- [ ] T64.6 Report and decision under the frozen rule; the winner goes into a cal-disp release with its own golden rebuild.
+
+### T65. Follow-ups from the v0.5.8 benchmark
+**Depends on:** T51
+**Context:** disp2vlm_validation decision 0007 accepts three failures for 0.5.8 only; the next value-changing release needs them to pass or a new decision. Figures: `00_tools/tests/venti/v058_failures_F23211_F08886.png`; runs in `cal_disp_e2e/t58bench`.
+- [ ] T65.1 Hawaii (F23211): why venti-dev #55 raises the station residuals (median +0.94 → +2.81, RMSE 2.57 → 3.44 with #55 alone).
+- [ ] T65.2 Oklahoma City (F08886): why venti-dev #57 widens the spread (NMAD 0.63 → 1.51).
+- [ ] T65.3 F08882: a #55-only run, so the two fixes are separated on all three failing frames.
+- [ ] T65.4 Per-pair calibration fields are rougher than velocity-domain ones on every frame checked (10 km high-pass NMAD 0.31 against 0.07 on F08622); find out how much is method and how much is the measure.
+
+### T66. Next cal-disp release (0.5.9)
+**Depends on:** T51, T65
+- [x] T66.1 venti-dev #58: robust weights no longer reject every data pixel of a sparse fit. *Merged 2026-11-03 (`dd6028f`):* golden identical at 1e-6; fires only in the degenerate case (F30716, F33076, F43045 in the NA coast campaign).
+- [ ] T66.2 Per-pair breaklines with a fixed land-piece map per frame, if the 17-frame power-8 confirmation holds (cal-vlm-batch `campaigns/gulf_east/validate/RESULTS.md`); Venti PR; owner decision.
+- [ ] T66.3 Pin, golden rebuild, ten-frame benchmark against 0.5.8; tag and image (owner).
+
 ## Later / cross-cutting
 
 ### T61. Output packaging: component and GNSS layers
 **Depends on:** T14, T51
 **Context:** D8: new layers go into `/auxiliary` (already a placeholder) without changing existing names: `cal_gnss_surface`, `cal_tropo`, `cal_set`, `cal_unwrap_shift` (int8 cycles), `cal_reference_offset`, `defo_area_mask`, `plate_motion` (ENU plate rate → LOS × Δt), `gnss_ve`, `gnss_vn` (+σ) as velocities. Enables VLM path A (T55).
-- [ ] T61.1 Product spec update and `/auxiliary` writer with CF attributes; `calibration == Σ cal_*` test on the product file.
-- [ ] T61.2 `plate_motion` layer from `geepers.euler.plate_velocity_enu` with the frame-table plate; test on a Hawaii pixel (PA) and a Houston pixel (NA).
+- [~] T61.1 Product spec update and `/auxiliary` writer with CF attributes; `calibration == Σ cal_*` test on the product file. *Partly (cal-disp v0.5.5, 2026-10-22):* `/auxiliary` E/N/U carry the GNSS displacement over the pair (+ `*_std`); the `cal_*` component layers, GNSS velocities, the Σ test and the product-spec update are open.
+- [x] T61.2 `plate_motion` layer from `geepers.euler.plate_velocity_enu` with the frame-table plate; test on a Hawaii pixel (PA) and a Houston pixel (NA). *Done in cal-disp v0.5.5 (2026-10-22):* `/plate_motion` group (ITRF2020-PMM, plate from the frame table), +6 MB on the golden pair.
 - [ ] T61.3 Compression and size budget (gamma product was 585 MB uncompressed → compressed); measure.
-- [ ] T61.4 Golden regeneration (deliberate) and minor version bump; `cal-disp validate --group auxiliary` covers the new layers.
+- [~] T61.4 Golden regeneration (deliberate) and minor version bump; `cal-disp validate --group auxiliary` covers the new layers. *Partly:* golden regenerated in v0.5.5 and `validate --group auxiliary` compares `/auxiliary` and `/plate_motion`; the `cal_*` layers are not written yet.
 
 ### T62. TS-U1 phase 2: inland unwrap errors
 **Depends on:** T42
@@ -585,6 +611,9 @@ flowchart LR
   subgraph P6[Phase 6 NISAR]
     T18 --> T58; T38 --> T59; T58 --> T59; T59 --> T60
   end
+  subgraph P7[Post-v0.5 calibration]
+    T51 --> T64; T51 --> T65; T51 --> T66; T65 --> T66
+  end
   T14 --> T61; T51 --> T61; T42 --> T62
 ```
 
@@ -604,3 +633,4 @@ T07 → T10 → T12 → T13 → T14 → T17 → T18/T19 → T28 → T33 → T37 
 | 7–8 | T49, T50, T51 |
 | 9–12 | T52–T57 |
 | when data arrives | T58–T60; later T61, T62 |
+| from 2026-11 | T64 (North America study), T65 (0.5.8 follow-ups), T66 (0.5.9) |
