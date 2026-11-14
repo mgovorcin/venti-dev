@@ -558,6 +558,34 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 - [ ] T66.2 Per-pair breaklines with a fixed land-piece map per frame, if the 17-frame power-8 confirmation holds (cal-vlm-batch `campaigns/gulf_east/validate/RESULTS.md`); Venti PR; owner decision.
 - [ ] T66.3 Pin, golden rebuild, ten-frame benchmark against 0.5.8; tag and image (owner).
 
+### T67. TS-O1: overshoot-safe surface fitting
+**Depends on:** T51, T66.1
+**Context:** owner 2026-11-09: be careful with overshooting. The calibration surface must carry only the long-wavelength GNSS-tied field (remove-restore); features shorter than the 50 km cutoff must pass through unchanged. On the owner's 104 review polygons over the na-coast-v058 mosaic, what calibration adds is anti-correlated with the raw-DISP anomaly (r = −0.95, 24 polygon/frame cases with raw velocity). It cancels local features and sometimes flips their sign: Metairie raw −0.8 → +1.9 mm/yr LOS, Mississippi coast −8.2 → +7.1, Hagerstown +0.1 → +1.6 (`cal-vlm-batch campaigns/gulf_east/validate/figures/v058_polygons_raw_vs_calibration.png`; scripts `tmp/calvlm/triage/absorb.py`, `raw_vs_cal.py`). Two mechanisms seen so far:
+1. **Small regions with their own surface** (`surface.regions = separate`, F44055/F00835; the same risk applies to breakline pieces, T66.2): a few-km² region gets a local-linear fit, so a slope extrapolated from its edge. Example: the sharp sloped wedge on the Metairie east bank, between Lake Pontchartrain and the river.
+2. **Coherence-weight dominance** (power 8): a dense high-coherence town carries most of the weight inside the 50 km kernel, so the surface follows the town's own signal (Hagerstown, a broad ~20 km bump).
+
+Unwrap errors that the surface partly absorbs (Bolivar raw +90 → +15) are T62's, not this study's. They are kept in the bench as stress cases only.
+
+- [ ] T67.1 **Measures (no value change).**
+  (a) *Signal preservation:* inject synthetic local features into the raw velocity of a real frame (bowls and bumps of 2, 5, 10 and 20 km at ±2/±5/±10 mm/yr, on high- and low-coherence ground and on small disconnected regions). Calibrate, and report the fraction of each feature that survives: target 1.0 below 10 km, and never < 0 (sign flip).
+  (b) *Overshoot score on real data:* use automatic segments (connected land regions, coherent clusters above the frame's p90 coherence) plus the owner's polygons as a held-out check. Compare the calibration-added anomaly against the raw anomaly over a 0.15° ring. Report the fraction with a sign flip, the fraction where calibration injects > 1 mm/yr into a feature that is flat in raw, and the median excess.
+  Both measures become a QA flag in the cal-vlm-batch validate scripts.
+- [ ] T67.2 **Velocity-domain screen** on the 25 gulf_east_val frames, arms at power 8:
+  - A0: v0.5.8.
+  - A1: region-size rule. A region or piece below N fit cells gets one offset and no slope, and below M it joins the frame surface. N and M are swept, starting near `piece_min_pixels` = 3000.
+  - A2: weight-share cap. Within each kernel footprint, no connected high-coherence cluster carries more than a share s of the weight, with s swept.
+  - A3: local-constant fallback where the kernel support is one-sided or coverage is below the blend threshold. This targets edge extrapolation.
+  - A4: post-fit clamp. The part of the correction shorter than twice the cutoff is limited to k·σ_CAL. Last resort.
+  - Combinations of the best of A1–A3, and `regions = pieces` (T66.2) scored under the same measures.
+- [ ] T67.3 **Per-pair stacks** for at most 2 arms on the 17-frame breakline set plus the ten benchmark frames (Batch, owner approval for cost).
+- [ ] T67.4 **Report and decision** (`disp2vlm_validation studies/TS-O1/REPORT.md`) under a rule frozen before T67.2 runs (owner to approve). An arm is adopted only if all of these hold:
+  - Synthetic preservation is ≥ 0.9 for features ≤ 10 km, with no sign flips.
+  - The real-data sign-flip fraction is at least halved.
+  - GNSS hold-out RMSE (T64.2, 30 km radius) is not worse by more than 0.1 mm/yr on average or 0.3 on any frame.
+  - The overlap-offset score is not worse.
+
+  The winner lands behind an `algorithm_parameters` flag (default = 0.5.8 behaviour) and goes into a release with its own golden rebuild. If T64 changes the coherence power, A2 is rerun at the new power.
+
 ## Later / cross-cutting
 
 ### T61. Output packaging: component and GNSS layers
