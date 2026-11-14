@@ -1,13 +1,13 @@
 # Implementation plan: Venti, DISP-CAL, VLM, validation package
 
-*Status updated 2026-11-04: cal-disp tagged through v0.5.8 (2026-11-02, three benchmark failures accepted, disp2vlm_validation decision 0007); VLM v0.1 released; T64–T66 added for the post-v0.5 calibration work. Checkboxes reflect merged work, notes give the evidence.*
+*Status updated 2026-11-14: cal-disp 0.5.9 candidate (breaklines and island pass, options off by default; image `cal-disp:0.5.9-rc` passes the golden, tag pending); UNR grid regeneration (T68) and the North America VLM baseline map (T69) added; Hawaii gets its own approach (T65.1). Checkboxes reflect merged work, notes give the evidence.*
 
 Companion to [specs.md](specs.md) (PRD v0.1, 2026-10-05). Requirement IDs (R-G1, R-S2, …), trade-study IDs (TS-G1, …) and milestones (M0–M6) refer to the PRD.
 
 ## How to read this plan
 
 - **Phases** follow the PRD milestones. Phases 0 and 1 run in parallel; phase 3 runs in parallel with phase 2.
-- **Tasks** are numbered `T01`–`T66`. Each lists `Depends on:` task IDs. A task may start when all its dependencies are done, unless a subtask says otherwise.
+- **Tasks** are numbered `T01`–`T69`. Each lists `Depends on:` task IDs. A task may start when all its dependencies are done, unless a subtask says otherwise.
 - **Subtasks** are checklist items. One subtask is roughly one PR or one commit under the `git-commit-pr` skill: a single concern, with tests in the same change (`unit-tests` skill).
 - **Definition of done** for every task, unless the task says otherwise:
   - tests for the new behaviour pass in `pixi run -e dev test`;
@@ -15,7 +15,7 @@ Companion to [specs.md](specs.md) (PRD v0.1, 2026-10-05). Requirement IDs (R-G1,
   - the golden test is green, or was regenerated on purpose with the diff explained (`workflow-regression` skill);
   - the PR was reviewed by the owner and merged into the fork's `main` (or the release branch named in the task).
 - **Repos:** `venti-dev` (Venti), `cal-disp`, `geepers`, `<validation>` (name TBD, T11), `<vlm>` (name TBD, T52). All work happens on `mgovorcin/*`. Upstream PRs happen only in T06 and T51.
-- No orphan tasks: T01, T02 and T07 are the only tasks with no dependencies, and every task is a dependency of at least one other task or is a release task (T06, T51, T57, T60, T61, T62, T64, T66).
+- No orphan tasks: T01, T02 and T07 are the only tasks with no dependencies, and every task is a dependency of at least one other task or is a release task (T06, T51, T57, T60, T61, T62, T64, T66, T67, T68, T69).
 
 ---
 
@@ -370,6 +370,8 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 - [~] T41.2 Review and finalize polygons for Houston/Galveston, Central Valley (San Joaquin), Kīlauea; `defo_area_db_v1.geojson`. *Started:* `defo_area_db_v1.geojson` 1.0-draft with Houston-Galveston (trade-study polygon); Central Valley and Kīlauea wait for the T40 stacks. *Status 2026-10-16:* area DB `1.1-draft` (Houston-Galveston, San Joaquin +15 km, Kern N/S, Kīlauea; venti-dev #34); owner review still open.
 - [x] T41.3 `event_db_v1.geojson`: Ridgecrest (t0, footprint, source USGS ComCat); schema per T32.1. *Done 2026-10-09 (venti-dev PR #25, 1.0-draft):* Mw 7.1 + Mw 6.4 from ComCat; footprint = W&C 1994 rupture along strike, buffer max(15 km, 0.75 L); to check vs the F16941 coseismic step.
 - [~] T41.4 Tests: every polygon is valid, has `id`/`version`, and reaches outside its own velocity anomaly (checked against T40.4 quick-looks). *Status 2026-10-16:* validity/id/version and stable-ring tests in place; the per-polygon check against the quick-looks moves to the final edge-case pass.
+- [~] T41.5 Defo area database v2: 137 areas (draft, iteration 3; frozen copy `data/defo_area_db_v2_draft_iter3_gate.geojson` in the grid study), used by the regenerated grid (T68) and by the v33j gate rerun. Owner review and tag open.
+- [ ] T41.6 Owner rule 2026-11-14, one area set on both sides: stations inside the areas the GNSS grid leaves out do not enter validation, not even as benchmark conditions; calibration masks InSAR in the same areas, fits outside and restores on top ("let InSAR constrain the deforming region"). Needs a disp2vlm_validation decision record and the cal-disp/Venti wiring.
 
 ### T42. TS-U1 phase 1: islands with trusted GNSS
 **Depends on:** T36, T38
@@ -426,7 +428,7 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 **Context:** R-G4: a versioned snapshot per release, mirrored to controlled storage (S3 bucket TBD, PRD §7.5 Q6), hash recorded in metadata; roll-forward deliberate (proposal every 6 months) and gated by e2e.
 - [x] T48.1 `scripts/snapshot_unr_grid.py` (validation or cal-disp repo): download v0.3 constant (and variable) for IGS20 via geepers, write `unr_grid_<version>_<date>/` + `MANIFEST.sha256` + `snapshot.json` (UNR version, date, node count, data span). *Done 2026-10-06 in Venti* (`venti.gnss.snapshot` + `scripts/snapshot_unr_grid.py`): Venti owns the sampler that reads the layout, so the writer lives next to it; `--bounds`, `--grid-types`, `--verify`; tests with injected fetch/download fakes.
 - [x] T48.2 Upload to S3; document the bucket layout and IAM in `docs/operations.md`. *Proposed 2026-10-06:* `s3://opera-adt/opera-ancillary/unr-grid/<snapshot_id>/` + a `CURRENT` pointer, next to the existing shared ancillary data (`docs/operations.md`, Storage). Waiting for the owner's OK; nothing uploaded. *Uploaded 2026-10-06* (location approved): `unr_grid_0.3_IGS20_20261006`, 28,492 nodes, 31 not published upstream (404), sample re-download verified; `CURRENT` waits for T46.
-- [ ] T48.3 cal-disp `download unr` can read from the snapshot path (`unr_timeseries_dir`), and metadata records `gnss_snapshot_id` + hash (through T28.4 provenance). *Waits for the cal-disp wiring (T37, behind T26/T09).* *Status 2026-10-16:* open; products record `snapshot_id: null` (per-frame UNR downloads).
+- [ ] T48.3 cal-disp `download unr` can read from the snapshot path (`unr_timeseries_dir`), and metadata records `gnss_snapshot_id` + hash (through T28.4 provenance). *Waits for the cal-disp wiring (T37, behind T26/T09).* *Status 2026-10-16:* open; products record `snapshot_id: null` (per-frame UNR downloads). *2026-11-14:* a regenerated grid may replace the published one (T68, ADR-0022); the snapshot layout stays.
 - [x] T48.4 Roll-forward procedure documented: new snapshot → T46 gate → new frame-table k if needed → minor version. *Done 2026-10-06:* `docs/operations.md` (moves to cal-disp docs with T48.3).
 
 ### T49. v0.5 Docker image, golden regeneration, changelog
@@ -547,16 +549,16 @@ All behind T19 flags; gamma defaults reproduce the golden until T37.
 ### T65. Follow-ups from the v0.5.8 benchmark
 **Depends on:** T51
 **Context:** disp2vlm_validation decision 0007 accepts three failures for 0.5.8 only; the next value-changing release needs them to pass or a new decision. Figures: `00_tools/tests/venti/v058_failures_F23211_F08886.png`; runs in `cal_disp_e2e/t58bench`.
-- [ ] T65.1 Hawaii (F23211): why venti-dev #55 raises the station residuals (median +0.94 → +2.81, RMSE 2.57 → 3.44 with #55 alone).
+- [ ] T65.1 Hawaii (F23211): venti-dev #55 raised the station residuals (median +0.94 → +2.81, RMSE 2.57 → 3.44 with #55 alone), and the v33j grid gate made it worse again (sill 231 against 201). **Owner 2026-11-14: Hawaii is an edge case, because the whole island deforms.** Test (a) remove-restore of the deforming area with the fit on stable area only, and (b) an offset-only calibration from the stable area, with the variable grid as well as the constant one. Treat Hawaii separately in gates rather than tuning the general method for it.
 - [ ] T65.2 Oklahoma City (F08886): why venti-dev #57 widens the spread (NMAD 0.63 → 1.51).
 - [ ] T65.3 F08882: a #55-only run, so the two fixes are separated on all three failing frames.
 - [ ] T65.4 Per-pair calibration fields are rougher than velocity-domain ones on every frame checked (10 km high-pass NMAD 0.31 against 0.07 on F08622); find out how much is method and how much is the measure.
 
 ### T66. Next cal-disp release (0.5.9)
-**Depends on:** T51, T65
+**Depends on:** T51
 - [x] T66.1 venti-dev #58: robust weights no longer reject every data pixel of a sparse fit. *Merged 2026-11-03 (`dd6028f`):* golden identical at 1e-6; fires only in the degenerate case (F30716, F33076, F43045 in the NA coast campaign).
-- [ ] T66.2 Per-pair breaklines with a fixed land-piece map per frame, if the 17-frame power-8 confirmation holds (cal-vlm-batch `campaigns/gulf_east/validate/RESULTS.md`); Venti PR; owner decision.
-- [ ] T66.3 Pin, golden rebuild, ten-frame benchmark against 0.5.8; tag and image (owner).
+- [x] T66.2 Per-pair breaklines with a fixed land-piece map per frame. *Done:* 17-frame power-8 confirmation (mean RMSE 2.50 → 2.06 mm/yr); venti-dev #60 (`surface.regions = 'pieces'`, 2026-11-06), #62 (pieces never bridge across water) and #63 (island pass, `surface.small_pieces = 'offset'`, 2026-11-13); cal-disp #44 (runconfig `land_pieces_file`) and #45 (pin Venti `6c16457`). Off by default and not in the packaged frame table.
+- [~] T66.3 Pin, golden check, tag and image. *Status 2026-11-14:* image `cal-disp:0.5.9-rc` built from `cd3e7f2` passes the golden check (defaults unchanged, so no ten-frame benchmark needed for the release itself); tag `v0.5.9` and release record are the owner's. Turning `pieces` on in the packaged frame table is a separate decision that needs the benchmark.
 
 ### T67. TS-O1: overshoot-safe surface fitting
 **Depends on:** T51, T66.1
@@ -585,6 +587,25 @@ Unwrap errors that the surface partly absorbs (Bolivar raw +90 → +15) are T62'
   - The overlap-offset score is not worse.
 
   The winner lands behind an `algorithm_parameters` flag (default = 0.5.8 behaviour) and goes into a release with its own golden rebuild. If T64 changes the coherence power, A2 is rerun at the new power.
+
+### T68. Regenerated UNR rate grid as calibration input
+**Depends on:** T48
+**Context:** the published UNR v0.3 grid is wrong in places (Hagerstown nodes at +2.89 mm/yr vertical while the stations subside; 184 of 365 Baja nodes on North American motion; 522 zero-sigma nodes). ADR-0022 (proposed): the grid may be rebuilt from MIDAS station rates by local kriging, deforming-area stations left out of the vertical, delivered as a frozen snapshot in the published layout. Study: `01_OPERA/CAL/unr_grid_regen` (README, LEDGER).
+- [x] T68.1 Rebuild tool in geepers (opera-adt/geepers#98, #99; `gridding.py`, `scripts/recreate-unr-grid.py`), scored against held-out stations.
+- [x] T68.2 Snapshot `v33j` on S3 next to the official grid; cal-vlm-batch `stage-cal --grid-snapshot` (#7, 2026-11-13). The official grid stays the default.
+- [x] T68.3 ADR-0022 written and merged as proposed (venti-dev #64).
+- [~] T68.4 Ten-frame gate with v33j. *First run 2026-11-13:* 9/10 PASS; Houston fails only on its deforming-area conditions; Hawaii worse. *Rerun started 2026-11-14* with the v2 defo database on both sides (T41.5, T41.6), label `unrv33jdb`.
+- [ ] T68.5 Node patches for the published grid where the rebuild is not adopted: cal-vlm-batch `stage-cal --grid-patch-dir` (#4, open; 82 vertical patches, 193 held for review).
+- [ ] T68.6 Owner decision: accept ADR-0022, then a cal-disp release that records the snapshot id (T48.3).
+
+### T69. North America VLM baseline map
+**Depends on:** T57, T66
+**Context:** owner 2026-11-12: a working North America coastal VLM map first, as a product and a test set; algorithm generality second. Ledger: cal-vlm-batch `campaigns/na_coast/BASELINE.md` and `frame_fixes.csv`.
+- [~] T69.1 Velocity-level baseline recipe: water-aware breaklines, island pass, robust fit, deformation mask with restore (disp2vlm_validation `studies/island_pass.py`, d2v #42, open; 533 of 539 frames).
+- [x] T69.2 Five-frame per-date check on cal-disp 0.5.9 (`na-redo-check-v059`, 2026-11-14): close to the baseline, better than v058 on 4 of 5 frames.
+- [ ] T69.3 Campaign `na-redo-v059`: 539 coastal frames per date on cal-disp 0.5.9 (cal-vlm-batch #8, open). Owner GO 2026-11-13; staged, not submitted.
+- [~] T69.4 Unwrap-error regions and their GNSS tie, as a QA layer (d2v #41, cal-vlm-batch #5, open). Unwrap correction stays off in calibration (T62).
+- [ ] T69.5 Frame fixes after the full campaign (F01383 island, leftover island fragments), then the VLM mosaic.
 
 ## Later / cross-cutting
 
@@ -640,7 +661,7 @@ flowchart LR
     T18 --> T58; T38 --> T59; T58 --> T59; T59 --> T60
   end
   subgraph P7[Post-v0.5 calibration]
-    T51 --> T64; T51 --> T65; T51 --> T66; T65 --> T66
+    T51 --> T64; T51 --> T65; T51 --> T66; T51 --> T67; T48 --> T68; T57 --> T69; T66 --> T69
   end
   T14 --> T61; T51 --> T61; T42 --> T62
 ```
@@ -661,4 +682,4 @@ T07 → T10 → T12 → T13 → T14 → T17 → T18/T19 → T28 → T33 → T37 
 | 7–8 | T49, T50, T51 |
 | 9–12 | T52–T57 |
 | when data arrives | T58–T60; later T61, T62 |
-| from 2026-11 | T64 (North America study), T65 (0.5.8 follow-ups), T66 (0.5.9) |
+| from 2026-11 | T64 (North America study), T65 (0.5.8 follow-ups), T66 (0.5.9), T67 (overshoot), T68 (UNR grid), T69 (NA VLM map) |
