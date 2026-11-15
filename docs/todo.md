@@ -93,7 +93,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [~] T64 TS-NA: coherence power and fit mask across North America — depends on T51. Frames and local prototypes done 2026-11-01 (`cal_disp_e2e/ts_na/PLAN.md`); Batch pilot needs owner approval
 - [ ] T65 Follow-ups from the v0.5.8 benchmark — depends on T51. Hawaii now gets its own approach (owner 2026-11-14: stable-area fit with remove-restore, offset-only test); per-pair roughness confirmed real (cause open); done: F08882 #55-only (#55 worsens it, #57 recovers), Oklahoma City (level set by the power-8 weighting, input to T64/T67)
 - [~] T66 Next cal-disp release (0.5.9) — depends on T51. #58 guard, breaklines (#60, #62) and island pass (#63) merged; cal-disp #44/#45 merged; `cal-disp:0.5.9-rc` passes the golden; tag and release record are the owner's
-- [ ] T67 TS-O1: overshoot-safe surface fitting — depends on T51, T66.1. Plan only; decision-rule thresholds need owner approval
+- [ ] T67 TS-O1: overshoot-safe surface fitting — depends on T51, T66.1. decision rule approved by the owner 2026-11-14 (provisional until T67.2 starts); reference arm 0.5.9 with breaklines
 - [~] T68 Regenerated UNR rate grid — depends on T48. Tool, v33j snapshot, `--grid-snapshot` and ADR-0022 (proposed) done; v33j gate rerun with defo DB v2 running; patches (cal-vlm-batch #4) and ADR acceptance open
 - [~] T69 North America VLM baseline map — depends on T57, T66. Recipe (d2v #42) and five-frame check done; `na-redo-v059` (539 frames) staged, not submitted; unwrap-region QA (d2v #41, cal-vlm-batch #5) open
 
@@ -137,3 +137,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` not started · `[!]` blocked
 - [ ] **Refine extrapolated σ_CAL** (owner 2026-10-14: come back to it): the nearest-value + distance inflation is a placeholder. Calibrate the inflation against held-out stations (TS-E4 coverage on filled pixels only), consider a coverage-based factor instead of distance, and decide whether low-quality pixels (recommended_mask = 0) should carry a separate flag.
 - 2026-11-04 Plan revised: cal-disp v0.5.8 tagged 2026-11-02 (decision 0007); T61.2 marked done (v0.5.5); T64 (TS-NA), T65 (0.5.8 follow-ups), T66 (0.5.9) added.
 - 2026-11-14 Plan revised: T66.2 done (breaklines, island pass), 0.5.9-rc passes the golden; T41.5–T41.6 (defo DB v2, owner validation rule), T68 (UNR grid regeneration, ADR-0022) and T69 (NA VLM baseline map) added; Hawaii approach recorded in T65.1.
+- 2026-11-14 T67 decision rule approved by the owner ("ok for now"); reference arm A0 = 0.5.9 with breaklines. cal-disp v0.5.9 tagged (`a8c76b3`).

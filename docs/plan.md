@@ -573,14 +573,14 @@ Unwrap errors that the surface partly absorbs (Bolivar raw +90 → +15) are T62'
   (b) *Overshoot score on real data:* use automatic segments (connected land regions, coherent clusters above the frame's p90 coherence) plus the owner's polygons as a held-out check. Compare the calibration-added anomaly against the raw anomaly over a 0.15° ring. Report the fraction with a sign flip, the fraction where calibration injects > 1 mm/yr into a feature that is flat in raw, and the median excess.
   Both measures become a QA flag in the cal-vlm-batch validate scripts.
 - [ ] T67.2 **Velocity-domain screen** on the 25 gulf_east_val frames, arms at power 8:
-  - A0: v0.5.8.
+  - A0: v0.5.9 with breaklines on (`surface.regions = 'pieces'`, island pass), the setting campaigns run since `na-redo-v059`; v0.5.8 is also scored for reference.
   - A1: region-size rule. A region or piece below N fit cells gets one offset and no slope, and below M it joins the frame surface. N and M are swept, starting near `piece_min_pixels` = 3000.
   - A2: weight-share cap. Within each kernel footprint, no connected high-coherence cluster carries more than a share s of the weight, with s swept.
   - A3: local-constant fallback where the kernel support is one-sided or coverage is below the blend threshold. This targets edge extrapolation.
   - A4: post-fit clamp. The part of the correction shorter than twice the cutoff is limited to k·σ_CAL. Last resort.
   - Combinations of the best of A1–A3, and `regions = pieces` (T66.2) scored under the same measures.
 - [ ] T67.3 **Per-pair stacks** for at most 2 arms on the 17-frame breakline set plus the ten benchmark frames (Batch, owner approval for cost).
-- [ ] T67.4 **Report and decision** (`disp2vlm_validation studies/TS-O1/REPORT.md`) under a rule frozen before T67.2 runs (owner to approve). An arm is adopted only if all of these hold:
+- [ ] T67.4 **Report and decision** (`disp2vlm_validation studies/TS-O1/REPORT.md`) under a rule frozen before T67.2 runs. *Owner approved the rule 2026-11-14 ("ok for now"); it is frozen once T67.2 starts.* An arm is adopted only if all of these hold:
   - Synthetic preservation is ≥ 0.9 for features ≤ 10 km, with no sign flips.
   - The real-data sign-flip fraction is at least halved.
   - GNSS hold-out RMSE (T64.2, 30 km radius) is not worse by more than 0.1 mm/yr on average or 0.3 on any frame.
