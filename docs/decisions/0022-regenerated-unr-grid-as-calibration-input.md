@@ -1,6 +1,6 @@
 # ADR-0022: A regenerated UNR rate grid, with its own sigma, may be the calibration input
 
-- **Status:** proposed
+- **Status:** accepted (owner, 2026-11-23: candidate v33u_creep_canada)
 - **Date:** 2026-11-13; updated 2026-11-23 (candidate v33u_creep_canada)
 - **Source:** UNR grid regeneration study (`01_OPERA/CAL/unr_grid_regen`, README
   and LEDGER there); method in geepers (opera-adt/geepers#98, #99)
