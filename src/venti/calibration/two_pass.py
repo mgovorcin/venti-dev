@@ -350,8 +350,7 @@ def _calibrate_pieces(
         disp, gnss_los, frame_mask, ref_point, opts, pixel_m, cycle_m,
         coherence=coherence, **kwargs,
     )  # fmt: skip
-    total = np.array(frame.calibration, dtype=np.float64)
-    own = []
+    own: dict[int, np.ndarray] = {}
     for k in big:
         piece = land_pieces == k
         piece_mask = usable & piece
@@ -368,19 +367,45 @@ def _calibrate_pieces(
         except ValueError as err:  # no fit cell left on the piece
             logger.warning("land piece %d keeps the frame surface: %s", k, err)
             continue
-        total[piece] = alone.calibration[piece]
-        own.append(k)
-    logger.info("breaklines: land pieces with a surface of their own: %s", own)
+        own[k] = alone.calibration[piece]
+    logger.info("breaklines: land pieces with a surface of their own: %s", list(own))
+
+    def with_pieces(frame_cal: np.ndarray) -> np.ndarray:
+        total = np.array(frame_cal, dtype=np.float64)
+        for k, values in own.items():
+            total[land_pieces == k] = values
+        return total
+
+    def offsets(total: np.ndarray) -> dict[int, float]:
+        out = {}
+        for k in small:
+            use = usable & (land_pieces == k) & np.isfinite(gnss_los)
+            if use.any():
+                out[k] = float(np.median((disp - total - gnss_los)[use]))
+        return out
+
+    total = with_pieces(frame.calibration)
+    shift = offsets(total)
+    gated = [
+        k for k, v in shift.items() if abs(v) < options.surface.small_piece_offset_min
+    ]
+    if gated and options.surface.small_piece_gated == "refit":
+        # a constant under the gate is not an unwrap-like error: the piece goes
+        # back into the frame fit, as if it had no constant of its own
+        keep = [k for k in apart if k not in gated]
+        frame_mask = usable & ~np.isin(land_pieces, keep) if keep else usable
+        frame = calibrate_pair(
+            disp, gnss_los, frame_mask, ref_point, opts, pixel_m, cycle_m,
+            coherence=coherence, **kwargs,
+        )  # fmt: skip
+        total = with_pieces(frame.calibration)
+        shift = {k: v for k, v in offsets(total).items() if k not in gated}
+        logger.info("island pass: %d gated pieces back in the frame fit", len(gated))
     shifted = 0
-    for k in small:
-        piece = land_pieces == k
-        use = usable & piece & np.isfinite(gnss_los)
-        if not use.any():
+    for k, v in shift.items():
+        if abs(v) < options.surface.small_piece_offset_min:
             continue
-        offset = float(np.median((disp - total - gnss_los)[use]))
-        if abs(offset) < options.surface.small_piece_offset_min:
-            continue
-        total[piece] += offset
+        total[land_pieces == k] += v
         shifted += 1
     if small:
         logger.info("island pass: %d small pieces set by a constant", shifted)

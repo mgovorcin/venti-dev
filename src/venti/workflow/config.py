@@ -176,6 +176,15 @@ class SurfaceOptions(BaseModel):
             "fitted without it. 0 (default): every constant is applied."
         ),
     )
+    small_piece_gated: Literal["extrapolate", "refit"] = Field(
+        "extrapolate",
+        description=(
+            "With small_piece_offset_min > 0: what a piece whose constant falls "
+            "under the gate gets. 'extrapolate' (default): the frame surface, "
+            "fitted without the piece. 'refit': the frame surface is fitted again "
+            "with those pieces in it (one more frame fit)."
+        ),
+    )
     edge_constant_offset: float | None = Field(
         None,
         gt=0,

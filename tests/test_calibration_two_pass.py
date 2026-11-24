@@ -864,6 +864,7 @@ class TestOvershootArms:
         assert o.surface.small_piece_offset_min == 0.0
         assert o.surface.edge_constant_offset is None
         assert o.surface.short_clamp_k is None
+        assert o.surface.small_piece_gated == "extrapolate"
         assert o.weights.cluster_share_max is None
 
     def test_offset_gate_keeps_a_cycle_step_and_drops_a_small_constant(self):
@@ -884,6 +885,17 @@ class TestOvershootArms:
             coherence=coh, exclude_mask=bowl_mask, land_pieces=labels,
         )  # fmt: skip
         np.testing.assert_allclose(rule.calibration, frame.calibration, atol=1e-9)
+
+    def test_gated_piece_goes_back_into_the_frame_fit_with_refit(self):
+        refit, _ = self._island_runs(
+            small_piece_offset_min=10 * CYCLE_M, small_piece_gated="refit"
+        )
+        rule, _ = self._island_runs(small_piece_frame_max_pixels=10**6)
+        np.testing.assert_allclose(refit.calibration, rule.calibration, atol=1e-9)
+        _kept, err = self._island_runs(
+            small_piece_offset_min=0.5 * CYCLE_M, small_piece_gated="refit"
+        )
+        assert abs(np.median(err)) < 0.0005  # a cycle step still gets its constant
 
     def test_clamp_limits_the_short_part_only(self):
         from venti.calibration.two_pass import _clamp_short
