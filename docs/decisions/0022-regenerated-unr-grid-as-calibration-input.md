@@ -1,7 +1,7 @@
 # ADR-0022: A regenerated UNR rate grid, with its own sigma, may be the calibration input
 
-- **Status:** proposed
-- **Date:** 2026-11-13
+- **Status:** accepted (owner, 2026-11-23; grid v33u_creep3_canada chosen 2026-11-24)
+- **Date:** 2026-11-13; updated 2026-11-23 and 2026-11-24 (grid v33u_creep3_canada)
 - **Source:** UNR grid regeneration study (`01_OPERA/CAL/unr_grid_regen`, README
   and LEDGER there); method in geepers (opera-adt/geepers#98, #99)
 - **Supersedes, once accepted:** ADR-0005 in part (the published interpolated
@@ -22,22 +22,41 @@ The rebuilt grid:
 3. leaves the stations of deforming areas out of the vertical, so the grid
    carries the regional field only (remove-restore on the GNSS side, at the
    stations and not at the nodes as R-G5 does today);
-4. interpolates the remaining station rates by local kriging with the
-   spatial structure function, measured from the stations, as the variogram
-   (`geepers.structure_kriging`), with breaklines only where rates are truly
-   discontinuous: the Gulf of California and the creeping section of the San
-   Andreas;
-5. carries the kriging sigma in the sigma columns.
+4. interpolates the vertical by local kriging with the spatial structure
+   function, measured from the stations, as the variogram
+   (`geepers.structure_kriging`), about the Caron (2018) GIA model as
+   background;
+5. interpolates the horizontals by least-squares collocation (LSC) about
+   rigid plate motion (Pacific on the Pacific side, North America
+   elsewhere): one global LSC in the plate-boundary belts (Southern
+   California, Central Valley, Alaska, Hawaii), moving-window LSC elsewhere,
+   blended over 100 km ("split hybrid");
+6. removes models of fault creep from the station horizontals and restores
+   them at the nodes (a fault creeping from the surface to depth Dc): the
+   San Andreas creeping section through Parkfield (28.7 mm/yr, 15 km), the
+   Hayward (7.2 mm/yr, 12 km) and the Calaveras (8.8 mm/yr, 15 km, tapered
+   out at its north end), and adds 346 nodes on both sides of those traces
+   (2, 6 and 12 km, every 6 km) so the sampled grid carries the steps. The
+   Gulf of California stays cut by a breakline;
+7. covers all of Canada (43,446 lattice nodes, the UNR layout extended
+   north; 43,792 with the fault nodes, appended after the official lookup
+   lines);
+8. carries a sigma per component: the LSC or kriging sigma, plus for the
+   vertical the GIA model spread far from stations, a term near the areas
+   left out, and a term for the local misfit of the stations.
 
 It becomes the operational input only after the e2e gate (plan T46) passes
 with it and the owner signs off. Until then the published grid stays the
 input, and this record stays proposed.
 
-Until then it is an alternative to try, not a replacement: the current
-candidate, snapshot `unr_grid_opera-v33j_IGS20_20261112`, is in
-`s3://opera-adt/opera-ancillary/unr-grid/` next to the official snapshot, with
-`CURRENT` unchanged, and `cal-vlm-batch stage-cal --grid-snapshot` calibrates
-frames with it (same nodes as the official staging, only the rates swapped).
+The chosen grid is snapshot `unr_grid_opera-v33u_creep3_canada_IGS20_20261123`,
+in `s3://opera-adt/opera-ancillary/unr-grid/` next to the official snapshot
+(uploaded and verified 2026-11-24; `CURRENT` unchanged). The earlier
+candidates `unr_grid_opera-v33u_creep_canada_IGS20_20261120` (creeping section
+only) and `unr_grid_opera-v33j_IGS20_20261112` are there too.
+`cal-vlm-batch stage-cal --grid-snapshot` calibrates frames with a snapshot;
+since cal-vlm-batch#9 it also reads an extended lookup, so the fault nodes are
+staged where a frame reaches them.
 
 ## Context
 
@@ -87,6 +106,35 @@ files swapped (2026-11-12):
   stable-station RMSE rises from 3.72 to 3.99: the rest of the gap is not a
   mismatch of areas and is not explained yet.
 
+Update 2026-11-23, candidate v33u_creep_canada. Held out in 75 km blocks
+(7,997 stations, Canada included), NMAD east/north/up 0.38 / 0.38 / 0.78 mm/yr
+and error over sigma (|z| 68%) 0.90 / 0.88 / 0.91: LSC improves the
+horizontals over kriging (0.45 / 0.43), and the extra vertical terms bring
+Alaska's |z| from 1.35 to 1.06. Against independent solutions, reduced to the
+regional field (median within 30 km, the vertical only beyond 25 km of the
+areas left out), the horizontals differ from JPL and MEaSUREs by 0.32-0.37
+mm/yr (published grid 0.39-0.45). The vertical difference (about 0.4) is the
+level at which those centres differ from each other (0.33-0.36), not a grid
+error. The horizontal error is 0.7-1.0 of the vertical, not the half that the
+rule of thumb for positions gives, so it is measured, not imposed.
+
+Calibration gate, ten frames, cal-disp 0.5.8 settings, the 137 deforming
+areas masked in cal-disp and restored, the grid files swapped: stable-station
+RMSE equal to or lower than with the published grid on nine frames; Hawaii
+sill -7.6% (v33j: +14.9%). The two failures are not the grid's: the Central
+Valley all-station sill (+10%, the same with the published grid and the 137
+areas; +0.2% with the deforming-area stations out of the sill) and Houston's
+subsiding-station condition (5.32 mm/yr, published grid with the same mask
+5.37). Over the creeping section (F11116, 2016-2023) the creep model and fault
+nodes lower gate RMSE from 4.21 (published) and 4.20 (without them) to 4.07,
+and the 31 stations within 15 km of the trace from 3.36 to 2.96 mm/yr RMS. The
+cubic RBF that Venti samples the grid with rings by about 4 mm/yr at the step,
+but the calibration surface is long-wavelength: the calibrated velocity
+changes smoothly (at most 3.5 mm/yr near the fault, 0.1 beyond the section
+ends). A linear RBF or the creep model restored after sampling would follow
+the step more closely; neither is needed for calibration, and both would
+change values (Venti todo if ever wanted).
+
 ## Consequences
 
 - R-G1 changes: the grid input is a frozen snapshot that may be regenerated
@@ -113,4 +161,18 @@ files swapped (2026-11-12):
   Imaging). The ATBD and the note to W. Hammond need the same account.
 - Sparse arcs (the Aleutians) carry real block motion the grid follows only
   as far as their few stations allow; sigma there is probably too small.
-- Open items are listed in the study's `LEDGER.md` (20 as of this date).
+- Creep is modelled on the San Andreas, Hayward and Calaveras only; other
+  creeping faults (Superstition Hills, Imperial, Maacama) are smoothed like
+  any other gradient, and the fault trace used looks about 1 km off near
+  Parkfield. The fault models make the grid better near the faults (held
+  out, Hayward stations within 5 km 3.3 -> 1.7 mm/yr, Parkfield 4.2 -> 2.7)
+  but do not change calibration: on F11116 and F36542 the grid with all three
+  models, the San Andreas alone and the creeping section alone calibrate
+  alike (gate RMSE 4.07-4.10 and 2.66-2.67 mm/yr), because the calibration
+  surface is long-wavelength.
+- The snapshot has 43,792 nodes, more than the published 28,492. Readers that
+  assume the official lookup have to read the lookup shipped with the
+  snapshot instead: frame staging does since cal-vlm-batch#9; geepers
+  `UnrGridSource` needs its new `lookup_file` argument (geepers branch
+  `feature/unr-grid-lookup-file`), or it misses the Canada and fault nodes.
+- Open items are listed in the study's `LEDGER.md` (21 as of this date).
