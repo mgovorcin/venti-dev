@@ -1,6 +1,6 @@
 # Implementation plan: Venti, DISP-CAL, VLM, validation package
 
-*Status updated 2026-11-14: cal-disp 0.5.9 candidate (breaklines and island pass, options off by default; image `cal-disp:0.5.9-rc` passes the golden, tag pending); UNR grid regeneration (T68) and the North America VLM baseline map (T69) added; Hawaii gets its own approach (T65.1). Checkboxes reflect merged work, notes give the evidence.*
+*Status updated 2026-11-23: cal-disp v0.5.9 tagged (a8c76b3; image `cal-disp:0.5.9` passes the golden, local only); the North America VLM map is built (T69.3, T69.6: 1,184 frames on 0.5.9); UNR grid candidate `v33u_creep_canada` passes the ten-frame gate (T68.4), ADR-0022 acceptance is the owner's (T68.6); phase 0 (gamma 0.3) is superseded by the 0.5.x releases and parked until the owner closes or delivers it. Earlier, 2026-11-14: UNR grid regeneration (T68) and the North America VLM baseline map (T69) added; Hawaii gets its own approach (T65.1). Checkboxes reflect merged work, notes give the evidence.*
 
 Companion to [specs.md](specs.md) (PRD v0.1, 2026-10-05). Requirement IDs (R-G1, R-S2, …), trade-study IDs (TS-G1, …) and milestones (M0–M6) refer to the PRD.
 
@@ -20,6 +20,8 @@ Companion to [specs.md](specs.md) (PRD v0.1, 2026-10-05). Requirement IDs (R-G1,
 ---
 
 ## Phase 0: Gamma 0.3 release (M0, week 1)
+
+*Status 2026-11-23: superseded.* cal-disp v0.5.0 to v0.5.9 have been tagged on `gamma-release` since this phase was written, and the open T04–T06 subtasks describe a gamma 0.3 delivery that has not been made. They stay open and are not counted as active work; the owner decides whether to close them or deliver 0.3 (upstream PR opera-adt/cal-disp#21 is still open).
 
 Branch: `cal-disp` `gamma-release` (HEAD `7085ec9`). Local clone: `00_tools/src/cal-disp`. The algorithm is frozen; only packaging, documentation and reproducibility work.
 
@@ -594,18 +596,20 @@ Unwrap errors that the surface partly absorbs (Bolivar raw +90 → +15) are T62'
 - [x] T68.1 Rebuild tool in geepers (opera-adt/geepers#98, #99; `gridding.py`, `scripts/recreate-unr-grid.py`), scored against held-out stations.
 - [x] T68.2 Snapshot `v33j` on S3 next to the official grid; cal-vlm-batch `stage-cal --grid-snapshot` (#7, 2026-11-13). The official grid stays the default.
 - [x] T68.3 ADR-0022 written and merged as proposed (venti-dev #64).
-- [~] T68.4 Ten-frame gate with v33j. *First run 2026-11-13:* 9/10 PASS; Houston fails only on its deforming-area conditions; Hawaii worse. *Rerun started 2026-11-14* with the v2 defo database on both sides (T41.5, T41.6), label `unrv33jdb`.
+- [x] T68.4 Ten-frame gate with v33j. *First run 2026-11-13:* 9/10 PASS; Houston fails only on its deforming-area conditions; Hawaii worse. *Rerun started 2026-11-14* with the v2 defo database on both sides (T41.5, T41.6), label `unrv33jdb`. *Done 2026-11-20:* the later candidates (all of Canada, then San Andreas creep remove-restore) pass 10/10 on the grid-attributable checks, Hawaii better than published; F11116 creeping-section test gate RMSE 4.21 → 4.07, no ringing. Candidate chosen 2026-11-23: snapshot `unr_grid_opera-v33u_creep_canada_IGS20_20261120` (on S3 next to the official grid, which stays the default; cal-vlm-batch #9 merged for the extended lookup). Details: `01_OPERA/CAL/unr_grid_regen` README and LEDGER item 21; ADR-0022 update venti-dev #67 (open). The Parkfield creep variant is still under test.
 - [ ] T68.5 Node patches for the published grid where the rebuild is not adopted: cal-vlm-batch `stage-cal --grid-patch-dir` (#4, open; 82 vertical patches, 193 held for review).
-- [ ] T68.6 Owner decision: accept ADR-0022, then a cal-disp release that records the snapshot id (T48.3).
+- [ ] T68.6 Owner decision: accept ADR-0022 (venti-dev #67 brings it to the `v33u_creep_canada` candidate; status stays proposed), then a cal-disp release that records the snapshot id (T48.3).
 
 ### T69. North America VLM baseline map
 **Depends on:** T57, T66
 **Context:** owner 2026-11-12: a working North America coastal VLM map first, as a product and a test set; algorithm generality second. Ledger: cal-vlm-batch `campaigns/na_coast/BASELINE.md` and `frame_fixes.csv`.
-- [~] T69.1 Velocity-level baseline recipe: water-aware breaklines, island pass, robust fit, deformation mask with restore (disp2vlm_validation `studies/island_pass.py`, d2v #42, open; 533 of 539 frames).
+- [x] T69.1 Velocity-level baseline recipe: water-aware breaklines, island pass, robust fit, deformation mask with restore (disp2vlm_validation `studies/island_pass.py`, d2v #42, merged; 533 of 539 frames). Carried into the per-date campaign through cal-disp 0.5.9 (`surface.regions='pieces'`, `small_pieces='offset'`).
 - [x] T69.2 Five-frame per-date check on cal-disp 0.5.9 (`na-redo-check-v059`, 2026-11-14): close to the baseline, better than v058 on 4 of 5 frames.
-- [ ] T69.3 Campaign `na-redo-v059`: 539 coastal frames per date on cal-disp 0.5.9 (cal-vlm-batch #8, open). Owner GO 2026-11-13; staged, not submitted.
-- [~] T69.4 Unwrap-error regions and their GNSS tie, as a QA layer (d2v #41, cal-vlm-batch #5, open). Unwrap correction stays off in calibration (T62).
-- [ ] T69.5 Frame fixes after the full campaign (F01383 island, leftover island fragments), then the VLM mosaic.
+- [x] T69.3 Campaign `na-redo-v059`: 539 coastal frames per date on cal-disp 0.5.9 (cal-vlm-batch #8, open). Owner GO 2026-11-13. *Done 2026-11-15:* 539/539 frames through velocity (F16663 254 of 269 pairs). Gulf/East 64 frames: median GNSS RMS 1.52 (v058) → 1.27, small-piece stations worse (0.95 → 1.33). Why-worse report: cal-vlm-batch `campaigns/na_coast/validate/figures/redo_check/WORSE_FRAMES.md` (9 of 133 frames worse, mostly stations in deforming or decorrelated areas). The campaign record PR (#8) is still open.
+- [x] T69.4 Unwrap-error regions and their GNSS tie, as a QA layer (d2v #41, cal-vlm-batch #5, both merged). Unwrap correction stays off in calibration (T62).
+- [~] T69.5 Frame fixes after the full campaign (F01383 island, leftover island fragments), then the VLM mosaic. *Status 2026-11-23:* mosaic built (cal-vlm-batch `campaigns/na_v059_vertical_velocity_mm_yr_{0p003deg,90m}.tif`, 1,184 frames; western Aleutians across 180°, Guam and Samoa left out). Island fix confirmed per date (`campaigns/na_lakes` in the cal-vlm-batch-redo worktree): lakes 23 of 29 frames fixed (`na-islands4-v059`, GNSS 4 better, 0 worse, change outside the islands p95 0.05 mm/yr), coast 22 of 29 (`na-islands-v059`). Own-surface threshold stays 97 km² (500 km² test `na-islands5-v059`, 2026-11-20: no consistent gain; long thin islands such as Galveston need their own surface). Still open: owner review areas sorted into grid bullseyes, one-frame raw blobs, island offsets and surface bumps (2026-11-23, `tmp/calvlm/weird`); defo/event DB v2 candidates for owner review (`campaigns/na_coast/reference_db`); the island fix is not yet in the mosaic.
+- [x] T69.6 Campaign `na-inland-v059`: inland frames for full North America coverage (owner 2026-11-14; 682 frames with DISP-S1, one pass, no extra mask pass). *Done 2026-11-15:* 658 frames through velocity; 21 failed UNR staging and F04854/F06830/F28774 have no pairs (invalid reference pixel), listed in cal-vlm-batch `campaigns/na_inland/README.md`. Rescue 2026-11-15: 17 of the 21 staged with a GNSS grid from cal-disp's UNR selection (margin 2° for 8 frames with no grid point inside); F14888 (no grid point within 2°), F33075, F44885, F44886 (no DISP-S1-STATIC granule) stay out.
+- [ ] T69.7 Inland follow-ups: velocity step for the 17 rescued inland frames (calibrated; their velocity had not run as of 2026-11-17, so they are not in the mosaic); check the broad −2 to −6 mm/yr inland signal (mid-continent, Gulf, Mexico) against GNSS: reference or datum bias, or real; the UNR grid stops at 51.1° N across most of Canada (57° N in BC) in the published grid, so northern frames wait on T68.
 
 ## Later / cross-cutting
 
