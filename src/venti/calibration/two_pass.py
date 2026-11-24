@@ -43,7 +43,7 @@ from .gaps import base_weights, fill_gaps
 from .loclin import kernel_sigma_px, loclin_surface
 from .remove_restore import sigma_inflation_inside
 from .uncertainty import fit_sigma, resolve_k, sigma_cal
-from .weights import fit_weights
+from .weights import cap_cluster_share, fit_weights
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +194,34 @@ def _extrapolate_sigma(
     return np.where(missing, nearest * factor, sigma).astype(sigma.dtype, copy=False)
 
 
+def _clamp_short(
+    surface_ds: np.ndarray,
+    filled_ds: np.ndarray,
+    w_ds: np.ndarray,
+    cutoff_m: float,
+    pixel_m: float,
+    k: float,
+) -> np.ndarray:
+    """Limit the part of the surface shorter than twice the cutoff (TS-O1 A4).
+
+    The long part is the surface low-passed with half response at
+    ``2 * cutoff_m``; the rest is clipped to ``k`` times the fit term of
+    sigma_CAL. Where that term is undefined the surface is left as it is.
+    """
+    from scipy.ndimage import gaussian_filter
+
+    sigma_px = kernel_sigma_px(cutoff_m, pixel_m)
+    sigma_fit_ds, _ = fit_sigma(filled_ds, w_ds, sigma_px, surface_ds)
+    long = gaussian_filter(
+        surface_ds, kernel_sigma_px(2.0 * cutoff_m, pixel_m), mode="nearest"
+    )
+    short = surface_ds - long
+    limit = np.where(np.isfinite(sigma_fit_ds), k * sigma_fit_ds, np.inf)
+    clamped = int(np.sum(np.abs(short) > limit))
+    logger.info("short-wavelength clamp (k = %.2f): %d fit cells clipped", k, clamped)
+    return long + np.clip(short, -limit, limit)
+
+
 def _robust_plane(
     rows: np.ndarray, cols: np.ndarray, misfit: np.ndarray, n_iter: int = 3
 ) -> np.ndarray:
@@ -288,7 +316,11 @@ def _calibrate_pieces(
     pieces are left out of the frame fit as well, and each then gets the frame
     surface plus the median of its own misfit ``disp - calibration - gnss``:
     an island too small for a surface is set onto the GNSS field by a constant
-    instead of bending the surface it shares.
+    instead of bending the surface it shares. Pieces under
+    ``surface.small_piece_frame_max_pixels`` fit cells stay in the frame fit
+    with no constant, and a constant under ``surface.small_piece_offset_min``
+    is not applied (TS-O1 arm A1: the constant also takes out any real signal
+    that fills the piece).
     """
     opts = options.model_copy(deep=True)
     opts.surface.regions = "none"
@@ -300,7 +332,13 @@ def _calibrate_pieces(
         if k != ids[counts.argmax()] and n / cells >= options.surface.piece_min_pixels
     ]
     small = (
-        [int(k) for k in ids if k != ids[counts.argmax()] and int(k) not in big]
+        [
+            int(k)
+            for k, n in zip(ids, counts, strict=False)
+            if k != ids[counts.argmax()]
+            and int(k) not in big
+            and n / cells >= options.surface.small_piece_frame_max_pixels
+        ]
         if options.surface.small_pieces == "offset"
         else []
     )
@@ -339,7 +377,10 @@ def _calibrate_pieces(
         use = usable & piece & np.isfinite(gnss_los)
         if not use.any():
             continue
-        total[piece] += float(np.median((disp - total - gnss_los)[use]))
+        offset = float(np.median((disp - total - gnss_los)[use]))
+        if abs(offset) < options.surface.small_piece_offset_min:
+            continue
+        total[piece] += offset
         shifted += 1
     if small:
         logger.info("island pass: %d small pieces set by a constant", shifted)
@@ -612,6 +653,7 @@ def calibrate_pair(
             grids: (
                 tuple[np.ndarray, np.ndarray, np.ndarray | None, float] | None
             ) = None,
+            final: bool = False,
         ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
             f_valid, f_exclude, f_coh, f_pixel = grids or (
                 valid_ds,
@@ -638,6 +680,15 @@ def calibrate_pair(
                 coherence_power=options.weights.coherence_power,
                 robust=robust,
             )
+            # the TS-O1 arms act on the final surface only, not on the pass-1 tie
+            if final and options.weights.cluster_share_max is not None:
+                w = cap_cluster_share(
+                    w,
+                    f_coh,
+                    sigma_px,
+                    options.weights.cluster_share_max,
+                    options.weights.cluster_percentile,
+                )
             surface_ds, cov = loclin_surface(
                 filled,
                 w,
@@ -645,6 +696,7 @@ def calibrate_pair(
                 cutoff_m,
                 data_mask=fit_valid,
                 coverage_blend=DATA_COVERAGE_BLEND,
+                edge_constant=options.surface.edge_constant_offset if final else None,
             )
             return surface_ds, cov, w, filled
 
@@ -728,6 +780,7 @@ def calibrate_pair(
             options.surface.cutoff_wavelength_meters,
             options.weights.robust,
             grids=region_grids,
+            final=True,
         )
         if labels_ds is not None:
             surface_ds = _region_offsets(
@@ -738,6 +791,15 @@ def calibrate_pair(
                 options.surface.region_min_pixels,
                 model=options.surface.region_model,
                 plane_min_pixels=options.surface.region_plane_min_pixels,
+            )
+        if options.surface.short_clamp_k is not None:
+            surface_ds = _clamp_short(
+                surface_ds,
+                filled_ds,
+                w_ds,
+                options.surface.cutoff_wavelength_meters,
+                pixel_ds,
+                options.surface.short_clamp_k,
             )
         fit_ok = (w_ds > 0) & valid_ds & ~exclude_ds
         fit_std = (

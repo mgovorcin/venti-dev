@@ -144,3 +144,20 @@ def test_loclin_surface_is_continuous_with_sea_and_gaps():
     coast_jump = np.abs(np.diff(surface[:, 45:55], axis=1)).max()
     assert coast_jump < 0.5
     assert cov[:, :20].mean() < cov[:, 100:].mean()
+
+
+def test_edge_constant_stops_the_slope_extrapolation_off_one_side():
+    from venti.calibration.loclin import local_linear_surface
+
+    ny, nx, sigma = 80, 160, 10.0
+    _yy, xx = np.mgrid[0:ny, 0:nx].astype(float)
+    w = (xx < 60).astype(float)  # data on the left only
+    field = np.where(w > 0, 0.1 * xx, 0.0)  # a ramp: the slope is extrapolated
+    ll, _ = local_linear_surface(field, w, sigma)
+    ec, _ = local_linear_surface(field, w, sigma, edge_constant=0.5)
+    # deep inside the data the centroid sits on the pixel: identical (the
+    # frame's own edges are one-sided too, so only interior rows)
+    np.testing.assert_allclose(ec[30:50, 25:35], ll[30:50, 25:35], atol=1e-9)
+    # 30 px off the data edge local-linear keeps climbing, the fallback does not
+    assert ll[40, 90] > 8.5
+    assert ec[40, 90] < 6.0

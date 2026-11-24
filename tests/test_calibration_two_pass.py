@@ -835,3 +835,68 @@ def test_land_piece_labels_never_bridge_across_water():
     assert labels[150, 250] not in (0, labels[150, 150])
     # without the land mask the channel is bridged like any other gap
     assert len(np.unique(land_piece_labels(valid, **kw))) == 2
+
+
+class TestOvershootArms:
+    """TS-O1 arms (Venti plan T67.2): off by default, each does its one job."""
+
+    def _island_runs(self, **surface):
+        disp, gnss, valid, _ramp, bowl_mask, island_mask, coh = scene()
+        labels = np.where(valid, 1, 0).astype(np.uint16)
+        labels[island_mask] = 2
+        o = _pieces_opts(10**6)  # the island is under piece_min_pixels
+        o = o.model_copy(
+            update={
+                "surface": o.surface.model_copy(
+                    update={"small_pieces": "offset", **surface}
+                )
+            }
+        )
+        r = calibrate_pair(
+            disp, gnss, valid, REF, o, PIXEL_M, CYCLE_M, coherence=coh,
+            exclude_mask=bowl_mask, land_pieces=labels,
+        )  # fmt: skip
+        return r, ((disp - r.calibration) - gnss)[island_mask]
+
+    def test_defaults_are_off(self):
+        o = CalibrationOptions()
+        assert o.surface.small_piece_frame_max_pixels == 0
+        assert o.surface.small_piece_offset_min == 0.0
+        assert o.surface.edge_constant_offset is None
+        assert o.surface.short_clamp_k is None
+        assert o.weights.cluster_share_max is None
+
+    def test_offset_gate_keeps_a_cycle_step_and_drops_a_small_constant(self):
+        _, err_on = self._island_runs()
+        _, err_gate = self._island_runs(small_piece_offset_min=0.5 * CYCLE_M)
+        _, err_off = self._island_runs(small_piece_offset_min=10 * CYCLE_M)
+        assert abs(np.median(err_on)) < 0.0005
+        np.testing.assert_allclose(err_gate, err_on, atol=1e-12)  # the step is kept
+        assert abs(np.median(err_off)) > 0.5 * CYCLE_M  # no constant at all
+
+    def test_size_rule_puts_small_pieces_back_in_the_frame_fit(self):
+        rule, _ = self._island_runs(small_piece_frame_max_pixels=10**6)
+        disp, gnss, valid, _ramp, bowl_mask, island_mask, coh = scene()
+        labels = np.where(valid, 1, 0).astype(np.uint16)
+        labels[island_mask] = 2
+        frame = calibrate_pair(
+            disp, gnss, valid, REF, _pieces_opts(10**6), PIXEL_M, CYCLE_M,
+            coherence=coh, exclude_mask=bowl_mask, land_pieces=labels,
+        )  # fmt: skip
+        np.testing.assert_allclose(rule.calibration, frame.calibration, atol=1e-9)
+
+    def test_clamp_limits_the_short_part_only(self):
+        from venti.calibration.two_pass import _clamp_short
+
+        ny, nx, px = 120, 120, 500.0
+        yy, xx = np.mgrid[0:ny, 0:nx].astype(float)
+        long = 1e-3 * xx / nx
+        bump = 0.01 * np.exp(-((yy - 60) ** 2 + (xx - 60) ** 2) / (2 * 4.0**2))
+        surface = long + bump
+        w = np.ones((ny, nx))
+        field = surface + np.random.default_rng(0).normal(0, 1e-3, (ny, nx))
+        loose = _clamp_short(surface, field, w, 20_000.0, px, 1e6)
+        np.testing.assert_allclose(loose, surface, atol=1e-12)
+        tight = _clamp_short(surface, field, w, 20_000.0, px, 1.0)
+        assert tight[60, 60] < 0.5 * surface[60, 60]
+        np.testing.assert_allclose(tight[:, :5], surface[:, :5], atol=2e-4)

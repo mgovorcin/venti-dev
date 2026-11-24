@@ -29,7 +29,13 @@ from scipy.ndimage import gaussian_filter
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["RobustMethod", "coherence_weights", "fit_weights", "robust_weights"]
+__all__ = [
+    "RobustMethod",
+    "cap_cluster_share",
+    "coherence_weights",
+    "fit_weights",
+    "robust_weights",
+]
 
 RobustMethod = Literal["huber", "gate"]
 MAD_SCALE = 1.4826
@@ -199,3 +205,78 @@ def fit_weights(
             )
         w = w * rw
     return w
+
+
+def cap_cluster_share(
+    weights: np.ndarray,
+    coherence: np.ndarray | None,
+    sigma_px: float,
+    share_max: float,
+    percentile: float = 90.0,
+) -> np.ndarray:
+    """Scale down coherent clusters that carry too much of a kernel's weight.
+
+    A dense, bright town inside the kernel carries most of the coherence^p
+    weight, so the surface follows the town's own signal (TS-O1, mechanism 2).
+    Clusters are the connected pixels above the `percentile` coherence of the
+    weighted pixels. Their share of the kernel weight, ``G(w_c) / G(w)`` with
+    ``w_c`` the weights on every cluster pixel, is taken at each cluster pixel.
+    A cluster whose largest share q exceeds `share_max` gets one factor on all
+    its weights, ``share_max (1 - q) / ((1 - share_max) q)``, which brings the
+    share there down to `share_max`. Clusters that share a kernel are capped
+    together, so the share of each is at most `share_max`.
+
+    Parameters
+    ----------
+    weights : np.ndarray
+        Fit weights (base x coherence^p x robust).
+    coherence : np.ndarray or None
+        Coherence on the same grid; None returns `weights` unchanged.
+    sigma_px : float
+        Kernel sigma of the fit, pixels.
+    share_max : float
+        Largest share of the kernel weight a cluster may carry, in (0, 1).
+    percentile : float
+        Coherence percentile (of the weighted pixels) that seeds a cluster.
+
+    Returns
+    -------
+    np.ndarray
+        The capped weights.
+
+    """
+    from scipy import ndimage as ndi
+
+    if not 0.0 < share_max < 1.0:
+        msg = f"share_max must be in (0, 1), got {share_max}"
+        raise ValueError(msg)
+    w = np.asarray(weights, dtype=np.float64)
+    if coherence is None:
+        return w
+    coh = np.nan_to_num(np.asarray(coherence, dtype=np.float64), nan=-np.inf)
+    on = w > 0
+    if on.sum() < 10:
+        return w
+    labels, n = ndi.label(on & (coh > np.percentile(coh[on], percentile)))
+    if n == 0:
+        return w
+    wc = np.where(labels > 0, w, 0.0)
+    total = gaussian_filter(w, sigma_px, mode="constant", cval=0.0)
+    share = np.divide(
+        gaussian_filter(wc, sigma_px, mode="constant", cval=0.0),
+        total,
+        out=np.zeros_like(total),
+        where=total > 0,
+    )
+    q = ndi.maximum(share, labels, index=np.arange(1, n + 1))
+    q = np.clip(np.asarray(q, dtype=np.float64), 1e-12, 1.0 - 1e-12)
+    factor = np.minimum(1.0, share_max * (1.0 - q) / ((1.0 - share_max) * q))
+    scale = np.concatenate([[1.0], factor])[labels]
+    logger.debug(
+        "cap_cluster_share(%.2f): %d clusters, %d capped, min factor %.3f",
+        share_max,
+        n,
+        int((factor < 1.0).sum()),
+        float(factor.min()),
+    )
+    return w * scale

@@ -156,6 +156,46 @@ class SurfaceOptions(BaseModel):
             "misfit, which sets it onto the GNSS field."
         ),
     )
+    small_piece_frame_max_pixels: int = Field(
+        0,
+        ge=0,
+        description=(
+            "With small_pieces='offset' (TS-O1 arm A1): labelled pieces under this "
+            "many fit-grid cells take part in the frame fit and keep the frame "
+            "surface, with no constant of their own. 0 (default): every piece under "
+            "piece_min_pixels gets the constant."
+        ),
+    )
+    small_piece_offset_min: float = Field(
+        0.0,
+        ge=0,
+        description=(
+            "With small_pieces='offset' (TS-O1 arm A1, gate): a small piece gets "
+            "its constant only when the median of its misfit is at least this large "
+            "(units of the displacement); otherwise it keeps the frame surface, "
+            "fitted without it. 0 (default): every constant is applied."
+        ),
+    )
+    edge_constant_offset: float | None = Field(
+        None,
+        gt=0,
+        description=(
+            "'loclin' only (TS-O1 arm A3). Where the data inside the kernel lie to "
+            "one side, the local-linear level extrapolates a slope from that side. "
+            "With a value t, the level gives way to the kernel-weighted local mean "
+            "as the weighted centroid of the data moves from t to t + 0.5 kernel "
+            "sigmas away from the pixel. None (default): local-linear everywhere."
+        ),
+    )
+    short_clamp_k: float | None = Field(
+        None,
+        gt=0,
+        description=(
+            "'loclin' only (TS-O1 arm A4, last resort). The part of the surface "
+            "shorter than twice cutoff_wavelength_meters is limited to k times the "
+            "fit term of sigma_CAL. None (default): no clamp."
+        ),
+    )
     region_min_pixels: int = Field(
         50,
         ge=1,
@@ -222,6 +262,24 @@ class WeightOptions(BaseModel):
         ge=0,
         le=1,
         description="Weight given to gap-filled pixels when fill_gaps is on",
+    )
+    cluster_share_max: float | None = Field(
+        None,
+        gt=0,
+        lt=1,
+        description=(
+            "TS-O1 arm A2: within each kernel footprint, the connected clusters "
+            "above the cluster_percentile coherence of the fit grid carry at most "
+            "this share of the fit weight; each cluster's weights are scaled down "
+            "by one factor so that the share at its own pixels stays under the cap. "
+            "None (default): no cap."
+        ),
+    )
+    cluster_percentile: float = Field(
+        90.0,
+        gt=0,
+        lt=100,
+        description="With cluster_share_max: coherence percentile that seeds a cluster",
     )
 
     model_config = {"validate_assignment": True, "extra": "forbid"}

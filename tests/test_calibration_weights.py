@@ -139,3 +139,46 @@ def test_robust_weights_stats_mask():
     field, base = _sparse_data_in_filled_grid()
     rw = robust_weights(field, base, SIGMA, stats_mask=base >= 1.0)
     assert np.mean(rw[base >= 1.0] > 0) > 0.9
+
+
+def test_cluster_cap_brings_a_bright_town_down_to_the_share():
+    from scipy.ndimage import gaussian_filter
+
+    from venti.calibration.weights import cap_cluster_share
+
+    ny, nx, sigma = 100, 100, 8.0
+    coh = np.full((ny, nx), 0.5)
+    coh[45:55, 45:55] = 0.95  # 1% of the pixels, far brighter
+    w = coherence_weights(coh, 8.0, coh.shape)
+    share = gaussian_filter(np.where(coh > 0.9, w, 0), sigma, mode="constant") / (
+        gaussian_filter(w, sigma, mode="constant")
+    )
+    assert share[50, 50] > 0.9
+    capped = cap_cluster_share(w, coh, sigma, 0.3)
+    share_c = gaussian_filter(np.where(coh > 0.9, capped, 0), sigma, mode="constant")
+    share_c /= gaussian_filter(capped, sigma, mode="constant")
+    assert share_c[45:55, 45:55].max() <= 0.3 + 1e-6
+    np.testing.assert_array_equal(capped[coh < 0.9], w[coh < 0.9])
+    np.testing.assert_array_equal(cap_cluster_share(w, None, sigma, 0.3), w)
+
+    # the surface follows the town's own signal less
+    field = np.where(coh > 0.9, 5.0, 0.0)
+    lvl, _ = local_linear_surface(field, w, sigma)
+    lvl_c, _ = local_linear_surface(field, capped, sigma)
+    assert lvl_c[50, 50] < 0.5 * lvl[50, 50]
+
+
+def test_cluster_cap_leaves_a_town_under_the_share_alone():
+    from venti.calibration.weights import cap_cluster_share
+
+    coh = np.full((60, 60), 0.9)
+    coh[::7, ::7] = 0.91  # many tiny clusters, none dominant
+    w = coherence_weights(coh, 8.0, coh.shape)
+    np.testing.assert_allclose(cap_cluster_share(w, coh, 6.0, 0.5), w)
+
+
+def test_cluster_cap_rejects_a_share_outside_zero_one():
+    from venti.calibration.weights import cap_cluster_share
+
+    with pytest.raises(ValueError, match="share_max"):
+        cap_cluster_share(np.ones((5, 5)), np.ones((5, 5)), 2.0, 1.0)
