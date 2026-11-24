@@ -1,7 +1,7 @@
 # ADR-0022: A regenerated UNR rate grid, with its own sigma, may be the calibration input
 
-- **Status:** accepted (owner, 2026-11-23: candidate v33u_creep_canada)
-- **Date:** 2026-11-13; updated 2026-11-23 (candidate v33u_creep_canada)
+- **Status:** accepted (owner, 2026-11-23; grid v33u_creep3_canada chosen 2026-11-24)
+- **Date:** 2026-11-13; updated 2026-11-23 and 2026-11-24 (grid v33u_creep3_canada)
 - **Source:** UNR grid regeneration study (`01_OPERA/CAL/unr_grid_regen`, README
   and LEDGER there); method in geepers (opera-adt/geepers#98, #99)
 - **Supersedes, once accepted:** ADR-0005 in part (the published interpolated
@@ -31,14 +31,15 @@ The rebuilt grid:
    elsewhere): one global LSC in the plate-boundary belts (Southern
    California, Central Valley, Alaska, Hawaii), moving-window LSC elsewhere,
    blended over 100 km ("split hybrid");
-6. removes a model of the San Andreas creeping section (a fault creeping
-   from the surface to 15 km, about 30 mm/yr, tapered at the section ends)
-   from the station horizontals and restores it at the nodes, and adds 120
-   nodes on both sides of that trace (2, 6 and 12 km, every 6 km) so the
-   sampled grid carries the step. The Gulf of California stays cut by a
-   breakline;
+6. removes models of fault creep from the station horizontals and restores
+   them at the nodes (a fault creeping from the surface to depth Dc): the
+   San Andreas creeping section through Parkfield (28.7 mm/yr, 15 km), the
+   Hayward (7.2 mm/yr, 12 km) and the Calaveras (8.8 mm/yr, 15 km, tapered
+   out at its north end), and adds 346 nodes on both sides of those traces
+   (2, 6 and 12 km, every 6 km) so the sampled grid carries the steps. The
+   Gulf of California stays cut by a breakline;
 7. covers all of Canada (43,446 lattice nodes, the UNR layout extended
-   north; 43,566 with the fault nodes, appended after the official lookup
+   north; 43,792 with the fault nodes, appended after the official lookup
    lines);
 8. carries a sigma per component: the LSC or kriging sigma, plus for the
    vertical the GIA model spread far from stations, a term near the areas
@@ -48,11 +49,11 @@ It becomes the operational input only after the e2e gate (plan T46) passes
 with it and the owner signs off. Until then the published grid stays the
 input, and this record stays proposed.
 
-Until then it is an alternative to try, not a replacement. The current
-candidate is snapshot `unr_grid_opera-v33u_creep_canada_IGS20_20261120`
-(local; to be uploaded to `s3://opera-adt/opera-ancillary/unr-grid/` next to
-the official snapshot, with `CURRENT` unchanged, once the owner picks it). The
-earlier candidate `unr_grid_opera-v33j_IGS20_20261112` is already there.
+The chosen grid is snapshot `unr_grid_opera-v33u_creep3_canada_IGS20_20261123`,
+in `s3://opera-adt/opera-ancillary/unr-grid/` next to the official snapshot
+(uploaded and verified 2026-11-24; `CURRENT` unchanged). The earlier
+candidates `unr_grid_opera-v33u_creep_canada_IGS20_20261120` (creeping section
+only) and `unr_grid_opera-v33j_IGS20_20261112` are there too.
 `cal-vlm-batch stage-cal --grid-snapshot` calibrates frames with a snapshot;
 since cal-vlm-batch#9 it also reads an extended lookup, so the fault nodes are
 staged where a frame reaches them.
@@ -160,11 +161,18 @@ change values (Venti todo if ever wanted).
   Imaging). The ATBD and the note to W. Hammond need the same account.
 - Sparse arcs (the Aleutians) carry real block motion the grid follows only
   as far as their few stations allow; sigma there is probably too small.
-- Only the creeping section has a fault model. Smaller creeping faults
-  (Hayward, Calaveras, Superstition Hills, 5-10 mm/yr) are smoothed like any
-  other gradient, and the fault trace used looks about 1 km off near
-  Parkfield.
-- The snapshot has 43,566 nodes, more than the published 28,492. Readers that
-  assume the official lookup (frame staging, geepers `UnrGridSource`) have to
-  read the lookup shipped with the snapshot instead.
+- Creep is modelled on the San Andreas, Hayward and Calaveras only; other
+  creeping faults (Superstition Hills, Imperial, Maacama) are smoothed like
+  any other gradient, and the fault trace used looks about 1 km off near
+  Parkfield. The fault models make the grid better near the faults (held
+  out, Hayward stations within 5 km 3.3 -> 1.7 mm/yr, Parkfield 4.2 -> 2.7)
+  but do not change calibration: on F11116 and F36542 the grid with all three
+  models, the San Andreas alone and the creeping section alone calibrate
+  alike (gate RMSE 4.07-4.10 and 2.66-2.67 mm/yr), because the calibration
+  surface is long-wavelength.
+- The snapshot has 43,792 nodes, more than the published 28,492. Readers that
+  assume the official lookup have to read the lookup shipped with the
+  snapshot instead: frame staging does since cal-vlm-batch#9; geepers
+  `UnrGridSource` needs its new `lookup_file` argument (geepers branch
+  `feature/unr-grid-lookup-file`), or it misses the Canada and fault nodes.
 - Open items are listed in the study's `LEDGER.md` (21 as of this date).
