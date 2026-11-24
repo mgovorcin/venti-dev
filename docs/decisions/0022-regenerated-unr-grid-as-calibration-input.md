@@ -172,7 +172,7 @@ change values (Venti todo if ever wanted).
   surface is long-wavelength.
 - The snapshot has 43,792 nodes, more than the published 28,492. Readers that
   assume the official lookup have to read the lookup shipped with the
-  snapshot instead: frame staging does since cal-vlm-batch#9; geepers
-  `UnrGridSource` needs its new `lookup_file` argument (geepers branch
-  `feature/unr-grid-lookup-file`), or it misses the Canada and fault nodes.
+  snapshot instead: frame staging does since cal-vlm-batch#9; in geepers the
+  snapshot is read with `CustomGridSource.from_snapshot` (opera-adt/geepers#100),
+  since `UnrGridSource` stays UNR's product and knows only UNR's nodes.
 - Open items are listed in the study's `LEDGER.md` (21 as of this date).
